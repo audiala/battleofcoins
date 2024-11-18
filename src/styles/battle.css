@@ -8,7 +8,10 @@
   display: flex;
   gap: 2rem;
   overflow-x: auto;
-  padding: 2rem;
+  padding: 2rem 1rem;
+  margin: 0 1rem;
+  position: relative;
+  z-index: 1;
 }
 
 .round {
@@ -40,6 +43,12 @@
   border-radius: 1rem;
   padding: 1rem;
   border: 1px solid #374151;
+  position: relative;
+  z-index: 1;
+}
+
+.pool:hover {
+  z-index: 2;
 }
 
 .pool-cryptos {
@@ -57,6 +66,7 @@
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
 }
 
 .crypto-card:hover {
@@ -67,6 +77,11 @@
 .crypto-card.winner {
   background: #2a1f2d;
   border: 1px solid #f53e98;
+}
+
+.crypto-card.loser {
+  background: #2a1f2d;
+  border: 1px solid #F44336;
 }
 
 .crypto-logo {
@@ -175,4 +190,133 @@
 .winner-ticker {
   color: #9ca3af;
   font-size: 1rem;
-} 
+}
+
+.winner {
+  border: 2px solid #4CAF50; /* Green border for winners */
+}
+
+.loser {
+  border: 2px solid #F44336; /* Red border for losers */
+}
+
+.pool-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 1rem;
+  color: #f53e98;
+  gap: 1rem;
+}
+
+.pool-loading-overlay {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f53e98;
+  border-top: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.crypto-tooltip {
+  position: absolute;
+  visibility: hidden;
+  opacity: 0;
+  z-index: 100;
+  width: 200px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  
+  /* Position the tooltip */
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 10px;
+}
+
+.tooltip-content {
+  color: #ffffff;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Show tooltip on hover */
+.crypto-card:hover .crypto-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Add a small arrow to the tooltip */
+.crypto-tooltip::before {
+  content: '';
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent #2a2a2a transparent transparent;
+}
+
+/* Adjust tooltip position for cards near the right edge */
+.crypto-card:hover .crypto-tooltip.right-edge {
+  left: auto;
+  right: 100%;
+  margin-left: 0;
+  margin-right: 10px;
+}
+
+.crypto-tooltip.right-edge::before {
+  left: auto;
+  right: -6px;
+  border-color: transparent transparent transparent #2a2a2a;
+}
+
+/* Style winner and loser cards */
+.crypto-card.winner .crypto-tooltip {
+  border: 1px solid #4CAF50;
+}
+
+.crypto-card.loser .crypto-tooltip {
+  border: 1px solid #F44336;
+}
+
+/* Add subtle indicator that there's hover information */
+.crypto-card::after {
+  content: 'ⓘ';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.875rem;
+  color: #666;
+  opacity: 0.7;
+}
+
+.crypto-card:hover::after {
+  opacity: 1;
+  color: #f53e98;
+}
+ 

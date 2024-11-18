@@ -1,17 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+  content: [
+    './src/**/*.{js,jsx,ts,tsx,astro}',
+    './src/**/*.{html,md,mdx,svelte,vue}'
+  ],
   theme: {
-    extend: {
-      colors: {
-        primary: '#f53e98',
-        dark: {
-          100: '#272727',
-          200: '#1e1e1e',
-          300: '#121212',
-        },
-      },
-    },
+    extend: {},
   },
   plugins: [],
 } 

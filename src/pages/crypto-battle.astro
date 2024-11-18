@@ -18,7 +18,7 @@ const yamlContent = readFileSync(join(dataDir, latestFile), 'utf8');
 const cryptoData = load(yamlContent);
 
 // Take only the first 512 cryptos
-const tournament_cryptos = cryptoData.slice(0, 512);
+const tournament_cryptos = cryptoData.slice(0, 16);
 ---
 
 <Layout title="Crypto Battle Tournament">

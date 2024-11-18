@@ -1,5 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { CryptoData } from './CryptoTable';
+import axios from 'axios';
+
+interface Winner {
+  coin: CryptoData;
+  reason: string;
+}
+
+interface Loser {
+  coin: CryptoData;
+  reason: string;
+}
+
+interface RoundWinners {
+  winners: Winner[];
+  losers: Loser[];
+}
 
 interface Round {
   name: string;
@@ -9,7 +25,9 @@ interface Round {
 interface Pool {
   id: number;
   cryptos: CryptoData[];
-  winners?: CryptoData[];
+  winners?: Winner[];
+  losers?: Loser[];
+  isLoading?: boolean;
 }
 
 export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
@@ -41,40 +59,58 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     setRounds([{ name: 'Round 1', pools: initialPools }]);
   }, [cryptos]);
 
-  const selectRandomWinners = (pool: Pool): CryptoData[] => {
-    const shuffled = [...pool.cryptos].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, Math.ceil(pool.cryptos.length / 2));
-  };
-
-  const processNextRound = () => {
-    setRounds(prevRounds => {
-      const newRounds = [...prevRounds];
+  const processNextRound = async () => {
+    try {
+      const newRounds = [...rounds];
       const currentRoundPools = newRounds[currentRoundRef.current].pools;
 
-      // Select winners from each pool
+      // Set all pools to loading state
       currentRoundPools.forEach(pool => {
-        pool.winners = selectRandomWinners(pool);
-        console.log(pool.winners);
+        pool.isLoading = true;
+      });
+      setRounds(newRounds);
+
+      // Process all pools in parallel
+      const poolPromises = currentRoundPools.map(async pool => {
+        try {
+          const response = await axios.post('/api/selectWinners', {
+            cryptos: pool.cryptos,
+          });
+
+          const data: RoundWinners = response.data;
+
+          // Update the pool with winners and losers
+          pool.winners = data.winners;
+          pool.losers = data.losers;
+        } catch (error) {
+          console.error(`Error processing pool ${pool.id}:`, error);
+        } finally {
+          // Clear loading state
+          pool.isLoading = false;
+          // Update the UI to reflect the change
+          setRounds([...newRounds]);
+        }
       });
 
-      // If all pools have winners, prepare next round
+      // Wait for all pools to complete
+      await Promise.all(poolPromises);
+
+      // Continue with the rest of the logic
       if (currentRoundPools.every(pool => pool.winners)) {
-        // Collect all winners
         const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
         
-        // Create new pools of 8 (or less for final rounds)
         const nextRoundPools: Pool[] = [];
         for (let i = 0; i < allWinners.length; i += 8) {
           nextRoundPools.push({
             id: i / 8,
-            cryptos: allWinners.slice(i, i + Math.min(8, allWinners.length - i))
+            cryptos: allWinners.map(w => w.coin).slice(i, i + Math.min(8, allWinners.length - i)),
           });
         }
 
         if (nextRoundPools.length > 0) {
           newRounds.push({
             name: `Round ${newRounds.length + 1}`,
-            pools: nextRoundPools
+            pools: nextRoundPools,
           });
           setCurrentRound(prev => {
             const updated = prev + 1;
@@ -84,8 +120,10 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
         }
       }
 
-      return newRounds;
-    });
+      setRounds(newRounds);
+    } catch (error) {
+      console.error('Error processing next round:', error);
+    }
   };
 
   const handleAutoPlay = async () => {
@@ -159,23 +197,41 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
           >
             <h3 className="round-title">{round.name}</h3>
             <div className="pools-container">
-              {round.pools.map((pool) => (
+              {round.pools.map(pool => (
                 <div key={`pool-${roundIndex}-${pool.id}`} className="pool">
-                  <div className="pool-cryptos">
-                    {pool.cryptos.map((crypto) => (
+                  {pool.isLoading && (
+                    <div className="pool-loading">
+                      <div className="loading-spinner"></div>
+                      <span>AI Analyzing...</span>
+                    </div>
+                  )}
+                  <div className={`pool-cryptos ${pool.isLoading ? 'pool-loading-overlay' : ''}`}>
+                    {pool.cryptos.map(crypto => (
                       <div
                         key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
-                        className={`crypto-card ${pool.winners?.includes(crypto) ? 'winner' : ''}`}
+                        className={`crypto-card ${
+                          pool.winners?.find(w => w.coin.id === crypto.id) ? 'winner' : 
+                          pool.losers?.find(l => l.coin.id === crypto.id) ? 'loser' : ''
+                        }`}
                       >
-                        <img 
-                          src={`/${crypto.logo_local.toLowerCase()}`} 
-                          alt={crypto.name} 
+                        <img
+                          src={`/${crypto.logo_local.toLowerCase()}`}
+                          alt={crypto.name}
                           className="crypto-logo"
                         />
                         <div className="crypto-info">
                           <span className="crypto-name">{crypto.name}</span>
                           <span className="crypto-ticker">{crypto.ticker}</span>
                         </div>
+                        {(pool.winners?.find(w => w.coin.id === crypto.id) || 
+                          pool.losers?.find(l => l.coin.id === crypto.id)) && (
+                          <div className="crypto-tooltip">
+                            <div className="tooltip-content">
+                              {pool.winners?.find(w => w.coin.id === crypto.id)?.reason || 
+                               pool.losers?.find(l => l.coin.id === crypto.id)?.reason}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
