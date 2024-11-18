@@ -8,7 +8,8 @@ import {
 } from '@tanstack/react-table';
 import type { SortingState } from '@tanstack/react-table';
 
-interface CryptoData {
+export type CryptoData = {
+  id: number;
   name: string;
   ticker: string;
   logo_local: string;
@@ -44,7 +45,7 @@ const columns = [
     header: '',
     cell: info => (
       <img 
-        src={`/logos/${info.getValue()}`} 
+        src={`/${info.getValue()}`} 
         alt="" 
         className="w-8 h-8 rounded-full ring-1 ring-gray-700"
       />

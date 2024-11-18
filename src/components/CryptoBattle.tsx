@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { CryptoData } from './CryptoTable';
 
 interface Round {
@@ -17,6 +17,17 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   const [currentRound, setCurrentRound] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
 
+  const roundsRef = useRef(rounds);
+  const currentRoundRef = useRef(currentRound);
+
+  useEffect(() => {
+    roundsRef.current = rounds;
+  }, [rounds]);
+
+  useEffect(() => {
+    currentRoundRef.current = currentRound;
+  }, [currentRound]);
+
   useEffect(() => {
     // Create initial pools of 8
     const initialPools: Pool[] = [];
@@ -27,51 +38,23 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
       });
     }
 
-    // Calculate number of rounds needed
-    const rounds: Round[] = [];
-    let currentPoolSize = 8;
-    let currentRoundSize = cryptos.length;
-    let roundNumber = 1;
-
-    while (currentRoundSize > 1) {
-      const roundName = currentRoundSize <= 8 
-        ? `Final ${currentRoundSize}` 
-        : `Round of ${currentRoundSize}`;
-      
-      if (roundNumber === 1) {
-        rounds.push({ name: roundName, pools: initialPools });
-      } else {
-        rounds.push({ name: roundName, pools: [] });
-      }
-      
-      // For next round
-      currentRoundSize = currentRoundSize <= 8 
-        ? Math.floor(currentRoundSize / 2)
-        : Math.floor(currentRoundSize / 2);
-      roundNumber++;
-    }
-
-    setRounds(rounds);
+    setRounds([{ name: 'Round 1', pools: initialPools }]);
   }, [cryptos]);
 
   const selectRandomWinners = (pool: Pool): CryptoData[] => {
     const shuffled = [...pool.cryptos].sort(() => Math.random() - 0.5);
-    // If pool size is 8 or more, take top 4
-    // If pool size is less than 8, take half
-    const winnersCount = pool.cryptos.length >= 8 ? 4 : Math.ceil(pool.cryptos.length / 2);
-    return shuffled.slice(0, winnersCount);
+    return shuffled.slice(0, Math.ceil(pool.cryptos.length / 2));
   };
 
   const processNextRound = () => {
     setRounds(prevRounds => {
       const newRounds = [...prevRounds];
-      const currentRoundPools = newRounds[currentRound].pools;
+      const currentRoundPools = newRounds[currentRoundRef.current].pools;
 
       // Select winners from each pool
       currentRoundPools.forEach(pool => {
-        if (!pool.winners) {
-          pool.winners = selectRandomWinners(pool);
-        }
+        pool.winners = selectRandomWinners(pool);
+        console.log(pool.winners);
       });
 
       // If all pools have winners, prepare next round
@@ -79,20 +62,25 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
         // Collect all winners
         const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
         
-        // Create new pools for next round
+        // Create new pools of 8 (or less for final rounds)
         const nextRoundPools: Pool[] = [];
-        const poolSize = allWinners.length <= 8 ? allWinners.length : 8;
-        
-        for (let i = 0; i < allWinners.length; i += poolSize) {
+        for (let i = 0; i < allWinners.length; i += 8) {
           nextRoundPools.push({
-            id: i / poolSize,
-            cryptos: allWinners.slice(i, i + poolSize)
+            id: i / 8,
+            cryptos: allWinners.slice(i, i + Math.min(8, allWinners.length - i))
           });
         }
 
         if (nextRoundPools.length > 0) {
-          newRounds[currentRound + 1].pools = nextRoundPools;
-          setCurrentRound(prev => prev + 1);
+          newRounds.push({
+            name: `Round ${newRounds.length + 1}`,
+            pools: nextRoundPools
+          });
+          setCurrentRound(prev => {
+            const updated = prev + 1;
+            currentRoundRef.current = updated;
+            return updated;
+          });
         }
       }
 
@@ -103,27 +91,47 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   const handleAutoPlay = async () => {
     setIsAutoPlaying(true);
     
-    while (currentRound < rounds.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      processNextRound();
+    try {
+      while (true) {
+        // Get current state from refs
+        const currentRoundData = roundsRef.current[currentRoundRef.current];
+        
+        // Check if we should stop
+        if (
+          !currentRoundData ||
+          (currentRoundData.pools.length === 1 &&
+            currentRoundData.pools[0].cryptos.length === 1)
+        ) {
+          break;
+        }
+
+        processNextRound();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    } catch (error) {
+      console.error('Error during auto play:', error);
+    } finally {
+      setIsAutoPlaying(false);
     }
-    
-    setIsAutoPlaying(false);
   };
+
+  const isTournamentComplete = rounds[currentRound]?.pools.length === 1 && 
+                              rounds[currentRound].pools[0].cryptos.length === 1;
 
   return (
     <div className="crypto-battle">
       <div className="battle-controls">
         <button 
           onClick={handleAutoPlay}
-          disabled={isAutoPlaying || currentRound === rounds.length - 1}
+          disabled={isAutoPlaying || isTournamentComplete}
           className="auto-play-button"
         >
           {isAutoPlaying ? 'Battle in Progress...' : 
-           currentRound === rounds.length - 1 ? 'Tournament Complete!' : 
+           isTournamentComplete ? 'Tournament Complete!' : 
            'Start Auto Battle'}
         </button>
-        {currentRound === rounds.length - 1 && rounds[currentRound].pools[0]?.cryptos[0] && (
+
+        {isTournamentComplete && (
           <div className="winner-announcement">
             <h2>🏆 Tournament Winner 🏆</h2>
             <div className="final-winner">
@@ -146,21 +154,21 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
       <div className="rounds-container">
         {rounds.map((round, roundIndex) => (
           <div 
-            key={round.name} 
+            key={`round-${roundIndex}`}
             className={`round ${roundIndex === currentRound ? 'active' : ''}`}
           >
             <h3 className="round-title">{round.name}</h3>
             <div className="pools-container">
               {round.pools.map((pool) => (
-                <div key={pool.id} className="pool">
+                <div key={`pool-${roundIndex}-${pool.id}`} className="pool">
                   <div className="pool-cryptos">
                     {pool.cryptos.map((crypto) => (
                       <div
-                        key={crypto.ticker}
+                        key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
                         className={`crypto-card ${pool.winners?.includes(crypto) ? 'winner' : ''}`}
                       >
                         <img 
-                          src={`/${crypto.logo_local}`} 
+                          src={`/${crypto.logo_local.toLowerCase()}`} 
                           alt={crypto.name} 
                           className="crypto-logo"
                         />
