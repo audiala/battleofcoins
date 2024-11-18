@@ -1,0 +1,41 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CryptoTable from '../components/CryptoTable.tsx';
+import { readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
+import { load } from 'js-yaml';
+import '../styles/main.css';
+
+// Read the YAML file
+const dataDir = join(process.cwd(), 'data');
+const files = readdirSync(dataDir);
+const latestFile = files
+  .filter(f => f.startsWith('top_500_coins_'))
+  .sort()
+  .reverse()[0];
+
+const yamlContent = readFileSync(join(dataDir, latestFile), 'utf8');
+const cryptoData = load(yamlContent);
+
+---
+
+<Layout title="Cryptocurrency Market Data">
+  <main class="page-container">
+    <div class="content-wrapper">
+      <div class="header-section">
+        <h1 class="page-title">Cryptocurrency Market Data</h1>
+        <div class="page-subtitle">
+          <p>Real-time market data for the top 500 cryptocurrencies</p>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <div class="table-scroll custom-scrollbar">
+          <div class="min-w-max">
+            <CryptoTable client:load data={cryptoData} />
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout> 
