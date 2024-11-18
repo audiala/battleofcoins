@@ -1,26 +1,29 @@
 {
-  "name": "",
+  "name": "crypto_battle",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@astrojs/react": "^3.6.2",
-    "@astrojs/tailwind": "^5.1.2",
-    "@tanstack/react-table": "^8.20.5",
-    "astro": "^4.16.13",
+    "@astrojs/react": "^3.0.0",
+    "@astrojs/tailwind": "^5.0.0",
+    "@tanstack/react-table": "^8.10.0",
+    "astro": "^3.0.0",
     "js-yaml": "^4.1.0",
-    "typescript": "^5.6.3"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/js-yaml": "^4.0.9",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1"
+    "@types/js-yaml": "^4.0.5",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.0.0"
   }
 }

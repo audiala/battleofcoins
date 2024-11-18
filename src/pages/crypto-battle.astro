@@ -1,0 +1,34 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CryptoBattle from '../components/CryptoBattle';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { load } from 'js-yaml';
+import '../styles/battle.css';
+
+// Read the YAML file
+const dataDir = join(process.cwd(), 'data');
+const files = readdirSync(dataDir);
+const latestFile = files
+  .filter(f => f.startsWith('top_500_coins_'))
+  .sort()
+  .reverse()[0];
+
+const yamlContent = readFileSync(join(dataDir, latestFile), 'utf8');
+const cryptoData = load(yamlContent);
+
+// Take only the first 512 cryptos
+const tournament_cryptos = cryptoData.slice(0, 512);
+---
+
+<Layout title="Crypto Battle Tournament">
+  <main>
+    <div class="header-section">
+      <h1 class="page-title">Crypto Battle Tournament</h1>
+      <div class="page-subtitle">
+        <p>512 cryptocurrencies enter, only one emerges victorious!</p>
+      </div>
+    </div>
+    <CryptoBattle client:load cryptos={tournament_cryptos} />
+  </main>
+</Layout> 

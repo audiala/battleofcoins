@@ -1,0 +1,265 @@
+coins:
+- community: {}
+  description: 'About Bitcoin (BTC)
+
+    Bitcoin (BTC) is the first cryptocurrency built on blockchain technology, also
+    known as a decentralized digital currency that is based on cryptography. Unlike
+    government-issued or fiat currencies such as US Dollars or Euro which are controlled
+    by central banks, Bitcoin can operate without the need of a central authority
+    like a central bank or a company. The decentralized nature allows it to operate
+    on a peer-to-peer network whereby users are able to send funds to each other without
+    going through intermediaries.
+
+    Who created Bitcoin?
+
+    The creator is an unknown individual or group that goes by the name Satoshi Nakamoto
+    with the idea of an electronic peer-to-peer cash system as it is written in a
+    whitepaper. Until today, the true identity of Satoshi Nakamoto has not been verified
+    though there has been speculation and rumor as to who Satoshi might be. What we
+    do know is that officially, the first genesis block of BTC was mined on 9th January
+    2009, defining the start of cryptocurrencies.
+
+    How does Bitcoin work?
+
+    While the general public perceives Bitcoin as a physical looking coin, it is actually
+    far from that. Under the hood, it is a distributed accounting ledger that is stored
+    as a chain of blocks - hence the name blockchain.
+
+    Let''s compare how Bitcoin is different from a commercial bank, which operates
+    as a centralized system. Given a situation where Alice wants to transact with
+    Bob, the bank is the only entity that holds the ledger that describes how much
+    balance Alice and Bob has. As the bank maintains the ledger, they will do the
+    verification as to whether Alice has enough funds to send to Bob. Finally when
+    the transaction successfully takes place, the Bank will deduct Alice’s account
+    and credit Bob’s account with the latest amount.
+
+    Bitcoin conversely works in a decentralized manner. Since there is no central
+    figure like a bank to verify the transactions and maintain the ledger, a copy
+    of the ledger is distributed across Bitcoin nodes. A node is a piece of software
+    that anybody can download and run to participate in the network. With that, everybody
+    has a copy of how much balance Alice and Bob has, and there will be no dispute
+    of fund balance.
+
+    Now, if Alice were to transact with Bob using bitcoin. Alice will have to broadcast
+    her transaction to the network that she intends to send $1 to Bob in equivalent
+    amount of bitcoin. So how does the system determine if Alice has enough bitcoin
+    to execute the transaction? This is where mining takes place.
+
+    Bitcoin Mining
+
+    A Bitcoin miner will use his or her computer rigs to validate Alice’s transaction
+    to be added into the ledger. In order to stop a miner from adding any arbitrary
+    transactions, they will need to solve a complex puzzle. Only if the miner is able
+    to solve the puzzle (called the Proof of Work), which happens at random, then
+    he or she is able to add the transactions into the ledger and the record is final.
+
+    Since running computer rigs cost money due to capital expenditure, which includes
+    the cost of the rigs and the cost of electricity, miners are rewarded with new
+    supply of bitcoins. This is the monetary system behind Bitcoin, where the fees
+    for validating transactions on the network is paid by the person who wishes to
+    transact (in this case it is Alice).
+
+    This makes the Bitcoin ledger resilient against fraud in a trustless manner. While
+    it is resilient, there are still some risks associated with the system such as
+    the 51% attack where by miners control more than 51% of the total computation
+    power and also there can be security risks outside of the control of the Bitcoin
+    protocol.
+
+    To learn more about Bitcoin (BTC), you may:
+
+
+    Watch a video on Bitcoin''s Lightning Network
+
+    Learn more about Bitcoin''s DeFi ecosystem
+
+
+    How to keep your Bitcoin safe?
+
+    When transacting coins, you would typically be doing it on your personal computer.
+    Since your personal computer is connected to the internet, it has the potential
+    to be infected by malware or spywares which could compromise your funds. 
+
+    Hardware wallets such as Trezor and Ledger are strongly encouraged in mitigating
+    that risk. These are external devices that look like USB sticks. A hardware wallet
+    secures your private key that holds your Bitcoin into an external device outside
+    of your personal computer. When you intend to transact, you would connect the
+    hardware wallet into your personal computer, and all the key signing in order
+    to transact would be done in the hardware itself outside of your computer.
+
+    However, if you physically lose your hardware wallet without a key phrase backup,
+    there is no other way of recovering your funds ever. As such when setting up your
+    hardware wallet, always remember to keep a copy of the key phrase and put it somewhere
+    safe from fire or flood.
+
+    Bitcoin Halving
+
+    Bitcoin Halving or sometimes also known as the Halvening, refers to the reduction
+    of block reward to miners by half. This is part of its built-in monetary policy,
+    in which after every approximately 4 years, the mining reward will be halved towards
+    the limited capped supply of 21 million Bitcoin. Once 21 million of Bitcoin have
+    been minted, there will no longer be new supply of it rewarded to miners, and
+    miners are expected to earn revenue by way of transaction fees. In order to follow
+    the real time of when the halving will take place, you can bookmark the CoinGecko''s
+    bitcoin halving page.
+
+    This is seen as a significant event for couple of reasons. Firstly, traders may
+    speculate on the possible scarcity of Bitcoin making way to high volatility. Secondly,
+    as miners'' rewards will be reduced, we may see some miners exiting the market
+    as they could not sustain the lower profitability. This in turn may cause the
+    hashing rate to reduce and mining pools may consolidate. Due to this, the bitcoin
+    network may be a little unstable during the halving period.
+
+
+    Bitcoin FAQs'
+  logo: https://assets.coingecko.com/coins/images/1/standard/bitcoin.png?1696501400
+  logo_local: logos/btc.png
+  market_stats:
+    circulating_supply: 19,784,078https://blockchain.info/q/totalbcEst. Circulating
+      Supply19,784,078
+    fully_diluted_valuation: $1,904,711,571,000
+    market_cap: $1,794,426,775,627
+    market_cap_fdv_ratio: '0.94'
+    max_supply: 21,000,000
+    total_supply: 21,000,000
+    trading_volume_24h: $68,950,969,776
+  marketcap: 6.1%
+  name: Bitcoin
+  source_code: ''
+  ticker: BTC
+  websites: []
+- community: {}
+  description: 'What is Ethereum?
+
+    Ethereum is a Proof-of-Stake blockchain that powers decentralized applications
+    (dApps) through smart contracts, without being controlled by a centralized entity.
+    As the first blockchain to feature smart contracts, it has the largest ecosystem
+    of decentralized applications, ranging from decentralized exchanges to crypto
+    lending and borrowing platforms and more. 
+
+    Ethereum is also home to numerous Layer 2 solutions that offer users a cheaper
+    and faster way to process transactions on the blockchain. Some of these solutions
+    include Arbitrum, which rolls up multiple transactions into a single transaction
+    on Ethereum, and Polygon’s Proof-of-Stake chain, which is a sidechain that runs
+    parallel to the Ethereum blockchain. 
+
+    What Makes Ethereum Unique?
+
+    Ethereum allows for the creation of ERC-20 tokens, which can be used as native
+    tokens for the applications that live on the Ethereum blockchain. These tokens
+    can be used for governance on their respective applications, for utility purposes
+    such as paying trading fees, or as stores of value, as in the case of stablecoins
+    like USDT and USDC. However, gas fees for transactions are still paid in ETH,
+    as transactions are still recorded on the Ethereum blockchain.
+
+    History of Ethereum
+
+    The Ethereum project was initially conceived when Vitalik Buterin published the
+    whitepaper in 2013. The yellowpaper, which consists of more technical details
+    on how Ethereum would work, was later published by Gavin Wood in 2014. A fundraising
+    sale was conducted in September 2014 and the network went live in July 2015. On
+    15 September 2022, Ethereum transitioned from Proof-of-Work to Proof-of-Stake
+    consensus with the Merge. 
+
+    What’s Next for Ethereum?
+
+    Now that the Merge is over, the final stage of Ethereum 2.0 is sharding, where
+    the database on the Ethereum blockchain is split into 64 shard chains. With sharding,
+    each validator only needs to verify the respective shards they’re responsible
+    for, instead of verifying the entire network. This will also lower the barrier
+    to entry for anyone who wishes to run a node. Besides encouraging further decentralization,
+    this will improve scalability and ideally reduce the gas fees on the Ethereum
+    network.
+
+    What can Ether (ETH) be Used For?
+
+    Ether (ETH) is the native coin that powers the Ethereum network and is used to
+    pay for transactions. ETH functions as a utility token and is used to pay for
+    gas fees for transactions on the Ethereum blockchain, denominated in gwei. Stakers
+    on the Ethereum network earn ETH as their reward for securing the network. ETH
+    is also a cryptocurrency, similar to bitcoin, and can be traded on multiple centralized
+    and decentralized exchanges, or even deposited as collateral to take out loans. 
+
+    To learn more about Ethereum, please check out the following articles:
+
+
+    Read this detailed guide on Ethereum Upgrades, the Merge, and ETH 2.0
+
+    Learn how to stake ETH 
+
+
+    FAQs on Ethereum'
+  logo: https://assets.coingecko.com/coins/images/279/standard/ethereum.png?1696501628
+  logo_local: logos/eth.png
+  market_stats:
+    circulating_supply: 120,424,008https://api.coingecko.com/api/v3/supply/ethEst.
+      Circulating Supply120,424,008
+    fully_diluted_valuation: $377,680,301,331
+    market_cap: $377,680,301,331
+    market_cap_fdv_ratio: '1.0'
+    max_supply: ∞
+    total_supply: 120,424,008
+    trading_volume_24h: $34,898,026,664
+  marketcap: 5.7%
+  name: Ethereum
+  source_code: ''
+  ticker: ETH
+  websites: []
+- community: {}
+  description: "What is Tether?\nTether is a stablecoin pegged to the US Dollar. A\
+    \ stablecoin is a type of cryptocurrency whose value is pegged to another fiat\
+    \ currency like the US Dollar or to a commodity like Gold. \nTether is the first\
+    \ stablecoin to be created and it is the most popular stablecoin used in the ecosystem.\
+    \ It has the largest stablecoins by circulation and market capitalization. \n\n\
+    Who created Tether?\nTether is controlled by Tether Holding Limited or known as\
+    \ Tether Limited. The CEO is JL Van Der Velde, the CFO is Giancarlo Devasini and\
+    \ the general counsel is Suart Hoegner. \nTether was launched by the team running\
+    \ Bitfinex, a major cryptocurrency exchange.\nHow does Tether work?\nTether was\
+    \ originally based on the Omni Layer, a transport protocol on the Bitcoin blockchain.\
+    \ Therefore, the original version of Tether is characterized by the inherent stability\
+    \ and security of the longest established blockchain network.\nTo accelerate adoption,\
+    \ in September 2017, Tether was launched on the Ethereum blockchain, as an ERC20\
+    \ token. Tether’s Ethereum ERC-20 is now the most popular Tether token type. \n\
+    Tether is available on Ethereum, Tron, EOS,Algorand, and more. You can see the\
+    \ full breakdown on Tether’s Transparency page. \nOn 20th March 2020, Tether announced\
+    \ that they will also be on the Bitcoin Cash network via the Simple Ledger Protocol.\n\
+    How does Tether maintain a 1:1 USD peg?\nThe USDT peg is maintained via a one-to-one\
+    \ collateral ratio. Tether Limited claims that every USDT in circulation is 100%\
+    \ backed by actual fiat in their reserves. Tether published their balances in\
+    \ their Transparency page. Tether Limited acts as a third-party custodian for\
+    \ the fiat currencies backing USDT. \nTo understand the process of how Tether\
+    \ is controlled by Tether Limited, take a look at the flow of fund process below:\n\
+    \nStep 1:­ User deposits fiat currency into Tether Limited's bank account. \n\
+    Step 2:­ Tether Limited generates and credits the user's Tether account. Tether\
+    \ enters into circulation. Amount of fiat currency deposited by the user must\
+    \ be equal to the amount of Tether issued to the user (E.g.: 500 USD deposited\
+    \ = 500 USDT issued)\nStep 3­: User transacts with USDT. The user can transfer,\
+    \ exchange, and store USDT.\nStep 4:­ The user deposits USDT with Tether Limited\
+    \ for redemption into fiat currency. \nStep 5:­ Tether Limited destroys the Tether\
+    \ and sends fiat currency to the user’s bank account. \nUsers can also obtain\
+    \ Tether outside of the aforementioned process via an exchange or another individual. \n\
+    What is the purpose of Tether?\n\n\nStable Currency\n\tTether converts fiat US\
+    \ Dollar into blockchain stablecoins and expedites the transaction to other cryptocurrencies\
+    \ compared to using regular fiat currencies. \n\n\nWide Acceptance\n\tTether acts\
+    \ as an alternative for deposit/withdrawal and has become a popular trading pair\
+    \ across major exchanges as it provides ease of use in calculating profit and\
+    \ loss for traders. The wide acceptance of Tether makes it convenient for users\
+    \ to move their USD holdings seamlessly between their wallets and exchanges."
+  logo: https://assets.coingecko.com/coins/images/325/standard/Tether.png?1696501661
+  logo_local: logos/usdt.png
+  market_stats:
+    circulating_supply: 127,539,192,697https://app.tether.to/transparency.jsonEst.
+      Circulating Supply127,539,192,697
+    fully_diluted_valuation: $127,636,433,049
+    market_cap: $127,636,433,049
+    market_cap_fdv_ratio: '1.0'
+    max_supply: ∞
+    total_supply: 127,539,192,697
+    trading_volume_24h: $79,170,130,849
+  marketcap: 0.1%
+  name: Tether
+  source_code: ''
+  ticker: USDT
+  websites: []
+last_index: 3
+last_page: 1
+last_updated: '2024-11-18T21:07:11.248712'

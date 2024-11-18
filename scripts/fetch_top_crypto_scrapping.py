@@ -16,7 +16,7 @@ from pathlib import Path
 # Constants
 BASE_URL = "https://www.coingecko.com"
 COINS_PER_PAGE = 100
-TOTAL_COINS = 500
+TOTAL_COINS = 512
 PAGES = TOTAL_COINS // COINS_PER_PAGE
 DATA_DIR = "./data"
 PROGRESS_FILE = os.path.join(DATA_DIR, "scraping_progress.yaml")
@@ -383,7 +383,7 @@ async def scrape_coingecko_top_coins(resume=False):
 
 if __name__ == "__main__":
     # Set up argument parser
-    parser = argparse.ArgumentParser(description='Scrape top 500 cryptocurrencies from CoinGecko')
+    parser = argparse.ArgumentParser(description='Scrape top 512 cryptocurrencies from CoinGecko')
     parser.add_argument('--resume', action='store_true', help='Resume from last saved progress')
     args = parser.parse_args()
     
