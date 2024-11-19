@@ -29,7 +29,6 @@ LTC: reason for losing
 Pool:
 ${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name} (price: ${crypto.market_stats.price} marketcap: ${crypto.market_stats.market_cap} marketcap_fdv_ratio: ${crypto.market_stats.market_cap_fdv_ratio})`).join('\n')}`
 
-
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [

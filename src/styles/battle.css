@@ -67,6 +67,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  border: 1px solid transparent;
 }
 
 .crypto-card:hover {
@@ -76,12 +77,11 @@
 
 .crypto-card.winner {
   background: #2a1f2d;
-  border: 1px solid #f53e98;
+  border: 2px solid #f53e98 !important;
 }
 
 .crypto-card.loser {
-  background: #2a1f2d;
-  border: 1px solid #F44336;
+  opacity: 0.6;
 }
 
 .crypto-logo {
@@ -192,14 +192,6 @@
   font-size: 1rem;
 }
 
-.winner {
-  border: 2px solid #4CAF50; /* Green border for winners */
-}
-
-.loser {
-  border: 2px solid #F44336; /* Red border for losers */
-}
-
 .pool-loading {
   position: absolute;
   top: 0;
@@ -296,11 +288,11 @@
 
 /* Style winner and loser cards */
 .crypto-card.winner .crypto-tooltip {
-  border: 1px solid #4CAF50;
+  border: 1px solid #f53e98;
 }
 
 .crypto-card.loser .crypto-tooltip {
-  border: 1px solid #F44336;
+  border: 1px solid #2a2a2a;
 }
 
 /* Add subtle indicator that there's hover information */
@@ -315,8 +307,12 @@
   opacity: 0.7;
 }
 
+.crypto-card.winner::after {
+  color: #f53e98;
+  opacity: 0.9;
+}
+
 .crypto-card:hover::after {
   opacity: 1;
-  color: #f53e98;
 }
  

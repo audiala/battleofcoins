@@ -73,7 +73,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
       // Process all pools in parallel
       const poolPromises = currentRoundPools.map(async pool => {
         try {
-          const response = await axios.post('/api/selectWinners', {
+          const response = await axios.post('/api/selectWinnersRandom', {
             cryptos: pool.cryptos,
           });
 
@@ -156,6 +156,30 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   const isTournamentComplete = rounds[currentRound]?.pools.length === 1 && 
                               rounds[currentRound].pools[0].cryptos.length === 1;
 
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const tooltip = event.currentTarget.querySelector('.crypto-tooltip') as HTMLElement;
+    if (!tooltip) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const spaceRight = window.innerWidth - rect.right;
+    const spaceLeft = rect.left;
+
+    // Position tooltip to the right if there's enough space, otherwise to the left
+    if (spaceRight >= 270) { // 250px width + 20px margin
+      tooltip.style.left = `${rect.right + 10}px`;
+      tooltip.style.right = 'auto';
+      tooltip.style.top = `${rect.top}px`;
+    } else if (spaceLeft >= 270) {
+      tooltip.style.right = `${window.innerWidth - rect.left + 10}px`;
+      tooltip.style.left = 'auto';
+      tooltip.style.top = `${rect.top}px`;
+    } else {
+      // If there's not enough space on either side, show above or below
+      tooltip.style.left = `${rect.left}px`;
+      tooltip.style.top = `${rect.bottom + 10}px`;
+    }
+  };
+
   return (
     <div className="crypto-battle">
       <div className="battle-controls">
@@ -210,9 +234,10 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
                       <div
                         key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
                         className={`crypto-card ${
-                          pool.winners?.find(w => w.coin.id === crypto.id) ? 'winner' : 
-                          pool.losers?.find(l => l.coin.id === crypto.id) ? 'loser' : ''
+                          pool.winners?.some(w => w.coin.ticker === crypto.ticker) ? 'winner' : 
+                          pool.losers?.some(l => l.coin.ticker === crypto.ticker) ? 'loser' : ''
                         }`}
+                        onMouseMove={handleMouseMove}
                       >
                         <img
                           src={`/${crypto.logo_local.toLowerCase()}`}
@@ -223,12 +248,12 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
                           <span className="crypto-name">{crypto.name}</span>
                           <span className="crypto-ticker">{crypto.ticker}</span>
                         </div>
-                        {(pool.winners?.find(w => w.coin.id === crypto.id) || 
-                          pool.losers?.find(l => l.coin.id === crypto.id)) && (
+                        {(pool.winners?.find(w => w.coin.ticker === crypto.ticker) || 
+                          pool.losers?.find(l => l.coin.ticker === crypto.ticker)) && (
                           <div className="crypto-tooltip">
                             <div className="tooltip-content">
-                              {pool.winners?.find(w => w.coin.id === crypto.id)?.reason || 
-                               pool.losers?.find(l => l.coin.id === crypto.id)?.reason}
+                              {pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
+                               pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason}
                             </div>
                           </div>
                         )}
