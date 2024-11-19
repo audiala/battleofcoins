@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { CryptoData } from './CryptoTable';
 import axios from 'axios';
+import { Tooltip } from './Tooltip';
+import { CryptoCard } from './CryptoCard';
 
 interface Winner {
   coin: CryptoData;
@@ -208,34 +210,22 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
                     </div>
                   )}
                   <div className={`pool-cryptos ${pool.isLoading ? 'pool-loading-overlay' : ''}`}>
-                    {pool.cryptos.map(crypto => (
-                      <div
-                        key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
-                        className={`crypto-card ${
-                          pool.winners?.some(w => w.coin.ticker === crypto.ticker) ? 'winner' : 
-                          pool.losers?.some(l => l.coin.ticker === crypto.ticker) ? 'loser' : ''
-                        }`}
-                      >
-                        <img
-                          src={`/${crypto.logo_local.toLowerCase()}`}
-                          alt={crypto.name}
-                          className="crypto-logo"
+                    {pool.cryptos.map(crypto => {
+                      const isWinner = pool.winners?.some(w => w.coin.ticker === crypto.ticker);
+                      const reason = pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
+                                     pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason;
+
+                      return (
+                        <CryptoCard
+                          key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
+                          crypto={crypto}
+                          isWinner={isWinner || false}
+                          reason={reason}
+                          roundIndex={roundIndex}
+                          poolId={pool.id}
                         />
-                        <div className="crypto-info">
-                          <span className="crypto-name">{crypto.name}</span>
-                          <span className="crypto-ticker">{crypto.ticker}</span>
-                        </div>
-                        {(pool.winners?.find(w => w.coin.ticker === crypto.ticker) || 
-                          pool.losers?.find(l => l.coin.ticker === crypto.ticker)) && (
-                          <div className="crypto-tooltip">
-                            <div className="tooltip-content">
-                              {pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
-                               pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}

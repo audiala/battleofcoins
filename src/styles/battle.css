@@ -241,87 +241,66 @@
   100% { transform: rotate(360deg); }
 }
 
+/* Remove old tooltip styles */
 .crypto-tooltip {
-  position: absolute;
-  visibility: hidden;
-  opacity: 0;
-  z-index: 100001;
-  width: 280px;
-  background: rgba(26, 26, 26, 0.95);
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
-  backdrop-filter: blur(8px);
-  
-  left: calc(100% + 16px);
-  top: 50%;
-  transform: translateY(-50%);
+  display: none;
 }
 
-.tooltip-content {
+/* Add new portal tooltip styles */
+.tooltip-portal {
+  position: absolute;
+  z-index: 999999;
+  width: 280px;
+  background: rgba(26, 26, 26, 0.98);
+  border-radius: 8px;
+  padding: 16px;
   color: #ffffff;
   font-size: 0.9rem;
   line-height: 1.6;
-  font-weight: 400;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Handle tooltip positioning when near the right edge */
-@media (min-width: 768px) {
-  .crypto-card:hover .crypto-tooltip {
-    visibility: visible;
-    opacity: 1;
-  }
-
-  /* When tooltip would overflow on the right */
-  .crypto-card:has(.crypto-tooltip:hover) {
-    position: relative;
-  }
-
-  .round:last-child .crypto-tooltip,
-  .crypto-card:hover .crypto-tooltip:hover {
-    left: auto;
-    right: calc(100% + 16px);
-  }
-
-  /* Flip the arrow for right-edge tooltips */
-  .round:last-child .crypto-tooltip::before,
-  .crypto-card:hover .crypto-tooltip:hover::before {
-    left: auto;
-    right: -8px;
-    border-color: transparent transparent transparent rgba(26, 26, 26, 0.95);
-  }
-
-  .round:last-child .crypto-card.winner .crypto-tooltip::before,
-  .crypto-card.winner:hover .crypto-tooltip:hover::before {
-    border-left-color: #f53e98;
-    border-right-color: transparent;
-  }
+.tooltip-portal.winner {
+  border: 2px solid #f53e98;
+  box-shadow: 0 8px 32px rgba(245, 62, 152, 0.2);
 }
 
-/* Mobile view adjustments */
-@media (max-width: 767px) {
-  .crypto-tooltip {
-    position: absolute;
-    left: 50%;
-    top: calc(100% + 8px);
-    transform: translateX(-50%);
-    width: calc(100% - 32px);
-  }
+.tooltip-portal::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 8px solid transparent;
+}
 
-  .crypto-tooltip::before {
-    left: 50%;
-    top: -8px;
-    transform: translateX(-50%);
-    border-color: transparent transparent rgba(26, 26, 26, 0.95) transparent;
-  }
+/* Left arrow */
+.tooltip-portal[style*="left: "] {
+  margin-left: 8px;
+}
 
-  .crypto-card.winner .crypto-tooltip::before {
-    border-bottom-color: #f53e98;
-    border-right-color: transparent;
-  }
+.tooltip-portal[style*="left: "]::before {
+  left: -16px;
+  border-right-color: rgba(26, 26, 26, 0.98);
+}
+
+.tooltip-portal.winner[style*="left: "]::before {
+  border-right-color: #f53e98;
+}
+
+/* Right arrow */
+.tooltip-portal[style*="right: "] {
+  margin-right: 8px;
+}
+
+.tooltip-portal[style*="right: "]::before {
+  right: -16px;
+  border-left-color: rgba(26, 26, 26, 0.98);
+}
+
+.tooltip-portal.winner[style*="right: "]::before {
+  border-left-color: #f53e98;
 }
 
 /* Style winner and loser cards */
