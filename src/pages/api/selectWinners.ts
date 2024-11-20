@@ -6,13 +6,13 @@ const openai = new OpenAI({
 });
 
 export const POST: APIRoute = async ({ request }) => {
-  const { cryptos } = await request.json();
+  const { cryptos, prompt } = await request.json();
   
   // Calculate the number of winners needed (half of the pool)
   const numWinners = Math.ceil(cryptos.length / 2);
 
   try {
-    const prompt = `Analyze this pool of cryptocurrencies and select exactly ${numWinners} winners and mark the rest as losers.
+    const basePrompt = `Analyze this pool of cryptocurrencies and select exactly ${numWinners} winners and mark the rest as losers.
 For each coin, provide an explanation for your decision.
 
 Respond in this exact format (no extra text) as this example with this format (coin symbol in uppercase: reason for winning/losing):
@@ -39,7 +39,11 @@ ${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name} (price: ${crypt
         {
           role: "user",
           content: prompt
-        }
+        },
+        {
+            role: "user",
+            content: basePrompt
+          }
       ],
       temperature: 0.7,
       max_tokens: 2000,

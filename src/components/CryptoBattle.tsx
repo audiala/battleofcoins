@@ -37,6 +37,7 @@ interface BattleHistory {
   date: string;
   rounds: Round[];
   winner?: CryptoData;
+  prompt: string;
 }
 
 function createBattleHash(rounds: Round[]): string {
@@ -63,6 +64,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
   const [selectedBattleId, setSelectedBattleId] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState<string>('');
 
   const roundsRef = useRef(rounds);
   const currentRoundRef = useRef(currentRound);
@@ -100,7 +102,8 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
           id: battleHash, // Use the hash as the ID
           date: new Date().toISOString(),
           rounds,
-          winner
+          winner,
+          prompt
         };
 
         const updatedHistories = [...battleHistories, newBattle];
@@ -108,7 +111,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
         localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
       }
     }
-  }, [isTournamentComplete, rounds, currentRound, battleHistories]);
+  }, [isTournamentComplete, rounds, currentRound, battleHistories, prompt]);
 
   const processNextRound = async () => {
     try {
@@ -140,6 +143,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
           try {
             const response = await axios.post('/api/selectWinners', {
               cryptos: pool.cryptos,
+              prompt
             });
 
             const data: RoundWinners = response.data;
@@ -226,6 +230,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
       setRounds(battle.rounds);
       setCurrentRound(battle.rounds.length - 1);
       setSelectedBattleId(battleId);
+      setPrompt(battle.prompt);
     }
   };
 
@@ -242,6 +247,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     setRounds([{ name: 'Round 1', pools: initialPools }]);
     setCurrentRound(0);
     setSelectedBattleId(null);
+    setPrompt('');
   };
 
   useEffect(() => {
@@ -266,14 +272,31 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
           </select>
         </div>
 
+        <div className="prompt-input">
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Enter your selection criteria..."
+            disabled={isAutoPlaying || selectedBattleId !== null}
+            className="prompt-textarea"
+          />
+          {selectedBattleId && (
+            <div className="prompt-display">
+              <h4>Selection Criteria:</h4>
+              <p>{prompt}</p>
+            </div>
+          )}
+        </div>
+
         <button 
           onClick={handleAutoPlay}
-          disabled={isAutoPlaying || isTournamentComplete || selectedBattleId !== null}
+          disabled={isAutoPlaying || isTournamentComplete || selectedBattleId !== null || !prompt.trim()}
           className="auto-play-button"
         >
           {isAutoPlaying ? 'Battle in Progress...' : 
            isTournamentComplete ? 'Tournament Complete!' : 
            selectedBattleId ? 'Viewing Past Battle' :
+           !prompt.trim() ? 'Enter Selection Criteria' :
            'Start Auto Battle'}
         </button>
 
