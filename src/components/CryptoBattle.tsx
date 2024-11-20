@@ -67,36 +67,50 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
       const newRounds = [...roundsRef.current];
       const currentRoundPools = newRounds[currentRoundRef.current].pools;
 
-      // Set all pools to loading state
-      currentRoundPools.forEach(pool => {
-        pool.isLoading = true;
-      });
-      setRounds(newRounds);
+      // Skip processing if any pool has only one contestant
+      if (currentRoundPools.some(pool => pool.cryptos.length === 1)) {
+        // If there's only one contestant, mark it as winner directly
+        currentRoundPools.forEach(pool => {
+          if (pool.cryptos.length === 1) {
+            pool.winners = [{
+              coin: pool.cryptos[0],
+              reason: "Last contestant standing"
+            }];
+            pool.losers = [];
+          }
+        });
+      } else {
+        // Set all pools to loading state
+        currentRoundPools.forEach(pool => {
+          pool.isLoading = true;
+        });
+        setRounds(newRounds);
 
-      // Process all pools in parallel
-      const poolPromises = currentRoundPools.map(async pool => {
-        try {
-          const response = await axios.post('/api/selectWinners', {
-            cryptos: pool.cryptos,
-          });
+        // Process all pools in parallel
+        const poolPromises = currentRoundPools.map(async pool => {
+          try {
+            const response = await axios.post('/api/selectWinners', {
+              cryptos: pool.cryptos,
+            });
 
-          const data: RoundWinners = response.data;
+            const data: RoundWinners = response.data;
 
-          // Update the pool with winners and losers
-          pool.winners = data.winners;
-          pool.losers = data.losers;
-        } catch (error) {
-          console.error(`Error processing pool ${pool.id}:`, error);
-        } finally {
-          // Clear loading state
-          pool.isLoading = false;
-          // Update the UI to reflect the change
-          setRounds([...newRounds]);
-        }
-      });
+            // Update the pool with winners and losers
+            pool.winners = data.winners;
+            pool.losers = data.losers;
+          } catch (error) {
+            console.error(`Error processing pool ${pool.id}:`, error);
+          } finally {
+            // Clear loading state
+            pool.isLoading = false;
+            // Update the UI to reflect the change
+            setRounds([...newRounds]);
+          }
+        });
 
-      // Wait for all pools to complete
-      await Promise.all(poolPromises);
+        // Wait for all pools to complete
+        await Promise.all(poolPromises);
+      }
 
       // Continue with the rest of the logic
       if (currentRoundPools.every(pool => pool.winners)) {

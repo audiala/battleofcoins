@@ -33,6 +33,10 @@ ${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name} (price: ${crypt
           content: "You are an expert cryptocurrency analyst. Your task is to analyze cryptocurrencies and provide clear, concise explanations for your selections."
         },
         {
+            role: "system",
+            content: "You never choose staked assets, wrapped assets or stablecoins."
+          },
+        {
           role: "user",
           content: prompt
         }
