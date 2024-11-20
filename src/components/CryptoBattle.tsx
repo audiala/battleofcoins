@@ -289,8 +289,26 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     battleSavedRef.current = false;
   };
 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <div className="crypto-battle">
+      <div className="menu-container">
+        <button 
+          className="menu-button"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          ☰
+        </button>
+        {isMenuOpen && (
+          <div className="menu-dropdown">
+            <a href="/my-wallet" className="menu-item">My Wallet</a>
+            <a href="/battle-history" className="menu-item">Battle History</a>
+            <a href="/crypto-table" className="menu-item">Crypto Table</a>
+          </div>
+        )}
+      </div>
+
       <div className="battle-controls">
         <div className="battle-history">
           <select 
