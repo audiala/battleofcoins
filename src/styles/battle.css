@@ -416,4 +416,200 @@
   line-height: 1.5;
   white-space: pre-wrap;
 }
+
+/* Add these new styles */
+.battle-dashboard {
+  padding: 2rem;
+  background: #121212;
+  min-height: 100vh;
+  color: white;
+}
+
+.dashboard-title {
+  color: #f53e98;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 3rem;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(245, 62, 152, 0.2);
+}
+
+.dashboard-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: #1e1e1e;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2a2a2a;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0 auto;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  padding: 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.dashboard-table th {
+  color: #f53e98;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #1a1a1a;
+}
+
+.dashboard-table tr {
+  transition: all 0.2s ease;
+}
+
+.dashboard-table tr:hover {
+  background: #222;
+}
+
+.dashboard-table td {
+  color: #e1e1e1;
+  font-size: 0.95rem;
+}
+
+.prompt-cell {
+  max-width: 300px;
+  min-width: 200px;
+}
+
+.prompt-content {
+  max-height: 100px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  color: #b4b4b4;
+  padding: 0.5rem;
+  background: #1a1a1a;
+  border-radius: 0.5rem;
+  border: 1px solid #2a2a2a;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.winner-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background: #1a1a1a;
+  border-radius: 0.5rem;
+  border: 1px solid #2a2a2a;
+}
+
+.winner-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #f53e98;
+}
+
+.rounds-cell {
+  max-height: 150px;
+  overflow-y: auto;
+  min-width: 200px;
+  padding: 0.5rem;
+  background: #1a1a1a;
+  border-radius: 0.5rem;
+  border: 1px solid #2a2a2a;
+}
+
+.round-winners {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.round-winners:last-child {
+  margin-bottom: 0;
+}
+
+.round-winners strong {
+  color: #f53e98;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.view-battle-link {
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  background: #f53e98;
+  color: white;
+  text-decoration: none;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.view-battle-link:hover {
+  background: #f52e88;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 62, 152, 0.2);
+}
+
+/* Custom scrollbar for table container */
+.dashboard-table-container::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.dashboard-table-container::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.dashboard-table-container::-webkit-scrollbar-thumb {
+  background: #f53e98;
+  border-radius: 4px;
+}
+
+/* Custom scrollbar for cells */
+.prompt-content::-webkit-scrollbar,
+.rounds-cell::-webkit-scrollbar {
+  width: 4px;
+}
+
+.prompt-content::-webkit-scrollbar-track,
+.rounds-cell::-webkit-scrollbar-track {
+  background: #1a1a1a;
+  border-radius: 2px;
+}
+
+.prompt-content::-webkit-scrollbar-thumb,
+.rounds-cell::-webkit-scrollbar-thumb {
+  background: #f53e98;
+  border-radius: 2px;
+}
+
+/* Add responsive styles */
+@media (max-width: 1024px) {
+  .dashboard-table-container {
+    padding: 1rem;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 1rem;
+  }
+
+  .prompt-cell {
+    max-width: 200px;
+  }
+}
  

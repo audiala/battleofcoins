@@ -83,8 +83,28 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   useEffect(() => {
     const savedHistories = localStorage.getItem('cryptoBattleHistories');
     if (savedHistories) {
-      setBattleHistories(JSON.parse(savedHistories));
+      const histories = JSON.parse(savedHistories);
+      setBattleHistories(histories);
+      
+      // Check URL for battle ID
+      const params = new URLSearchParams(window.location.search);
+      const battleId = params.get('battle');
+      if (battleId) {
+        const battle = histories.find((h: BattleHistory) => h.id === battleId);
+        if (battle) {
+          // Don't start a new battle if we're loading a specific one
+          setRounds(battle.rounds);
+          setCurrentRound(battle.rounds.length - 1);
+          setSelectedBattleId(battleId);
+          setPrompt(battle.prompt);
+          battleSavedRef.current = true; // Prevent re-saving
+          return; // Skip startNewBattle
+        }
+      }
     }
+    
+    // Only start new battle if we're not loading a specific one
+    startNewBattle();
   }, []);
 
   // Add a ref to track if the battle has been saved
