@@ -7,24 +7,20 @@ const openai = new OpenAI({
 
 export const POST: APIRoute = async ({ request }) => {
   const { cryptos } = await request.json();
+  
+  // Calculate the number of winners needed (half of the pool)
+  const numWinners = Math.ceil(cryptos.length / 2);
 
   try {
-    const prompt = `Analyze this pool of cryptocurrencies and select winners and losers. Make sure to split the pool in two equal parts. 
-For example, if there are 10 cryptos, select 5 winners and 5 losers. And if there are 8 cryptos, select 4 winners and 4 losers.
+    const prompt = `Analyze this pool of cryptocurrencies and select exactly ${numWinners} winners and mark the rest as losers.
 For each coin, provide an explanation for your decision.
 
 Respond in this exact format (no extra text) as this example with this format (coin symbol in uppercase: reason for winning/losing):
 $Winners$
-ETH: reason for winning
-SOL: reason for winning
-ADA: reason for winning
-BNB: reason for winning
+${Array(numWinners).fill('COIN: reason for winning').join('\n')}
 
 $Losers$
-DOGE: reason for losing
-NEO: reason for losing
-XRP: reason for losing
-LTC: reason for losing
+${Array(cryptos.length - numWinners).fill('COIN: reason for losing').join('\n')}
             
 Pool:
 ${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name} (price: ${crypto.market_stats.price} marketcap: ${crypto.market_stats.market_cap} marketcap_fdv_ratio: ${crypto.market_stats.market_cap_fdv_ratio})`).join('\n')}`
@@ -109,12 +105,12 @@ ${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name} (price: ${crypt
     }));
 
     // Validate the response
-    if (winners.length !== 4) {
-      throw new Error(`Expected 4 winners, got ${winners.length}`);
+    if (winners.length !== numWinners) {
+      throw new Error(`Expected ${numWinners} winners, got ${winners.length}`);
     }
 
     const mappedResponse = {
-      winners: winners.slice(0, 4), // Ensure exactly 4 winners
+      winners, // No need to slice, we want all winners
       losers
     };
 
