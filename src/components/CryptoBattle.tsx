@@ -76,7 +76,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
       // Process all pools in parallel
       const poolPromises = currentRoundPools.map(async pool => {
         try {
-          const response = await axios.post('/api/selectWinnersRandom', {
+          const response = await axios.post('/api/selectWinners', {
             cryptos: pool.cryptos,
           });
 
