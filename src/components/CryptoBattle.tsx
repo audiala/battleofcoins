@@ -87,8 +87,11 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     }
   }, []);
 
+  // Add a ref to track if the battle has been saved
+  const battleSavedRef = useRef(false);
+
   useEffect(() => {
-    if (isTournamentComplete && rounds.length > 0) {
+    if (isTournamentComplete && rounds.length > 0 && !battleSavedRef.current) {
       const winner = rounds[currentRound].pools[0].cryptos[0];
       const battleHash = createBattleHash(rounds);
       
@@ -99,7 +102,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
 
       if (!battleExists) {
         const newBattle: BattleHistory = {
-          id: battleHash, // Use the hash as the ID
+          id: battleHash,
           date: new Date().toISOString(),
           rounds,
           winner,
@@ -109,6 +112,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
         const updatedHistories = [...battleHistories, newBattle];
         setBattleHistories(updatedHistories);
         localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
+        battleSavedRef.current = true;
       }
     }
   }, [isTournamentComplete, rounds, currentRound, battleHistories, prompt]);
@@ -248,6 +252,7 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     setCurrentRound(0);
     setSelectedBattleId(null);
     setPrompt('');
+    battleSavedRef.current = false; // Reset the saved flag
   };
 
   useEffect(() => {
@@ -272,21 +277,22 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
           </select>
         </div>
 
-        <div className="prompt-input">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Enter your selection criteria..."
-            disabled={isAutoPlaying || selectedBattleId !== null}
-            className="prompt-textarea"
-          />
-          {selectedBattleId && (
-            <div className="prompt-display">
-              <h4>Selection Criteria:</h4>
-              <p>{prompt}</p>
-            </div>
-          )}
-        </div>
+        {!selectedBattleId ? (
+          <div className="prompt-input">
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Enter your selection criteria..."
+              disabled={isAutoPlaying}
+              className="prompt-textarea"
+            />
+          </div>
+        ) : (
+          <div className="prompt-display">
+            <h4>Selection Criteria:</h4>
+            <p>{prompt}</p>
+          </div>
+        )}
 
         <button 
           onClick={handleAutoPlay}

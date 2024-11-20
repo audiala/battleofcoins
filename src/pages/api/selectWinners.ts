@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const basePrompt = `Analyze this pool of cryptocurrencies and select exactly ${numWinners} winners and mark the rest as losers.
-For each coin, provide an explanation for your decision.
+For each coin, provide an explanation for your decision relative to the other coins in the pool.
 
 Respond in this exact format (no extra text) as this example with this format (coin symbol in uppercase: reason for winning/losing):
 $Winners$
