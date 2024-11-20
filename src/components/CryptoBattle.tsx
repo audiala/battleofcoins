@@ -32,13 +32,43 @@ interface Pool {
   isLoading?: boolean;
 }
 
+interface BattleHistory {
+  id: string;
+  date: string;
+  rounds: Round[];
+  winner?: CryptoData;
+}
+
+function createBattleHash(rounds: Round[]): string {
+  // Create a string representation of the battle results
+  const battleString = rounds.map(round => 
+    round.pools.map(pool => 
+      pool.winners?.map(w => w.coin.ticker).join(',')
+    ).join('|')
+  ).join('_');
+  
+  // Simple hash function
+  let hash = 0;
+  for (let i = 0; i < battleString.length; i++) {
+    const char = battleString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return hash.toString(36); // Convert to base36 for shorter string
+}
+
 export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   const [rounds, setRounds] = useState<Round[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
+  const [selectedBattleId, setSelectedBattleId] = useState<string | null>(null);
 
   const roundsRef = useRef(rounds);
   const currentRoundRef = useRef(currentRound);
+
+  const isTournamentComplete = rounds[currentRound]?.pools.length === 1 && 
+                              rounds[currentRound].pools[0].cryptos.length === 1;
 
   useEffect(() => {
     roundsRef.current = rounds;
@@ -49,17 +79,36 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   }, [currentRound]);
 
   useEffect(() => {
-    // Create initial pools of 8
-    const initialPools: Pool[] = [];
-    for (let i = 0; i < cryptos.length; i += 8) {
-      initialPools.push({
-        id: i / 8,
-        cryptos: cryptos.slice(i, i + 8)
-      });
+    const savedHistories = localStorage.getItem('cryptoBattleHistories');
+    if (savedHistories) {
+      setBattleHistories(JSON.parse(savedHistories));
     }
+  }, []);
 
-    setRounds([{ name: 'Round 1', pools: initialPools }]);
-  }, [cryptos]);
+  useEffect(() => {
+    if (isTournamentComplete && rounds.length > 0) {
+      const winner = rounds[currentRound].pools[0].cryptos[0];
+      const battleHash = createBattleHash(rounds);
+      
+      // Check if this battle already exists
+      const battleExists = battleHistories.some(battle => 
+        createBattleHash(battle.rounds) === battleHash
+      );
+
+      if (!battleExists) {
+        const newBattle: BattleHistory = {
+          id: battleHash, // Use the hash as the ID
+          date: new Date().toISOString(),
+          rounds,
+          winner
+        };
+
+        const updatedHistories = [...battleHistories, newBattle];
+        setBattleHistories(updatedHistories);
+        localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
+      }
+    }
+  }, [isTournamentComplete, rounds, currentRound, battleHistories]);
 
   const processNextRound = async () => {
     try {
@@ -171,19 +220,60 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     }
   };
 
-  const isTournamentComplete = rounds[currentRound]?.pools.length === 1 && 
-                              rounds[currentRound].pools[0].cryptos.length === 1;
+  const loadBattle = (battleId: string) => {
+    const battle = battleHistories.find(h => h.id === battleId);
+    if (battle) {
+      setRounds(battle.rounds);
+      setCurrentRound(battle.rounds.length - 1);
+      setSelectedBattleId(battleId);
+    }
+  };
+
+  const startNewBattle = () => {
+    // Create initial pools of 8
+    const initialPools: Pool[] = [];
+    for (let i = 0; i < cryptos.length; i += 8) {
+      initialPools.push({
+        id: i / 8,
+        cryptos: cryptos.slice(i, i + 8)
+      });
+    }
+
+    setRounds([{ name: 'Round 1', pools: initialPools }]);
+    setCurrentRound(0);
+    setSelectedBattleId(null);
+  };
+
+  useEffect(() => {
+    startNewBattle();
+  }, [cryptos]);
 
   return (
     <div className="crypto-battle">
       <div className="battle-controls">
+        <div className="battle-history">
+          <select 
+            value={selectedBattleId || ''} 
+            onChange={(e) => e.target.value ? loadBattle(e.target.value) : startNewBattle()}
+            className="battle-select"
+          >
+            <option value="">Start New Battle</option>
+            {battleHistories.map(battle => (
+              <option key={battle.id} value={battle.id}>
+                {new Date(battle.date).toLocaleString()} - Winner: {battle.winner?.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <button 
           onClick={handleAutoPlay}
-          disabled={isAutoPlaying || isTournamentComplete}
+          disabled={isAutoPlaying || isTournamentComplete || selectedBattleId !== null}
           className="auto-play-button"
         >
           {isAutoPlaying ? 'Battle in Progress...' : 
            isTournamentComplete ? 'Tournament Complete!' : 
+           selectedBattleId ? 'Viewing Past Battle' :
            'Start Auto Battle'}
         </button>
 

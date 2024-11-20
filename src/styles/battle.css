@@ -141,6 +141,10 @@
 .battle-controls {
   text-align: center;
   margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .auto-play-button {
@@ -331,5 +335,32 @@
 
 .crypto-card:hover::after {
   opacity: 1;
+}
+
+.battle-history {
+  margin-bottom: 1rem;
+}
+
+.battle-select {
+  background: #1e1e1e;
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  width: 100%;
+  max-width: 400px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.battle-select:hover {
+  border-color: #f53e98;
+}
+
+.battle-select option {
+  background: #1e1e1e;
+  color: white;
+  padding: 0.5rem;
 }
  
