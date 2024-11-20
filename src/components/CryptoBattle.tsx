@@ -81,31 +81,36 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   }, [currentRound]);
 
   useEffect(() => {
-    const savedHistories = localStorage.getItem('cryptoBattleHistories');
-    if (savedHistories) {
-      const histories = JSON.parse(savedHistories);
-      setBattleHistories(histories);
-      
-      // Check URL for battle ID
-      const params = new URLSearchParams(window.location.search);
-      const battleId = params.get('battle');
-      if (battleId) {
-        const battle = histories.find((h: BattleHistory) => h.id === battleId);
-        if (battle) {
-          // Don't start a new battle if we're loading a specific one
-          setRounds(battle.rounds);
-          setCurrentRound(battle.rounds.length - 1);
-          setSelectedBattleId(battleId);
-          setPrompt(battle.prompt);
-          battleSavedRef.current = true; // Prevent re-saving
-          return; // Skip startNewBattle
+    const initializeBattle = async () => {
+      const savedHistories = localStorage.getItem('cryptoBattleHistories');
+      if (savedHistories) {
+        const histories = JSON.parse(savedHistories);
+        setBattleHistories(histories);
+        
+        // Check URL for battle ID
+        const params = new URLSearchParams(window.location.search);
+        const battleId = params.get('battle');
+        if (battleId) {
+          const battle = histories.find((h: BattleHistory) => h.id === battleId);
+          console.log('Found battle:', battle);
+          if (battle) {
+            console.log('Loading battle:', battle.rounds.length, 'rounds');
+            setRounds(battle.rounds);
+            setCurrentRound(battle.rounds.length - 1);
+            setSelectedBattleId(battleId);
+            setPrompt(battle.prompt);
+            battleSavedRef.current = true;
+            return; // Return early to prevent startNewBattle
+          }
         }
       }
-    }
-    
-    // Only start new battle if we're not loading a specific one
-    startNewBattle();
-  }, []);
+      
+      // Only start new battle if we didn't load one from URL
+      startNewBattle();
+    };
+
+    initializeBattle();
+  }, []); // Empty dependency array
 
   // Add a ref to track if the battle has been saved
   const battleSavedRef = useRef(false);
@@ -251,6 +256,12 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   const loadBattle = (battleId: string) => {
     const battle = battleHistories.find(h => h.id === battleId);
     if (battle) {
+      // Update URL without reloading the page
+      const newUrl = battleId ? 
+        `${window.location.pathname}?battle=${battleId}` : 
+        window.location.pathname;
+      window.history.pushState({}, '', newUrl);
+
       setRounds(battle.rounds);
       setCurrentRound(battle.rounds.length - 1);
       setSelectedBattleId(battleId);
@@ -259,6 +270,9 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
   };
 
   const startNewBattle = () => {
+    // Remove battle parameter from URL
+    window.history.pushState({}, '', window.location.pathname);
+
     // Create initial pools of 8
     const initialPools: Pool[] = [];
     for (let i = 0; i < cryptos.length; i += 8) {
@@ -272,12 +286,8 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     setCurrentRound(0);
     setSelectedBattleId(null);
     setPrompt('');
-    battleSavedRef.current = false; // Reset the saved flag
+    battleSavedRef.current = false;
   };
-
-  useEffect(() => {
-    startNewBattle();
-  }, [cryptos]);
 
   return (
     <div className="crypto-battle">
@@ -288,9 +298,12 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
             onChange={(e) => e.target.value ? loadBattle(e.target.value) : startNewBattle()}
             className="battle-select"
           >
-            <option value="">Start New Battle</option>
-            {battleHistories.map(battle => (
-              <option key={battle.id} value={battle.id}>
+            <option key="new-battle" value="">Start New Battle</option>
+            {battleHistories.map((battle, index) => (
+              <option 
+                key={`battle-${battle.id}-${index}`} 
+                value={battle.id}
+              >
                 {new Date(battle.date).toLocaleString()} - Winner: {battle.winner?.name}
               </option>
             ))}
