@@ -70,28 +70,12 @@ type ModelSortOption = 'default' | 'name' | 'cost';
 
 const createInitialPools = (cryptos: CryptoData[]): Pool[] => {
   const pools: Pool[] = [];
-  let currentPool: CryptoData[] = [];
-  
-  for (let i = 0; i < cryptos.length; i++) {
-    currentPool.push(cryptos[i]);
-    
-    // When we have 8 cryptos or it's the last iteration
-    if (currentPool.length === 8 || i === cryptos.length - 1) {
-      // If this is the last pool and it has only 1 crypto
-      if (i === cryptos.length - 1 && currentPool.length === 1 && pools.length > 0) {
-        // Add it to the previous pool
-        pools[pools.length - 1].cryptos.push(...currentPool);
-      } else {
-        // Create a new pool
-        pools.push({
-          id: pools.length,
-          cryptos: [...currentPool]
-        });
-      }
-      currentPool = [];
-    }
+  for (let i = 0; i < cryptos.length; i += 8) {
+    pools.push({
+      id: i / 8,
+      cryptos: cryptos.slice(i, i + Math.min(8, cryptos.length - i))
+    });
   }
-  
   return pools;
 };
 
@@ -301,27 +285,12 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         
         // Create next round pools
         const nextRoundPools: Pool[] = [];
-        let currentPool: CryptoData[] = [];
-        
-        allWinners.forEach((winner, index) => {
-          currentPool.push(winner.coin);
-          
-          // When we have 8 cryptos or it's the last winner
-          if (currentPool.length === 8 || index === allWinners.length - 1) {
-            // If this is the last pool and it has only 1 crypto
-            if (index === allWinners.length - 1 && currentPool.length === 1 && nextRoundPools.length > 0) {
-              // Add it to the previous pool
-              nextRoundPools[nextRoundPools.length - 1].cryptos.push(...currentPool);
-            } else {
-              // Create a new pool
-              nextRoundPools.push({
-                id: nextRoundPools.length,
-                cryptos: [...currentPool]
-              });
-            }
-            currentPool = [];
-          }
-        });
+        for (let i = 0; i < allWinners.length; i += 8) {
+          nextRoundPools.push({
+            id: i / 8,
+            cryptos: allWinners.slice(i, i + Math.min(8, allWinners.length - i)).map(w => w.coin)
+          });
+        }
 
         if (nextRoundPools.length > 0) {
           newRounds.push({
