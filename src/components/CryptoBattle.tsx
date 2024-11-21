@@ -317,7 +317,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
           console.log(`Model ${modelId} - All winners for round ${currentRoundIndex}:`, allWinners);
           
-          // Only create next round if there are multiple winners
           if (allWinners.length > 1) {
             // Create next round pools
             const nextRoundPools: Pool[] = [];
@@ -358,8 +357,48 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
             // Return the new round index
             resolve(currentRoundIndex + 1);
+          } else if (allWinners.length === 1) {
+            // Create a final round with only the winner
+            const finalWinner = allWinners[0].coin;
+            modelBattles.push({
+              name: `Final Round`,
+              pools: [{
+                id: 0,
+                cryptos: [finalWinner],
+                winners: [{
+                  coin: finalWinner,
+                  reason: "Final Winner"
+                }],
+                losers: []
+              }],
+            });
+
+            console.log(`Model ${modelId} - Final round created with the winner.`);
+
+            // Update states
+            setBattlesByModel(prev => {
+              const updated = {
+                ...prev,
+                [modelId]: modelBattles
+              };
+              battlesByModelRef.current = updated; // Update Ref
+              return updated;
+            });
+            
+            setCurrentRoundByModel(prev => {
+              const updated = {
+                ...prev,
+                [modelId]: currentRoundIndex + 1
+              };
+              currentRoundByModelRef.current = updated; // Update Ref
+              return updated;
+            });
+            console.log(`Model ${modelId} - Current Round updated to Final Round`);
+
+            // Indicate completion
+            resolve(null);
           } else {
-            console.log(`Model ${modelId} - Only one winner, tournament should be complete`);
+            console.log(`Model ${modelId} - Unexpected number of winners: ${allWinners.length}`);
             resolve(null);
           }
         } else {
@@ -459,8 +498,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
-  const isTournamentComplete = battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools.length === 1 && 
-                              battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos.length === 1;
+  const isTournamentComplete =
+    battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools?.length === 1 && 
+    battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools[0]?.winners?.length === 1;
 
   useEffect(() => {
     console.log('Checking tournament completion:', isTournamentComplete);
@@ -734,7 +774,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                     )}
                     <div className={`pool-cryptos ${pool.isLoading ? 'pool-loading-overlay' : ''}`}>
                       {pool.cryptos.map(crypto => {
-                        const isWinner = pool.winners?.some(w => w.coin.ticker === crypto.ticker);
+                        // Determine if the crypto is a winner
+                        const isWinner = pool.winners?.some(w => w.coin.ticker === crypto.ticker) || pool.cryptos.length === 1;
                         const reason = pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
                                        pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason;
 
