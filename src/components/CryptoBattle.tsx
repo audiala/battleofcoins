@@ -198,28 +198,15 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             return;
           }
 
-          // For pools with less than 8 cryptos, select first half
-          if (pool.cryptos.length < 8) {
-            const winnersCount = Math.floor(pool.cryptos.length / 2);
-            pool.winners = pool.cryptos.slice(0, winnersCount).map(coin => ({
-              coin,
-              reason: "Selected from smaller pool"
-            }));
-            pool.losers = pool.cryptos.slice(winnersCount).map(coin => ({
-              coin,
-              reason: "Not selected from smaller pool"
-            }));
-            return;
-          }
-
           // Set loading state
           pool.isLoading = true;
           setRounds([...newRounds]);
 
-          // Normal pool processing with API
+          // For all pools (including smaller ones), use AI selection
           const response = await axios.post('/api/selectWinners', {
             cryptos: pool.cryptos,
-            prompt
+            prompt,
+            winnersCount: Math.floor(pool.cryptos.length / 2) // Select half of the pool
           });
 
           const data: RoundWinners = response.data;
