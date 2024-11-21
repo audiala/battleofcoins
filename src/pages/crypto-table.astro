@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import CryptoTable from '../components/CryptoTable.tsx';
+import CryptoTable from '../components/CryptoTable';
+import '../styles/crypto-table.css';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { load } from 'js-yaml';
@@ -19,23 +20,6 @@ const cryptoData = load(yamlContent);
 
 ---
 
-<Layout title="Cryptocurrency Market Data">
-  <main class="page-container">
-    <div class="content-wrapper">
-      <div class="header-section">
-        <h1 class="page-title">Cryptocurrency Market Data</h1>
-        <div class="page-subtitle">
-          <p>Real-time market data for the top 500 cryptocurrencies</p>
-        </div>
-      </div>
-
-      <div class="table-container">
-        <div class="table-scroll custom-scrollbar">
-          <div class="min-w-max">
-            <CryptoTable client:load data={cryptoData} />
-          </div>
-        </div>
-      </div>
-    </div>
-  </main>
+<Layout title="Crypto Table">
+  <CryptoTable client:load data={cryptoData} />
 </Layout> 

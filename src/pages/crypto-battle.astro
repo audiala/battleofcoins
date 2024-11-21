@@ -23,13 +23,45 @@ const tournament_cryptos = cryptoData.slice(0, 16);
 
 <Layout title="Crypto Battle Tournament">
   <main>
-    <!-- <div class="header-section"> -->
-      <!-- <h1 class="page-title">Crypto Battle Tournament</h1>
-      <div class="page-subtitle">
-        <p>512 cryptocurrencies enter, only one emerges victorious!</p>
-      </div>
-    </div> -->
-    <!-- <a href="/battle-history">Battle History</a> -->
+    <div class="selection-container">
+      <a href="/crypto-table" class="select-coins-button">
+        Select Coins
+        <span class="arrow">→</span>
+      </a>
+    </div>
     <CryptoBattle client:load cryptos={tournament_cryptos} />
   </main>
-</Layout> 
+</Layout>
+
+<style>
+  .selection-container {
+    text-align: center;
+    margin: 2rem 0;
+  }
+
+  .select-coins-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f53e98;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .select-coins-button:hover {
+    background: #f52e88;
+    transform: translateY(-2px);
+  }
+
+  .arrow {
+    transition: transform 0.2s ease;
+  }
+
+  .select-coins-button:hover .arrow {
+    transform: translateX(4px);
+  }
+</style> 

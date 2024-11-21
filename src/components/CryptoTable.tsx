@@ -1,4 +1,5 @@
-import React from 'react';
+/** @jsxImportSource react */
+import React, { useState } from 'react';
 import {
   createColumnHelper,
   flexRender,
@@ -23,6 +24,12 @@ export type CryptoData = {
     total_supply: string;
     max_supply: string;
   };
+  selected?: boolean;
+};
+
+interface CryptoTableProps {
+  data: CryptoData[];
+  onSelectionChange?: (selectedCryptos: CryptoData[]) => void;
 }
 
 const columnHelper = createColumnHelper<CryptoData>();
@@ -41,6 +48,24 @@ function parseNumberValue(value: string | null): number {
 }
 
 const columns = [
+  columnHelper.accessor('selected', {
+    header: ({ table }) => (
+      <input
+        type="checkbox"
+        checked={table.getIsAllRowsSelected()}
+        onChange={table.getToggleAllRowsSelectedHandler()}
+        className="checkbox"
+      />
+    ),
+    cell: ({ row }) => (
+      <input
+        type="checkbox"
+        checked={row.getIsSelected()}
+        onChange={row.getToggleSelectedHandler()}
+        className="checkbox"
+      />
+    ),
+  }),
   columnHelper.accessor('logo_local', {
     header: '',
     cell: info => (
@@ -150,49 +175,150 @@ function formatNumber(value: string | null): string {
   }).format(num);
 }
 
-export default function CryptoTable({ data }: { data: CryptoData[] }) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
+export default function CryptoTable({ data, onSelectionChange }: CryptoTableProps) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [rowSelection, setRowSelection] = useState({});
+  const [selectedPreset, setSelectedPreset] = useState<string>('');
 
   const table = useReactTable({
     data,
     columns,
-    state: { sorting },
+    state: { 
+      sorting,
+      rowSelection,
+    },
+    enableRowSelection: true,
+    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
 
+  const handlePresetSelect = (preset: string) => {
+    setSelectedPreset(preset);
+    let selectedRows = {};
+
+    switch (preset) {
+      case 'top16':
+        data.slice(0, 16).forEach((_, index) => {
+          selectedRows[index] = true;
+        });
+        break;
+      case 'top100':
+        data.slice(0, 100).forEach((_, index) => {
+          selectedRows[index] = true;
+        });
+        break;
+      // Add more presets here when we have the tags
+      default:
+        selectedRows = {};
+    }
+
+    setRowSelection(selectedRows);
+    
+    if (onSelectionChange) {
+      const selectedCryptos = data.filter((_, index) => selectedRows[index]);
+      onSelectionChange(selectedCryptos);
+    }
+  };
+
+  const startBattle = () => {
+    const selectedCryptos = data.filter((_, index) => rowSelection[index]);
+    if (selectedCryptos.length < 8) {
+      alert('Please select at least 8 cryptocurrencies for the battle');
+      return;
+    }
+    // Store selected cryptos in sessionStorage
+    sessionStorage.setItem('selectedCryptos', JSON.stringify(selectedCryptos));
+    // Redirect to battle page
+    window.location.href = '/crypto-battle';
+  };
+
   return (
-    <table className="crypto-table">
-      <thead>
-        {table.getHeaderGroups().map(headerGroup => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map(header => (
-              <th key={header.id} onClick={header.column.getToggleSortingHandler()}>
-                <div className="flex items-center gap-2">
-                  {flexRender(header.column.columnDef.header, header.getContext())}
-                  {header.column.getIsSorted() && (
-                    <span className="sort-indicator">
-                      {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
-                    </span>
-                  )}
-                </div>
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map(row => (
-          <tr key={row.id}>
-            {row.getVisibleCells().map(cell => (
-              <td key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <div className="crypto-table-container">
+      <div className="table-controls">
+        <div className="controls-section">
+          <h2 className="presets-title">Quick Select</h2>
+          <div className="presets">
+            <button 
+              onClick={() => handlePresetSelect('top16')}
+              className={`preset-button ${selectedPreset === 'top16' ? 'active' : ''}`}
+            >
+              <span className="preset-icon">🏆</span>
+              <span className="preset-text">
+                <span className="preset-name">Top 16</span>
+                <span className="preset-description">Highest market cap</span>
+              </span>
+            </button>
+            <button 
+              onClick={() => handlePresetSelect('top100')}
+              className={`preset-button ${selectedPreset === 'top100' ? 'active' : ''}`}
+            >
+              <span className="preset-icon">💯</span>
+              <span className="preset-text">
+                <span className="preset-name">Top 100</span>
+                <span className="preset-description">Most popular coins</span>
+              </span>
+            </button>
+            <button 
+              onClick={() => handlePresetSelect('')}
+              className="preset-button clear"
+            >
+              <span className="preset-icon">🔄</span>
+              <span className="preset-text">
+                <span className="preset-name">Clear</span>
+                <span className="preset-description">Reset selection</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div className="battle-controls">
+          <div className="selection-info">
+            {Object.keys(rowSelection).length} coins selected
+          </div>
+          <button 
+            onClick={startBattle}
+            disabled={Object.keys(rowSelection).length < 8}
+            className="start-battle-button"
+          >
+            <span className="battle-icon">⚔️</span>
+            Start Battle
+          </button>
+        </div>
+      </div>
+
+      <table className="crypto-table">
+        <thead>
+          {table.getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} onClick={header.column.getToggleSortingHandler()}>
+                  <div className="flex items-center gap-2">
+                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.column.getIsSorted() && (
+                      <span className="sort-indicator">
+                        {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
+                      </span>
+                    )}
+                  </div>
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 } 
