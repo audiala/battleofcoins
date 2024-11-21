@@ -17,6 +17,7 @@ export function Menu() {
           <a href="/battle-history" className="menu-item">Battle History</a>
           <a href="/crypto-table" className="menu-item">Crypto Table</a>
           <a href="/crypto-battle" className="menu-item">Crypto Battle</a>
+          <a href="/settings" className="menu-item">Settings</a>
         </div>
       )}
     </div>
