@@ -103,8 +103,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   // Store initial cryptos in a ref to avoid re-renders
   const initialCryptosRef = useRef<CryptoData[]>(cryptos);
   
-  const [rounds, setRounds] = useState<Round[]>([]);
-  const [currentRound, setCurrentRound] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
   const [selectedBattleId, setSelectedBattleId] = useState<string | null>(null);
@@ -118,13 +116,25 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   const [allModelsSelected, setAllModelsSelected] = useState(false);
   const [isModelSelectionExpanded, setIsModelSelectionExpanded] = useState(false);
 
-  const roundsRef = useRef(rounds);
-  const currentRoundRef = useRef(currentRound);
   const battleSavedRef = useRef(false);
+
+  // Add Refs to keep track of the latest state
+  const battlesByModelRef = useRef<{[key: string]: Round[]}>({});
+  const currentRoundByModelRef = useRef<{[key: string]: number}>({});
+
+  // Sync Refs with state whenever they change
+  useEffect(() => {
+    battlesByModelRef.current = battlesByModel;
+  }, [battlesByModel]);
+
+  useEffect(() => {
+    currentRoundByModelRef.current = currentRoundByModel;
+  }, [currentRoundByModel]);
 
   // Combine the initialization logic into a single effect
   useEffect(() => {
     const initializeBattle = async () => {
+      console.log('Initializing battle...');
       // First, fetch the models
       try {
         const response = await axios.get('/api/models');
@@ -238,118 +248,191 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
-  const processNextRound = async (modelId: string) => {
-    try {
-      // Get current state from refs
-      const newRounds = [...roundsRef.current];
-      const currentRoundPools = newRounds[currentRoundRef.current].pools;
+  // Modify processNextRound to ensure Refs are updated correctly
+  function processNextRound(modelId: string): Promise<number | null> {
+    console.log(`Processing next round for model: ${modelId}`);
+    return new Promise(async (resolve) => {
+      try {
+        // Get current state for this model from Refs
+        const modelBattles = [...battlesByModelRef.current[modelId]];
+        const currentRoundIndex = currentRoundByModelRef.current[modelId];
+        const currentRoundPools = modelBattles[currentRoundIndex].pools;
 
-      // Process all pools in parallel
-      const poolPromises = currentRoundPools.map(async pool => {
-        try {
-          // If pool has only one contestant, it's automatically the winner
-          if (pool.cryptos.length === 1) {
-            pool.winners = [{
-              coin: pool.cryptos[0],
-              reason: "Last contestant standing"
-            }];
-            pool.losers = [];
-            return;
+        console.log(`Model ${modelId} - Current Round Index: ${currentRoundIndex}`);
+        console.log(`Model ${modelId} - Current Round Pools:`, currentRoundPools);
+
+        // Process all pools in parallel
+        const poolPromises = currentRoundPools.map(async pool => {
+          try {
+            // If pool has only one contestant, it's automatically the winner
+            if (pool.cryptos.length === 1) {
+              pool.winners = [{
+                coin: pool.cryptos[0],
+                reason: "Last contestant standing"
+              }];
+              pool.losers = [];
+              console.log(`Model ${modelId} - Pool ${pool.id} has a single crypto. Auto-winning.`);
+              return;
+            }
+
+            // Set loading state
+            pool.isLoading = true;
+            console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
+
+            // Use AI selection for winners
+            const response = await axios.post('/api/selectWinnersRandom', {
+              cryptos: pool.cryptos,
+              prompt,
+              model: modelId,
+              winnersCount: Math.floor(pool.cryptos.length / 2)
+            });
+
+            const data: RoundWinners = response.data;
+            pool.winners = data.winners;
+            pool.losers = data.losers;
+            console.log(`Model ${modelId} - Pool ${pool.id} winners:`, data.winners);
+          } catch (error) {
+            console.error(`Error processing pool ${pool.id} for model ${modelId}:`, error);
+          } finally {
+            pool.isLoading = false;
+            console.log(`Model ${modelId} - Pool ${pool.id} loading complete`);
+            // Update the state with the modified pool
+            setBattlesByModel(prev => {
+              const updated = {
+                ...prev,
+                [modelId]: modelBattles
+              };
+              battlesByModelRef.current = updated; // Update Ref
+              return updated;
+            });
           }
+        });
 
-          // Set loading state
-          pool.isLoading = true;
-          setRounds([...newRounds]);
+        // Wait for all pools to complete
+        await Promise.all(poolPromises);
+        console.log(`Model ${modelId} - All pools processed for round ${currentRoundIndex}`);
 
-          // For all pools (including smaller ones), use AI selection
-          const response = await axios.post('/api/selectWinners', {
-            cryptos: pool.cryptos,
-            prompt,
-            model: modelId,
-            winnersCount: Math.floor(pool.cryptos.length / 2) // Select half of the pool
-          });
+        // Check if all pools have winners before creating the next round
+        if (currentRoundPools.every(pool => pool.winners)) {
+          const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
+          console.log(`Model ${modelId} - All winners for round ${currentRoundIndex}:`, allWinners);
+          
+          // Only create next round if there are multiple winners
+          if (allWinners.length > 1) {
+            // Create next round pools
+            const nextRoundPools: Pool[] = [];
+            for (let i = 0; i < allWinners.length; i += 8) {
+              nextRoundPools.push({
+                id: i / 8,
+                cryptos: allWinners.slice(i, i + Math.min(8, allWinners.length - i)).map(w => w.coin)
+              });
+            }
 
-          const data: RoundWinners = response.data;
-          pool.winners = data.winners;
-          pool.losers = data.losers;
-        } catch (error) {
-          console.error(`Error processing pool ${pool.id}:`, error);
-        } finally {
-          pool.isLoading = false;
-          setRounds([...newRounds]);
+            // Add the new round
+            modelBattles.push({
+              name: `Round ${modelBattles.length + 1}`,
+              pools: nextRoundPools,
+            });
+
+            console.log(`Model ${modelId} - Next round created: Round ${modelBattles.length}`);
+
+            // Update states
+            setBattlesByModel(prev => {
+              const updated = {
+                ...prev,
+                [modelId]: modelBattles
+              };
+              battlesByModelRef.current = updated; // Update Ref
+              return updated;
+            });
+            
+            setCurrentRoundByModel(prev => {
+              const updated = {
+                ...prev,
+                [modelId]: currentRoundIndex + 1
+              };
+              currentRoundByModelRef.current = updated; // Update Ref
+              return updated;
+            });
+            console.log(`Model ${modelId} - Current Round updated to ${currentRoundIndex + 1}`);
+
+            // Return the new round index
+            resolve(currentRoundIndex + 1);
+          } else {
+            console.log(`Model ${modelId} - Only one winner, tournament should be complete`);
+            resolve(null);
+          }
+        } else {
+          console.log(`Model ${modelId} - Not all pools have winners yet`);
+          resolve(null);
         }
-      });
-
-      // Wait for all pools to complete
-      await Promise.all(poolPromises);
-
-      // Continue with the rest of the logic
-      if (currentRoundPools.every(pool => pool.winners)) {
-        const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
-        
-        // Create next round pools
-        const nextRoundPools: Pool[] = [];
-        for (let i = 0; i < allWinners.length; i += 8) {
-          nextRoundPools.push({
-            id: i / 8,
-            cryptos: allWinners.slice(i, i + Math.min(8, allWinners.length - i)).map(w => w.coin)
-          });
-        }
-
-        if (nextRoundPools.length > 0) {
-          newRounds.push({
-            name: `Round ${newRounds.length + 1}`,
-            pools: nextRoundPools,
-          });
-          setCurrentRound(prev => {
-            const updated = prev + 1;
-            currentRoundRef.current = updated;
-            return updated;
-          });
-        }
+      } catch (error) {
+        console.error(`Error processing next round for model ${modelId}:`, error);
+        resolve(null);
       }
+    });
+  }
 
-      setRounds(newRounds);
-    } catch (error) {
-      console.error('Error processing next round:', error);
-    }
-  };
-
+  // Modify handleAutoPlay to use Refs for the latest state
   const handleAutoPlay = async () => {
+    console.log('Auto Play started');
     setIsAutoPlaying(true);
     
     try {
       // Run battles for all selected models in parallel
       const battlePromises = selectedModels.map(async ({ modelId }) => {
-        while (true) {
-          await processNextRound(modelId);
+        console.log(`Starting battle for model: ${modelId}`);
+        let completed = false;
+
+        while (!completed) {
+          console.log(`Processing next round for model: ${modelId}`);
+          const newRoundIndex = await processNextRound(modelId);
           
-          // Get latest state for this model
-          const currentRoundData = battlesByModel[modelId][currentRoundByModel[modelId]];
-          
-          // Check if this model's battle is complete
-          if (
-            currentRoundData?.pools.length === 1 &&
-            currentRoundData.pools[0].cryptos.length === 1
-          ) {
-            break;
+          if (newRoundIndex === null) {
+            // Tournament is complete
+            console.log(`Battle complete for model: ${modelId}`);
+            completed = true;
+          } else {
+            // Verify if the tournament is complete using Refs
+            const currentRoundData = battlesByModelRef.current[modelId][newRoundIndex];
+            console.log(`Current Round Data for model ${modelId}:`, currentRoundData);
+            
+            if (
+              currentRoundData?.pools.length === 1 &&
+              currentRoundData.pools[0].cryptos.length === 1
+            ) {
+              console.log(`Tournament complete for model: ${modelId}`);
+              completed = true;
+            }
+
+            // Wait between rounds
+            await new Promise(resolve => setTimeout(resolve, 2000));
           }
-          
-          // Wait between rounds
-          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       });
 
       // Wait for all battles to complete
       await Promise.all(battlePromises);
+      console.log('All battles completed');
     } catch (error) {
       console.error('Error during auto play:', error);
     } finally {
       setIsAutoPlaying(false);
+      console.log('Auto Play ended');
     }
   };
 
+  // Modify loadBattle to ensure Refs are updated
+  useEffect(() => {
+    battlesByModelRef.current = battlesByModel;
+  }, [battlesByModel]);
+
+  useEffect(() => {
+    currentRoundByModelRef.current = currentRoundByModel;
+  }, [currentRoundByModel]);
+
   const loadBattle = (battleId: string) => {
+    console.log(`Loading battle with ID: ${battleId}`);
     const battle = battleHistories.find(h => h.id === battleId);
     if (battle) {
       // Update URL without reloading the page
@@ -359,51 +442,45 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       window.history.pushState({}, '', newUrl);
 
       // Update both rounds and battlesByModel states
-      setRounds(battle.rounds);
-      setCurrentRound(battle.rounds.length - 1);
-      
-      // Update the battlesByModel state for the active model
-      if (activeModelId) {
-        setBattlesByModel({
-          [activeModelId]: battle.rounds
-        });
-        setCurrentRoundByModel({
-          [activeModelId]: battle.rounds.length - 1
-        });
-      }
+      setBattlesByModel({
+        [activeModelId]: battle.rounds
+      });
+      setCurrentRoundByModel({
+        [activeModelId]: battle.rounds.length - 1
+      });
+      console.log(`Model ${activeModelId} - Battles loaded:`, battle.rounds);
       
       setSelectedBattleId(battleId);
       setPrompt(battle.prompt);
       battleSavedRef.current = true;
+      console.log('Battle loaded and saved flag set to true');
+    } else {
+      console.warn(`No battle found with ID: ${battleId}`);
     }
   };
 
-  const isTournamentComplete = rounds[currentRound]?.pools.length === 1 && 
-                              rounds[currentRound].pools[0].cryptos.length === 1;
+  const isTournamentComplete = battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools.length === 1 && 
+                              battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos.length === 1;
 
   useEffect(() => {
-    roundsRef.current = rounds;
-  }, [rounds]);
-
-  useEffect(() => {
-    currentRoundRef.current = currentRound;
-  }, [currentRound]);
-
-  useEffect(() => {
-    if (isTournamentComplete && rounds.length > 0 && !battleSavedRef.current) {
-      const winner = rounds[currentRound].pools[0].cryptos[0];
-      const battleHash = createBattleHash(rounds);
+    console.log('Checking tournament completion:', isTournamentComplete);
+    if (isTournamentComplete && !battleSavedRef.current) {
+      console.log('Tournament is complete. Saving battle history...');
+      const currentBattleRounds = battlesByModel[activeModelId];
+      const winner = currentBattleRounds[currentRoundByModel[activeModelId]].pools[0].cryptos[0];
+      const battleHash = createBattleHash(currentBattleRounds);
       
       // Check if this battle already exists
       const battleExists = battleHistories.some(battle => 
         createBattleHash(battle.rounds) === battleHash
       );
+      console.log(`Battle exists: ${battleExists}`);
 
       if (!battleExists) {
         const newBattle: BattleHistory = {
           id: battleHash,
           date: new Date().toISOString(),
-          rounds,
+          rounds: currentBattleRounds,
           winner,
           prompt
         };
@@ -412,9 +489,12 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         setBattleHistories(updatedHistories);
         localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
         battleSavedRef.current = true;
+        console.log('New battle history saved:', newBattle);
+      } else {
+        console.log('Battle already exists. Skipping save.');
       }
     }
-  }, [isTournamentComplete, rounds, currentRound, battleHistories, prompt]);
+  }, [isTournamentComplete, battlesByModel, currentRoundByModel, battleHistories, prompt, activeModelId]);
 
   // Add effect to fetch models
   useEffect(() => {
@@ -619,15 +699,15 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             <h2>🏆 Tournament Winner 🏆</h2>
             <div className="final-winner">
               <img 
-                src={`/${rounds[currentRound].pools[0].cryptos[0].logo_local}`} 
-                alt={rounds[currentRound].pools[0].cryptos[0].name}
+                src={`/${battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools[0].cryptos[0].logo_local}`} 
+                alt={battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos[0].name}
                 className="winner-logo"
               />
               <span className="winner-name">
-                {rounds[currentRound].pools[0].cryptos[0].name}
+                {battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos[0].name}
               </span>
               <span className="winner-ticker">
-                {rounds[currentRound].pools[0].cryptos[0].ticker}
+                {battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos[0].ticker}
               </span>
             </div>
           </div>
