@@ -141,11 +141,26 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
     // Create initial pools of 8
     const initialPools: Pool[] = [];
-    for (let i = 0; i < battleCryptos.length; i += 8) {
-      initialPools.push({
-        id: i / 8,
-        cryptos: battleCryptos.slice(i, i + 8)
-      });
+    let currentPool: CryptoData[] = [];
+    
+    for (let i = 0; i < battleCryptos.length; i++) {
+      currentPool.push(battleCryptos[i]);
+      
+      // When we have 8 cryptos or it's the last iteration
+      if (currentPool.length === 8 || i === battleCryptos.length - 1) {
+        // If this is the last pool and it has only 1 crypto
+        if (i === battleCryptos.length - 1 && currentPool.length === 1 && initialPools.length > 0) {
+          // Add it to the previous pool
+          initialPools[initialPools.length - 1].cryptos.push(...currentPool);
+        } else {
+          // Create a new pool
+          initialPools.push({
+            id: initialPools.length,
+            cryptos: [...currentPool]
+          });
+        }
+        currentPool = [];
+      }
     }
 
     setRounds([{ name: 'Round 1', pools: initialPools }]);
@@ -170,63 +185,84 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       const newRounds = [...roundsRef.current];
       const currentRoundPools = newRounds[currentRoundRef.current].pools;
 
-      // Skip processing if any pool has only one contestant
-      if (currentRoundPools.some(pool => pool.cryptos.length === 1)) {
-        // If there's only one contestant, mark it as winner directly
-        currentRoundPools.forEach(pool => {
+      // Process all pools in parallel
+      const poolPromises = currentRoundPools.map(async pool => {
+        try {
+          // If pool has only one contestant, it's automatically the winner
           if (pool.cryptos.length === 1) {
             pool.winners = [{
               coin: pool.cryptos[0],
               reason: "Last contestant standing"
             }];
             pool.losers = [];
+            return;
           }
-        });
-      } else {
-        // Set all pools to loading state
-        currentRoundPools.forEach(pool => {
+
+          // For pools with less than 8 cryptos, select first half
+          if (pool.cryptos.length < 8) {
+            const winnersCount = Math.floor(pool.cryptos.length / 2);
+            pool.winners = pool.cryptos.slice(0, winnersCount).map(coin => ({
+              coin,
+              reason: "Selected from smaller pool"
+            }));
+            pool.losers = pool.cryptos.slice(winnersCount).map(coin => ({
+              coin,
+              reason: "Not selected from smaller pool"
+            }));
+            return;
+          }
+
+          // Set loading state
           pool.isLoading = true;
-        });
-        setRounds(newRounds);
+          setRounds([...newRounds]);
 
-        // Process all pools in parallel
-        const poolPromises = currentRoundPools.map(async pool => {
-          try {
-            const response = await axios.post('/api/selectWinners', {
-              cryptos: pool.cryptos,
-              prompt
-            });
+          // Normal pool processing with API
+          const response = await axios.post('/api/selectWinners', {
+            cryptos: pool.cryptos,
+            prompt
+          });
 
-            const data: RoundWinners = response.data;
+          const data: RoundWinners = response.data;
+          pool.winners = data.winners;
+          pool.losers = data.losers;
+        } catch (error) {
+          console.error(`Error processing pool ${pool.id}:`, error);
+        } finally {
+          pool.isLoading = false;
+          setRounds([...newRounds]);
+        }
+      });
 
-            // Update the pool with winners and losers
-            pool.winners = data.winners;
-            pool.losers = data.losers;
-          } catch (error) {
-            console.error(`Error processing pool ${pool.id}:`, error);
-          } finally {
-            // Clear loading state
-            pool.isLoading = false;
-            // Update the UI to reflect the change
-            setRounds([...newRounds]);
-          }
-        });
-
-        // Wait for all pools to complete
-        await Promise.all(poolPromises);
-      }
+      // Wait for all pools to complete
+      await Promise.all(poolPromises);
 
       // Continue with the rest of the logic
       if (currentRoundPools.every(pool => pool.winners)) {
         const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
         
+        // Create next round pools
         const nextRoundPools: Pool[] = [];
-        for (let i = 0; i < allWinners.length; i += 8) {
-          nextRoundPools.push({
-            id: i / 8,
-            cryptos: allWinners.map(w => w.coin).slice(i, i + Math.min(8, allWinners.length - i)),
-          });
-        }
+        let currentPool: CryptoData[] = [];
+        
+        allWinners.forEach((winner, index) => {
+          currentPool.push(winner.coin);
+          
+          // When we have 8 cryptos or it's the last winner
+          if (currentPool.length === 8 || index === allWinners.length - 1) {
+            // If this is the last pool and it has only 1 crypto
+            if (index === allWinners.length - 1 && currentPool.length === 1 && nextRoundPools.length > 0) {
+              // Add it to the previous pool
+              nextRoundPools[nextRoundPools.length - 1].cryptos.push(...currentPool);
+            } else {
+              // Create a new pool
+              nextRoundPools.push({
+                id: nextRoundPools.length,
+                cryptos: [...currentPool]
+              });
+            }
+            currentPool = [];
+          }
+        });
 
         if (nextRoundPools.length > 0) {
           newRounds.push({
