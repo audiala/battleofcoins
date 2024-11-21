@@ -132,6 +132,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   const [currentRoundByModel, setCurrentRoundByModel] = useState<{[key: string]: number}>({});
   const [modelSortOption, setModelSortOption] = useState<ModelSortOption>('default');
   const [allModelsSelected, setAllModelsSelected] = useState(false);
+  const [isModelSelectionExpanded, setIsModelSelectionExpanded] = useState(false);
 
   const roundsRef = useRef(rounds);
   const currentRoundRef = useRef(currentRound);
@@ -507,27 +508,46 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           <>
             <div className="model-selection">
               <div className="model-controls">
-                <h4>Select AI Models</h4>
-                <div className="model-actions">
-                  <select
-                    value={modelSortOption}
-                    onChange={(e) => setModelSortOption(e.target.value as ModelSortOption)}
-                    className="model-sort-select"
+                <div className="model-header">
+                  <div className="model-title">
+                    <h4>Select AI Models</h4>
+                    <span className="model-counter">
+                      {selectedModels.length} selected
+                    </span>
+                  </div>
+                  {isModelSelectionExpanded && (
+                  <div className="model-actions">
+                    <select
+                      value={modelSortOption}
+                      onChange={(e) => setModelSortOption(e.target.value as ModelSortOption)}
+                      className="model-sort-select"
+                    >
+                      <option value="default">Default Order</option>
+                      <option value="name">Sort by Name</option>
+                      <option value="cost">Sort by Cost</option>
+                    </select>
+                    <button
+                      onClick={handleSelectAllModels}
+                      className="select-all-button"
+                    >
+                      {allModelsSelected ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                )}
+                  <button 
+                    onClick={() => setIsModelSelectionExpanded(!isModelSelectionExpanded)}
+                    className="expand-button"
                   >
-                    <option value="default">Default Order</option>
-                    <option value="name">Sort by Name</option>
-                    <option value="cost">Sort by Cost</option>
-                  </select>
-                  <button
-                    onClick={handleSelectAllModels}
-                    className="select-all-button"
-                  >
-                    {allModelsSelected ? 'Deselect All' : 'Select All'}
+                    {isModelSelectionExpanded ? 'Show Less' : 'Show All'} 
+                    <span className={`expand-icon ${isModelSelectionExpanded ? 'expanded' : ''}`}>
+                      ▼
+                    </span>
                   </button>
                 </div>
+                
               </div>
               
-              <div className="model-grid">
+              <div className={`model-grid ${isModelSelectionExpanded ? 'expanded' : 'collapsed'}`}>
                 {getSortedModels(models, modelSortOption).map(([key, model]) => (
                   <ModelTooltip
                     key={key}
@@ -542,7 +562,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                       <input
                         type="checkbox"
                         checked={selectedModels.some(m => m.modelId === key)}
-                        onChange={() => {}} // Required for React controlled component
+                        onChange={() => {}}
                         disabled={isAutoPlaying}
                       />
                       <div className="model-info">

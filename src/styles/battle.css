@@ -856,26 +856,53 @@
 }
 
 .model-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 0.5rem;
   margin-bottom: 1rem;
   width: 100%;
   box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.model-grid.collapsed {
+  max-height: 130px; /* Show exactly 2 rows */
+  overflow: hidden;
+}
+
+.model-grid.expanded {
+  max-height: none;
+}
+
+/* Improved gradient fade */
+.model-grid.collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(
+    to bottom,
+    rgba(18, 18, 18, 0) 0%,
+    rgba(18, 18, 18, 0.8) 50%,
+    rgba(18, 18, 18, 0.95) 100%
+  );
+  pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
 .model-checkbox {
   display: flex;
   align-items: center;
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: #1e1e1e;
-  border: 2px solid #374151;
+  border: 2px solid #2a2a2a;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.8rem;
-  box-sizing: border-box;
-  width: 100%;
+  height: 45px; /* Fixed height for consistency */
 }
 
 .model-checkbox input {
@@ -885,16 +912,22 @@
 .model-checkbox.selected {
   border-color: #f53e98;
   background: #2a1f2d;
+  box-shadow: 0 2px 8px rgba(245, 62, 152, 0.15);
+}
+
+.model-checkbox:hover {
+  transform: translateY(-2px);
+  border-color: #f53e98;
+  background: #2a1f2d;
+  box-shadow: 0 4px 12px rgba(245, 62, 152, 0.2);
 }
 
 .model-info {
   display: flex;
-  flex-direction: row;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 0.25rem;
-  min-width: 0;
+  gap: 0.5rem;
 }
 
 .model-name {
@@ -903,24 +936,69 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left;
   flex: 1;
-  min-width: 0;
-  padding-right: 0.25rem;
 }
 
 .model-cost {
   color: #9ca3af;
   font-size: 0.7rem;
   white-space: nowrap;
-  text-align: right;
-  flex-shrink: 0;
+  opacity: 0.8;
 }
 
-.model-checkbox:hover {
-  transform: translateY(-2px);
-  border-color: #f53e98;
+/* Add counter for selected models */
+.model-counter {
   background: #2a1f2d;
+  color: #f53e98;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+
+/* Update model header */
+.model-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #1e1e1e;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+}
+
+/* Improved expand button */
+.expand-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: 1px solid #f53e98;
+  border-radius: 0.5rem;
+  color: #f53e98;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expand-button:hover {
+  background: #2a1f2d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 62, 152, 0.2);
+}
+
+.expand-icon {
+  display: inline-block;
+  transition: all 0.3s ease;
+  font-size: 0.7rem;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
 }
 
 /* Update responsive breakpoints */
@@ -1039,5 +1117,80 @@
   top: 50%;
   transform: translateY(-50%);
   border-left-color: rgba(26, 26, 26, 0.98);
+}
+
+.model-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #1e1e1e;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+}
+
+.expand-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: 1px solid #f53e98;
+  border-radius: 0.5rem;
+  color: #f53e98;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expand-button:hover {
+  background: #2a1f2d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 62, 152, 0.2);
+}
+
+.expand-icon {
+  display: inline-block;
+  transition: all 0.3s ease;
+  font-size: 0.7rem;
+}
+
+.expand-icon.expanded {
+  transform: rotate(180deg);
+}
+
+.model-grid {
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+.model-grid.collapsed {
+  max-height: 200px; /* Show about 2-3 rows */
+  opacity: 0.8;
+}
+
+.model-grid.expanded {
+  max-height: none;
+  opacity: 1;
+}
+
+/* Add gradient fade for collapsed state */
+.model-grid.collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(transparent, #121212);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.model-grid.expanded::after {
+  opacity: 0;
 }
  
