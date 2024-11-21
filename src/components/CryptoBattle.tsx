@@ -131,70 +131,67 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         const modelsData = response.data.models.text;
         setModels(modelsData);
         
-        // Set default model selection
+        // Set default model selection with the first model
         const defaultModel = Object.keys(modelsData)[0];
-        if (defaultModel) {
-          setSelectedModels([{ modelId: defaultModel, active: true }]);
-          setActiveModelId(defaultModel);
-        }
-      } catch (error) {
-        console.error('Error fetching models:', error);
-      }
+        const initialSelectedModels = [{ modelId: defaultModel, active: true }];
+        setSelectedModels(initialSelectedModels);
+        setActiveModelId(defaultModel);
 
-      // Then handle battle initialization
-      const savedHistories = localStorage.getItem('cryptoBattleHistories');
-      if (savedHistories) {
-        const histories = JSON.parse(savedHistories);
-        setBattleHistories(histories);
-        
-        // Check URL for battle ID
-        const params = new URLSearchParams(window.location.search);
-        const battleId = params.get('battle');
-        if (battleId) {
-          const battle = histories.find((h: BattleHistory) => h.id === battleId);
-          if (battle) {
-            setBattlesByModel({
-              [selectedModels[0]?.modelId]: battle.rounds
-            });
-            setCurrentRoundByModel({
-              [selectedModels[0]?.modelId]: battle.rounds.length - 1
-            });
-            setSelectedBattleId(battleId);
-            setPrompt(battle.prompt);
-            battleSavedRef.current = true;
-            return;
+        // Check for saved battle history
+        const savedHistories = localStorage.getItem('cryptoBattleHistories');
+        if (savedHistories) {
+          const histories = JSON.parse(savedHistories);
+          setBattleHistories(histories);
+          
+          // Check URL for battle ID
+          const params = new URLSearchParams(window.location.search);
+          const battleId = params.get('battle');
+          if (battleId) {
+            const battle = histories.find((h: BattleHistory) => h.id === battleId);
+            if (battle) {
+              setBattlesByModel({
+                [defaultModel]: battle.rounds
+              });
+              setCurrentRoundByModel({
+                [defaultModel]: battle.rounds.length - 1
+              });
+              setSelectedBattleId(battleId);
+              setPrompt(battle.prompt);
+              battleSavedRef.current = true;
+              return;
+            }
           }
         }
-      }
 
-      // Check for selected cryptos in localStorage
-      const selectedCryptosJson = localStorage.getItem('selectedCryptos');
-      if (selectedCryptosJson) {
-        try {
-          const selectedCryptos = JSON.parse(selectedCryptosJson);
-          console.log('Found selected cryptos in component:', selectedCryptos.length);
-          initialCryptosRef.current = selectedCryptos;
-          
-          // Initialize battles for each selected model
-          const initialBattles: {[key: string]: Round[]} = {};
-          const initialRounds: {[key: string]: number} = {};
-
-          selectedModels.forEach(({ modelId }) => {
+        // Check for selected cryptos in localStorage
+        const selectedCryptosJson = localStorage.getItem('selectedCryptos');
+        if (selectedCryptosJson) {
+          try {
+            const selectedCryptos = JSON.parse(selectedCryptosJson);
+            console.log('Found selected cryptos in component:', selectedCryptos.length);
+            initialCryptosRef.current = selectedCryptos;
+            
+            // Initialize battles for the default model
             const initialPools = createInitialPools(selectedCryptos);
-            initialBattles[modelId] = [{ name: 'Round 1', pools: initialPools }];
-            initialRounds[modelId] = 0;
-          });
-
-          setBattlesByModel(initialBattles);
-          setCurrentRoundByModel(initialRounds);
-          localStorage.removeItem('selectedCryptos');
-        } catch (error) {
-          console.error('Error parsing selected cryptos:', error);
+            setBattlesByModel({
+              [defaultModel]: [{ name: 'Round 1', pools: initialPools }]
+            });
+            setCurrentRoundByModel({
+              [defaultModel]: 0
+            });
+            
+            localStorage.removeItem('selectedCryptos');
+          } catch (error) {
+            console.error('Error parsing selected cryptos:', error);
+            startNewBattle(cryptos);
+          }
+        } else {
+          console.log('Using default cryptos:', cryptos.length);
           startNewBattle(cryptos);
         }
-      } else {
-        console.log('Using default cryptos:', cryptos.length);
-        startNewBattle(cryptos);
+
+      } catch (error) {
+        console.error('Error during initialization:', error);
       }
     };
 
@@ -202,16 +199,23 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   }, []); // Empty dependency array for mount only
 
   const startNewBattle = (battleCryptos: CryptoData[]) => {
+    const newUrl = window.location.pathname;
+    window.history.pushState({}, '', newUrl);
+    
     if (!battleCryptos || battleCryptos.length === 0) {
       console.error('No cryptos provided for battle');
       return;
     }
 
+    // Use current selectedModels or default to first model if none selected
+    const modelsToUse = selectedModels.length > 0 ? selectedModels : 
+      Object.keys(models).length > 0 ? [{ modelId: Object.keys(models)[0], active: true }] : [];
+
     // Initialize battles for each selected model
     const initialBattles: {[key: string]: Round[]} = {};
     const initialRounds: {[key: string]: number} = {};
 
-    selectedModels.forEach(({ modelId }) => {
+    modelsToUse.forEach(({ modelId }) => {
       const initialPools = createInitialPools(battleCryptos);
       initialBattles[modelId] = [{ name: 'Round 1', pools: initialPools }];
       initialRounds[modelId] = 0;
@@ -219,7 +223,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
     setBattlesByModel(initialBattles);
     setCurrentRoundByModel(initialRounds);
-    setActiveModelId(selectedModels[0]?.modelId);
+    setActiveModelId(modelsToUse[0]?.modelId);
     setSelectedBattleId(null);
     setPrompt('');
     battleSavedRef.current = false;
@@ -354,10 +358,23 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         window.location.pathname;
       window.history.pushState({}, '', newUrl);
 
+      // Update both rounds and battlesByModel states
       setRounds(battle.rounds);
       setCurrentRound(battle.rounds.length - 1);
+      
+      // Update the battlesByModel state for the active model
+      if (activeModelId) {
+        setBattlesByModel({
+          [activeModelId]: battle.rounds
+        });
+        setCurrentRoundByModel({
+          [activeModelId]: battle.rounds.length - 1
+        });
+      }
+      
       setSelectedBattleId(battleId);
       setPrompt(battle.prompt);
+      battleSavedRef.current = true;
     }
   };
 
