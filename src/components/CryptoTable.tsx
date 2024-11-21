@@ -228,10 +228,16 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
       alert('Please select at least 8 cryptocurrencies for the battle');
       return;
     }
-    // Store selected cryptos in sessionStorage
-    sessionStorage.setItem('selectedCryptos', JSON.stringify(selectedCryptos));
-    // Redirect to battle page
-    window.location.href = '/crypto-battle';
+
+    // Store selected cryptos in localStorage
+    try {
+      localStorage.setItem('selectedCryptos', JSON.stringify(selectedCryptos));
+      console.log('Stored selected cryptos:', selectedCryptos); // Debug log
+      window.location.href = '/crypto-battle';
+    } catch (error) {
+      console.error('Error storing selected cryptos:', error);
+      alert('Failed to store selected cryptos. Please try again.');
+    }
   };
 
   return (

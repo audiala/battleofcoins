@@ -5,8 +5,9 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { load } from 'js-yaml';
 import '../styles/battle.css';
+import type { CryptoData } from '../components/CryptoTable';
 
-// Read the YAML file
+// Read the YAML file for default cryptos
 const dataDir = join(process.cwd(), 'data');
 const files = readdirSync(dataDir);
 const latestFile = files
@@ -15,10 +16,10 @@ const latestFile = files
   .reverse()[0];
 
 const yamlContent = readFileSync(join(dataDir, latestFile), 'utf8');
-const cryptoData = load(yamlContent);
+const cryptoData = load(yamlContent) as CryptoData[];
 
-// Take only the first 512 cryptos
-const tournament_cryptos = cryptoData.slice(0, 16);
+// Default to top 16 if no selection
+const default_cryptos = cryptoData.slice(0, 16);
 ---
 
 <Layout title="Crypto Battle Tournament">
@@ -29,7 +30,13 @@ const tournament_cryptos = cryptoData.slice(0, 16);
         <span class="arrow">→</span>
       </a>
     </div>
-    <CryptoBattle client:load cryptos={tournament_cryptos} />
+    <div id="battle-container">
+      <CryptoBattle 
+        client:load 
+        cryptos={default_cryptos}
+        defaultCryptos={default_cryptos}
+      />
+    </div>
   </main>
 </Layout>
 
@@ -64,4 +71,32 @@ const tournament_cryptos = cryptoData.slice(0, 16);
   .select-coins-button:hover .arrow {
     transform: translateX(4px);
   }
-</style> 
+</style>
+
+<script>
+  // Function to hydrate the battle component with selected cryptos
+  function hydrateBattle() {
+    const selectedCryptosJson = localStorage.getItem('selectedCryptos');
+    if (selectedCryptosJson) {
+      const selectedCryptos = JSON.parse(selectedCryptosJson);
+      const battleContainer = document.getElementById('battle-container');
+      if (battleContainer) {
+        // Update the component's props
+        const battleComponent = battleContainer.querySelector('[data-component="CryptoBattle"]');
+        if (battleComponent) {
+          battleComponent.setAttribute('cryptos', JSON.stringify(selectedCryptos));
+          battleComponent.setAttribute('defaultCryptos', JSON.stringify(selectedCryptos));
+          // Force a re-render
+          battleComponent.dispatchEvent(new Event('astro:load'));
+        }
+      }
+      // Clear the selection after use
+      // localStorage.removeItem('selectedCryptos');
+    }
+  }
+
+  // Run on page load
+  document.addEventListener('DOMContentLoaded', hydrateBattle);
+  // Also run when navigating back to this page
+  window.addEventListener('popstate', hydrateBattle);
+</script>
