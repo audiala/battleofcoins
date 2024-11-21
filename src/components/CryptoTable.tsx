@@ -175,9 +175,19 @@ function formatNumber(value: string | null): string {
   }).format(num);
 }
 
+// Update the RowSelection interface to include string index signature
+interface RowSelection {
+  [key: string]: boolean;
+}
+
+// Add type for the table's row selection state
+type TableRowSelection = {
+  [key: string]: boolean;
+}
+
 export default function CryptoTable({ data, onSelectionChange }: CryptoTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [rowSelection, setRowSelection] = useState({});
+  const [rowSelection, setRowSelection] = useState<TableRowSelection>({});
   const [selectedPreset, setSelectedPreset] = useState<string>('');
 
   const table = useReactTable({
@@ -185,10 +195,16 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
     columns,
     state: { 
       sorting,
-      rowSelection,
+      rowSelection: rowSelection as TableRowSelection,
     },
     enableRowSelection: true,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: (updaterOrValue) => {
+      if (typeof updaterOrValue === 'function') {
+        setRowSelection(old => updaterOrValue(old) as TableRowSelection);
+      } else {
+        setRowSelection(updaterOrValue as TableRowSelection);
+      }
+    },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -196,20 +212,19 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
 
   const handlePresetSelect = (preset: string) => {
     setSelectedPreset(preset);
-    let selectedRows = {};
+    let selectedRows: TableRowSelection = {};
 
     switch (preset) {
       case 'top16':
         data.slice(0, 16).forEach((_, index) => {
-          selectedRows[index] = true;
+          selectedRows[index.toString()] = true;
         });
         break;
       case 'top100':
         data.slice(0, 100).forEach((_, index) => {
-          selectedRows[index] = true;
+          selectedRows[index.toString()] = true;
         });
         break;
-      // Add more presets here when we have the tags
       default:
         selectedRows = {};
     }
@@ -217,22 +232,21 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
     setRowSelection(selectedRows);
     
     if (onSelectionChange) {
-      const selectedCryptos = data.filter((_, index) => selectedRows[index]);
+      const selectedCryptos = data.filter((_, index) => selectedRows[index.toString()]);
       onSelectionChange(selectedCryptos);
     }
   };
 
   const startBattle = () => {
-    const selectedCryptos = data.filter((_, index) => rowSelection[index]);
+    const selectedCryptos = data.filter((_, index) => rowSelection[index.toString()]);
     if (selectedCryptos.length < 8) {
       alert('Please select at least 8 cryptocurrencies for the battle');
       return;
     }
 
-    // Store selected cryptos in localStorage
     try {
       localStorage.setItem('selectedCryptos', JSON.stringify(selectedCryptos));
-      console.log('Stored selected cryptos:', selectedCryptos); // Debug log
+      console.log('Stored selected cryptos:', selectedCryptos);
       window.location.href = '/crypto-battle';
     } catch (error) {
       console.error('Error storing selected cryptos:', error);

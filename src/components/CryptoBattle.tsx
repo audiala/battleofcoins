@@ -40,6 +40,10 @@ interface BattleHistory {
   prompt: string;
 }
 
+interface CryptoBattleProps {
+  cryptos: CryptoData[];
+}
+
 function createBattleHash(rounds: Round[]): string {
   // Create a string representation of the battle results
   const battleString = rounds.map(round => 
@@ -58,7 +62,12 @@ function createBattleHash(rounds: Round[]): string {
   return hash.toString(36); // Convert to base36 for shorter string
 }
 
-export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
+export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
+  console.log('CryptoBattle received cryptos:', cryptos?.length);
+
+  // Store initial cryptos in a ref to avoid re-renders
+  const initialCryptosRef = useRef<CryptoData[]>(cryptos);
+  
   const [rounds, setRounds] = useState<Round[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
@@ -68,18 +77,9 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
 
   const roundsRef = useRef(rounds);
   const currentRoundRef = useRef(currentRound);
+  const battleSavedRef = useRef(false);
 
-  const isTournamentComplete = rounds[currentRound]?.pools.length === 1 && 
-                              rounds[currentRound].pools[0].cryptos.length === 1;
-
-  useEffect(() => {
-    roundsRef.current = rounds;
-  }, [rounds]);
-
-  useEffect(() => {
-    currentRoundRef.current = currentRound;
-  }, [currentRound]);
-
+  // Combine the initialization logic into a single effect
   useEffect(() => {
     const initializeBattle = async () => {
       const savedHistories = localStorage.getItem('cryptoBattleHistories');
@@ -104,43 +104,65 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
           }
         }
       }
-      
-      // Only start new battle if we didn't load one from URL
-      startNewBattle();
+
+      // Check for selected cryptos in localStorage
+      const selectedCryptosJson = localStorage.getItem('selectedCryptos');
+      if (selectedCryptosJson) {
+        try {
+          const selectedCryptos = JSON.parse(selectedCryptosJson);
+          console.log('Found selected cryptos in component:', selectedCryptos.length);
+          initialCryptosRef.current = selectedCryptos;
+          startNewBattle(selectedCryptos);
+          // Clear localStorage after use
+          localStorage.removeItem('selectedCryptos');
+        } catch (error) {
+          console.error('Error parsing selected cryptos:', error);
+          startNewBattle(cryptos); // Fallback to default cryptos
+        }
+      } else {
+        console.log('Using default cryptos:', cryptos.length);
+        startNewBattle(cryptos);
+      }
     };
 
     initializeBattle();
-  }, []); // Empty dependency array
+  }, []); // Empty dependency array for mount only
 
-  // Add a ref to track if the battle has been saved
-  const battleSavedRef = useRef(false);
-
-  useEffect(() => {
-    if (isTournamentComplete && rounds.length > 0 && !battleSavedRef.current) {
-      const winner = rounds[currentRound].pools[0].cryptos[0];
-      const battleHash = createBattleHash(rounds);
-      
-      // Check if this battle already exists
-      const battleExists = battleHistories.some(battle => 
-        createBattleHash(battle.rounds) === battleHash
-      );
-
-      if (!battleExists) {
-        const newBattle: BattleHistory = {
-          id: battleHash,
-          date: new Date().toISOString(),
-          rounds,
-          winner,
-          prompt
-        };
-
-        const updatedHistories = [...battleHistories, newBattle];
-        setBattleHistories(updatedHistories);
-        localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
-        battleSavedRef.current = true;
-      }
+  const startNewBattle = (battleCryptos: CryptoData[]) => {
+    console.log('Starting new battle with cryptos:', battleCryptos?.length);
+    
+    if (!battleCryptos || battleCryptos.length === 0) {
+      console.error('No cryptos provided for battle');
+      return;
     }
-  }, [isTournamentComplete, rounds, currentRound, battleHistories, prompt]);
+    
+    // Remove battle parameter from URL
+    window.history.pushState({}, '', window.location.pathname);
+
+    // Create initial pools of 8
+    const initialPools: Pool[] = [];
+    for (let i = 0; i < battleCryptos.length; i += 8) {
+      initialPools.push({
+        id: i / 8,
+        cryptos: battleCryptos.slice(i, i + 8)
+      });
+    }
+
+    setRounds([{ name: 'Round 1', pools: initialPools }]);
+    setCurrentRound(0);
+    setSelectedBattleId(null);
+    setPrompt('');
+    battleSavedRef.current = false;
+  };
+
+  // Update the select onChange handler
+  const handleBattleSelect = (value: string) => {
+    if (value) {
+      loadBattle(value);
+    } else {
+      startNewBattle(initialCryptosRef.current);
+    }
+  };
 
   const processNextRound = async () => {
     try {
@@ -269,33 +291,51 @@ export default function CryptoBattle({ cryptos }: { cryptos: CryptoData[] }) {
     }
   };
 
-  const startNewBattle = () => {
-    // Remove battle parameter from URL
-    window.history.pushState({}, '', window.location.pathname);
+  const isTournamentComplete = rounds[currentRound]?.pools.length === 1 && 
+                              rounds[currentRound].pools[0].cryptos.length === 1;
 
-    // Create initial pools of 8
-    const initialPools: Pool[] = [];
-    for (let i = 0; i < cryptos.length; i += 8) {
-      initialPools.push({
-        id: i / 8,
-        cryptos: cryptos.slice(i, i + 8)
-      });
+  useEffect(() => {
+    roundsRef.current = rounds;
+  }, [rounds]);
+
+  useEffect(() => {
+    currentRoundRef.current = currentRound;
+  }, [currentRound]);
+
+  useEffect(() => {
+    if (isTournamentComplete && rounds.length > 0 && !battleSavedRef.current) {
+      const winner = rounds[currentRound].pools[0].cryptos[0];
+      const battleHash = createBattleHash(rounds);
+      
+      // Check if this battle already exists
+      const battleExists = battleHistories.some(battle => 
+        createBattleHash(battle.rounds) === battleHash
+      );
+
+      if (!battleExists) {
+        const newBattle: BattleHistory = {
+          id: battleHash,
+          date: new Date().toISOString(),
+          rounds,
+          winner,
+          prompt
+        };
+
+        const updatedHistories = [...battleHistories, newBattle];
+        setBattleHistories(updatedHistories);
+        localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
+        battleSavedRef.current = true;
+      }
     }
-
-    setRounds([{ name: 'Round 1', pools: initialPools }]);
-    setCurrentRound(0);
-    setSelectedBattleId(null);
-    setPrompt('');
-    battleSavedRef.current = false;
-  };
+  }, [isTournamentComplete, rounds, currentRound, battleHistories, prompt]);
 
   return (
-    <div className="crypto-battle">
+    <div className="crypto-battle" data-component="CryptoBattle" {...props}>
       <div className="battle-controls">
         <div className="battle-history">
           <select 
             value={selectedBattleId || ''} 
-            onChange={(e) => e.target.value ? loadBattle(e.target.value) : startNewBattle()}
+            onChange={(e) => handleBattleSelect(e.target.value)}
             className="battle-select"
           >
             <option key="new-battle" value="">Start New Battle</option>

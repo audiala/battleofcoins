@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import CryptoBattle from '../components/CryptoBattle';
+import CryptoBattleComponent from '../components/CryptoBattle';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { load } from 'js-yaml';
@@ -20,6 +20,9 @@ const cryptoData = load(yamlContent) as CryptoData[];
 
 // Default to top 16 if no selection
 const default_cryptos = cryptoData.slice(0, 16);
+
+// Add console log for debugging
+console.log('Default cryptos loaded:', default_cryptos.length);
 ---
 
 <Layout title="Crypto Battle Tournament">
@@ -31,10 +34,10 @@ const default_cryptos = cryptoData.slice(0, 16);
       </a>
     </div>
     <div id="battle-container">
-      <CryptoBattle 
+      <CryptoBattleComponent 
         client:load 
         cryptos={default_cryptos}
-        defaultCryptos={default_cryptos}
+        data-component="CryptoBattle"
       />
     </div>
   </main>
@@ -74,29 +77,6 @@ const default_cryptos = cryptoData.slice(0, 16);
 </style>
 
 <script>
-  // Function to hydrate the battle component with selected cryptos
-  function hydrateBattle() {
-    const selectedCryptosJson = localStorage.getItem('selectedCryptos');
-    if (selectedCryptosJson) {
-      const selectedCryptos = JSON.parse(selectedCryptosJson);
-      const battleContainer = document.getElementById('battle-container');
-      if (battleContainer) {
-        // Update the component's props
-        const battleComponent = battleContainer.querySelector('[data-component="CryptoBattle"]');
-        if (battleComponent) {
-          battleComponent.setAttribute('cryptos', JSON.stringify(selectedCryptos));
-          battleComponent.setAttribute('defaultCryptos', JSON.stringify(selectedCryptos));
-          // Force a re-render
-          battleComponent.dispatchEvent(new Event('astro:load'));
-        }
-      }
-      // Clear the selection after use
-      // localStorage.removeItem('selectedCryptos');
-    }
-  }
-
-  // Run on page load
-  document.addEventListener('DOMContentLoaded', hydrateBattle);
-  // Also run when navigating back to this page
-  window.addEventListener('popstate', hydrateBattle);
+  // No need for hydration script anymore, component handles it internally
+  console.log('Battle page loaded');
 </script>

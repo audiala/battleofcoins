@@ -1,11 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import CryptoTable from '../components/CryptoTable';
+import CryptoTableComponent from '../components/CryptoTable';
 import '../styles/crypto-table.css';
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { load } from 'js-yaml';
 import '../styles/main.css';
+import type { CryptoData } from '../components/CryptoTable';
 
 // Read the YAML file
 const dataDir = join(process.cwd(), 'data');
@@ -16,10 +17,11 @@ const latestFile = files
   .reverse()[0];
 
 const yamlContent = readFileSync(join(dataDir, latestFile), 'utf8');
-const cryptoData = load(yamlContent);
+const cryptoData = load(yamlContent) as CryptoData[];
 
+console.log('Loaded crypto data:', cryptoData.length);
 ---
 
 <Layout title="Crypto Table">
-  <CryptoTable client:load data={cryptoData} />
+  <CryptoTableComponent client:load data={cryptoData} />
 </Layout> 
