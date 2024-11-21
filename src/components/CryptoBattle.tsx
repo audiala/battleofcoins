@@ -3,6 +3,7 @@ import type { CryptoData } from './CryptoTable';
 import axios from 'axios';
 import { Tooltip } from './Tooltip';
 import { CryptoCard } from './CryptoCard';
+import { ModelTooltip } from './ModelTooltip';
 
 interface Winner {
   coin: CryptoData;
@@ -528,22 +529,28 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               
               <div className="model-grid">
                 {getSortedModels(models, modelSortOption).map(([key, model]) => (
-                  <div
+                  <ModelTooltip
                     key={key}
-                    className={`model-checkbox ${selectedModels.some(m => m.modelId === key) ? 'selected' : ''}`}
-                    onClick={() => handleModelToggle(key)}
+                    name={model.name}
+                    description={model.description}
+                    cost={model.cost}
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectedModels.some(m => m.modelId === key)}
-                      onChange={() => {}} // Required for React controlled component
-                      disabled={isAutoPlaying}
-                    />
-                    <div className="model-info">
-                      <span className="model-name">{model.name}</span>
-                      <span className="model-cost">{model.cost.replace('Average cost', 'avg')}</span>
+                    <div
+                      className={`model-checkbox ${selectedModels.some(m => m.modelId === key) ? 'selected' : ''}`}
+                      onClick={() => handleModelToggle(key)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedModels.some(m => m.modelId === key)}
+                        onChange={() => {}} // Required for React controlled component
+                        disabled={isAutoPlaying}
+                      />
+                      <div className="model-info">
+                        <span className="model-name">{model.name}</span>
+                        <span className="model-cost">{model.cost.replace('Average cost', 'avg')}</span>
+                      </div>
                     </div>
-                  </div>
+                  </ModelTooltip>
                 ))}
               </div>
               

@@ -968,4 +968,76 @@
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;
 }
+
+.tooltip-trigger {
+  width: 100%;
+}
+
+.model-tooltip {
+  background: rgba(26, 26, 26, 0.98);
+  border: 1px solid rgba(245, 62, 152, 0.2);
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 250px;
+  max-width: 300px;
+  color: white;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.model-tooltip h4 {
+  color: #f53e98;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.model-tooltip-description {
+  color: #e1e1e1;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.model-tooltip-cost {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Add arrow */
+.model-tooltip::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 8px solid transparent;
+}
+
+/* Right side tooltip */
+.model-tooltip[style*="left:"] {
+  margin-left: 8px;
+}
+
+.model-tooltip[style*="left:"]::before {
+  left: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: rgba(26, 26, 26, 0.98);
+}
+
+/* Left side tooltip */
+.model-tooltip[style*="right:"] {
+  margin-right: 8px;
+}
+
+.model-tooltip[style*="right:"]::before {
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: rgba(26, 26, 26, 0.98);
+}
  
