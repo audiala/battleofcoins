@@ -36,8 +36,7 @@ interface Pool {
 interface BattleHistory {
   id: string;
   date: string;
-  rounds: Round[];
-  winner?: CryptoData;
+  results: BattleResults;
   prompt: string;
 }
 
@@ -68,6 +67,28 @@ interface ModelSelection {
 // Add this type for sorting options
 type ModelSortOption = 'default' | 'name' | 'cost';
 
+// Add new interfaces for scoring
+interface GlobalScore {
+  [ticker: string]: {
+    coin: CryptoData;
+    score: number;
+  };
+}
+
+interface BattleResults {
+  modelResults: {
+    [modelId: string]: {
+      rounds: Round[];
+      winner: CryptoData;
+    };
+  };
+  globalWinner: {
+    coin: CryptoData;
+    score: number;
+  };
+  scores: GlobalScore;
+}
+
 const createInitialPools = (cryptos: CryptoData[]): Pool[] => {
   const pools: Pool[] = [];
   for (let i = 0; i < cryptos.length; i += 8) {
@@ -96,6 +117,35 @@ function createBattleHash(rounds: Round[]): string {
   }
   return hash.toString(36); // Convert to base36 for shorter string
 }
+
+// Add function to calculate global scores
+const calculateGlobalScores = (modelResults: { [modelId: string]: { rounds: Round[]; winner: CryptoData; } }): GlobalScore => {
+  const scores: GlobalScore = {};
+  
+  Object.values(modelResults).forEach(({ winner }) => {
+    if (!scores[winner.ticker]) {
+      scores[winner.ticker] = {
+        coin: winner,
+        score: 0
+      };
+    }
+    scores[winner.ticker].score += 1;
+  });
+
+  return scores;
+};
+
+// Add function to determine global winner
+const determineGlobalWinner = (scores: GlobalScore) => {
+  return Object.values(scores).reduce((highest, current) => 
+    current.score > highest.score ? current : highest
+  );
+};
+
+// Add a type guard function to check if activeModelId is valid
+const isValidModelId = (modelId: string | null): modelId is string => {
+  return modelId !== null;
+};
 
 export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
   console.log('CryptoBattle received cryptos:', cryptos?.length);
@@ -160,10 +210,10 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             const battle = histories.find((h: BattleHistory) => h.id === battleId);
             if (battle) {
               setBattlesByModel({
-                [defaultModel]: battle.rounds
+                [defaultModel]: battle.results.modelResults[defaultModel].rounds
               });
               setCurrentRoundByModel({
-                [defaultModel]: battle.rounds.length - 1
+                [defaultModel]: battle.results.modelResults[defaultModel].rounds.length - 1
               });
               setSelectedBattleId(battleId);
               setPrompt(battle.prompt);
@@ -221,13 +271,20 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     const modelsToUse = selectedModels.length > 0 ? selectedModels : 
       Object.keys(models).length > 0 ? [{ modelId: Object.keys(models)[0], active: true }] : [];
 
-    // Initialize battles for each selected model
-    const initialBattles: {[key: string]: Round[]} = {};
-    const initialRounds: {[key: string]: number} = {};
+    // Create initial pools once and share them across all models
+    const initialPools = createInitialPools(battleCryptos);
+    const initialBattles: { [key: string]: Round[] } = {};
+    const initialRounds: { [key: string]: number } = {};
 
     modelsToUse.forEach(({ modelId }) => {
-      const initialPools = createInitialPools(battleCryptos);
-      initialBattles[modelId] = [{ name: 'Round 1', pools: initialPools }];
+      // Create a deep copy of initialPools for each model
+      const modelPools = initialPools.map(pool => ({
+        ...pool,
+        cryptos: [...pool.cryptos],
+        id: pool.id
+      }));
+
+      initialBattles[modelId] = [{ name: 'Round 1', pools: modelPools }];
       initialRounds[modelId] = 0;
     });
 
@@ -253,10 +310,23 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     console.log(`Processing next round for model: ${modelId}`);
     return new Promise(async (resolve) => {
       try {
+        // Ensure the model has battles initialized
+        if (!battlesByModelRef.current[modelId]) {
+          console.error(`No battles found for model ${modelId}`);
+          resolve(null);
+          return;
+        }
+
         // Get current state for this model from Refs
-        const modelBattles = [...battlesByModelRef.current[modelId]];
-        const currentRoundIndex = currentRoundByModelRef.current[modelId];
-        const currentRoundPools = modelBattles[currentRoundIndex].pools;
+        const modelBattles = [...(battlesByModelRef.current[modelId] || [])];
+        const currentRoundIndex = currentRoundByModelRef.current[modelId] || 0;
+        const currentRoundPools = modelBattles[currentRoundIndex]?.pools;
+
+        if (!currentRoundPools) {
+          console.error(`No pools found for model ${modelId} round ${currentRoundIndex}`);
+          resolve(null);
+          return;
+        }
 
         console.log(`Model ${modelId} - Current Round Index: ${currentRoundIndex}`);
         console.log(`Model ${modelId} - Current Round Pools:`, currentRoundPools);
@@ -279,7 +349,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             pool.isLoading = true;
             console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
-            // Use AI selection for winners
+            // Use AI selection for winners with specific model
             const response = await axios.post('/api/selectWinnersRandom', {
               cryptos: pool.cryptos,
               prompt,
@@ -296,21 +366,22 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           } finally {
             pool.isLoading = false;
             console.log(`Model ${modelId} - Pool ${pool.id} loading complete`);
-            // Update the state with the modified pool
-            setBattlesByModel(prev => {
-              const updated = {
-                ...prev,
-                [modelId]: modelBattles
-              };
-              battlesByModelRef.current = updated; // Update Ref
-              return updated;
-            });
           }
         });
 
         // Wait for all pools to complete
         await Promise.all(poolPromises);
         console.log(`Model ${modelId} - All pools processed for round ${currentRoundIndex}`);
+
+        // Update the state with the modified pools
+        setBattlesByModel(prev => {
+          const updated = {
+            ...prev,
+            [modelId]: modelBattles
+          };
+          battlesByModelRef.current = updated;
+          return updated;
+        });
 
         // Check if all pools have winners before creating the next round
         if (currentRoundPools.every(pool => pool.winners)) {
@@ -341,7 +412,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 ...prev,
                 [modelId]: modelBattles
               };
-              battlesByModelRef.current = updated; // Update Ref
+              battlesByModelRef.current = updated;
               return updated;
             });
             
@@ -350,10 +421,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 ...prev,
                 [modelId]: currentRoundIndex + 1
               };
-              currentRoundByModelRef.current = updated; // Update Ref
+              currentRoundByModelRef.current = updated;
               return updated;
             });
-            console.log(`Model ${modelId} - Current Round updated to ${currentRoundIndex + 1}`);
 
             // Return the new round index
             resolve(currentRoundIndex + 1);
@@ -373,15 +443,13 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               }],
             });
 
-            console.log(`Model ${modelId} - Final round created with the winner.`);
-
             // Update states
             setBattlesByModel(prev => {
               const updated = {
                 ...prev,
                 [modelId]: modelBattles
               };
-              battlesByModelRef.current = updated; // Update Ref
+              battlesByModelRef.current = updated;
               return updated;
             });
             
@@ -390,10 +458,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 ...prev,
                 [modelId]: currentRoundIndex + 1
               };
-              currentRoundByModelRef.current = updated; // Update Ref
+              currentRoundByModelRef.current = updated;
               return updated;
             });
-            console.log(`Model ${modelId} - Current Round updated to Final Round`);
 
             // Indicate completion
             resolve(null);
@@ -412,52 +479,118 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     });
   }
 
-  // Modify handleAutoPlay to use Refs for the latest state
+  // Update handleAutoPlay to initialize battles first
   const handleAutoPlay = async () => {
     console.log('Auto Play started');
     setIsAutoPlaying(true);
     
     try {
-      // Run battles for all selected models in parallel
+      // First, initialize battles for all selected models if not already initialized
+      const initialPools = createInitialPools(initialCryptosRef.current);
+      
+      // Initialize battles for all selected models
+      setBattlesByModel(prev => {
+        const newBattles = { ...prev };
+        selectedModels.forEach(({ modelId }) => {
+          if (!newBattles[modelId]) {
+            // Create a deep copy of initialPools for each model
+            const modelPools = initialPools.map(pool => ({
+              ...pool,
+              cryptos: [...pool.cryptos],
+              id: pool.id
+            }));
+            
+            newBattles[modelId] = [{ name: 'Round 1', pools: modelPools }];
+          }
+        });
+        battlesByModelRef.current = newBattles;
+        return newBattles;
+      });
+
+      // Initialize current round for all models
+      setCurrentRoundByModel(prev => {
+        const newRounds = { ...prev };
+        selectedModels.forEach(({ modelId }) => {
+          if (newRounds[modelId] === undefined) {
+            newRounds[modelId] = 0;
+          }
+        });
+        currentRoundByModelRef.current = newRounds;
+        return newRounds;
+      });
+
+      // Wait a moment for state updates to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Initialize results object for tracking winners
+      const modelResults: { [modelId: string]: { rounds: Round[]; winner: CryptoData; } } = {};
+      
+      // Run all model battles in parallel
       const battlePromises = selectedModels.map(async ({ modelId }) => {
         console.log(`Starting battle for model: ${modelId}`);
         let completed = false;
-
+        
         while (!completed) {
-          console.log(`Processing next round for model: ${modelId}`);
           const newRoundIndex = await processNextRound(modelId);
           
           if (newRoundIndex === null) {
-            // Tournament is complete
-            console.log(`Battle complete for model: ${modelId}`);
-            completed = true;
-          } else {
-            // Verify if the tournament is complete using Refs
-            const currentRoundData = battlesByModelRef.current[modelId][newRoundIndex];
-            console.log(`Current Round Data for model ${modelId}:`, currentRoundData);
-            
-            if (
-              currentRoundData?.pools.length === 1 &&
-              currentRoundData.pools[0].cryptos.length === 1
-            ) {
-              console.log(`Tournament complete for model: ${modelId}`);
+            // Tournament is complete for this model
+            const finalRound = battlesByModelRef.current[modelId]?.slice(-1)[0];
+            if (!finalRound) {
+              console.error(`No final round found for model ${modelId}`);
               completed = true;
+              continue;
             }
-
-            // Wait between rounds
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const winner = finalRound.pools[0].cryptos[0];
+            modelResults[modelId] = {
+              rounds: battlesByModelRef.current[modelId],
+              winner
+            };
+            completed = true;
           }
+          
+          // Small delay between rounds
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       });
 
       // Wait for all battles to complete
       await Promise.all(battlePromises);
-      console.log('All battles completed');
+      
+      // Calculate global scores and winner
+      const scores = calculateGlobalScores(modelResults);
+      const globalWinner = determineGlobalWinner(scores);
+      
+      // Create battle results
+      const battleResults: BattleResults = {
+        modelResults,
+        globalWinner,
+        scores
+      };
+      
+      // Create battle hash from all results
+      const battleHash = createBattleHash(Object.values(modelResults).flatMap(r => r.rounds));
+      
+      // Save battle history
+      if (!battleSavedRef.current) {
+        const newBattle: BattleHistory = {
+          id: battleHash,
+          date: new Date().toISOString(),
+          results: battleResults,
+          prompt
+        };
+        
+        const updatedHistories = [...battleHistories, newBattle];
+        setBattleHistories(updatedHistories);
+        localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
+        battleSavedRef.current = true;
+      }
+      
     } catch (error) {
       console.error('Error during auto play:', error);
     } finally {
       setIsAutoPlaying(false);
-      console.log('Auto Play ended');
     }
   };
 
@@ -480,14 +613,38 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         window.location.pathname;
       window.history.pushState({}, '', newUrl);
 
-      // Update both rounds and battlesByModel states
-      setBattlesByModel({
-        [activeModelId]: battle.rounds
-      });
-      setCurrentRoundByModel({
-        [activeModelId]: battle.rounds.length - 1
-      });
-      console.log(`Model ${activeModelId} - Battles loaded:`, battle.rounds);
+      // Handle both old and new battle history formats
+      if (battle.results?.modelResults) {
+        // New format with multiple models
+        setBattlesByModel(
+          Object.entries(battle.results.modelResults).reduce((acc, [modelId, data]) => ({
+            ...acc,
+            [modelId]: data.rounds
+          }), {})
+        );
+        setCurrentRoundByModel(
+          Object.entries(battle.results.modelResults).reduce((acc, [modelId, data]) => ({
+            ...acc,
+            [modelId]: data.rounds.length - 1
+          }), {})
+        );
+        
+        // Update selected models based on the battle results
+        setSelectedModels(
+          Object.keys(battle.results.modelResults).map(modelId => ({
+            modelId,
+            active: true
+          }))
+        );
+      } else {
+        // Old format with single model
+        setBattlesByModel({
+          [activeModelId]: battle.rounds || []
+        });
+        setCurrentRoundByModel({
+          [activeModelId]: (battle.rounds || []).length - 1
+        });
+      }
       
       setSelectedBattleId(battleId);
       setPrompt(battle.prompt);
@@ -498,43 +655,19 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
-  const isTournamentComplete =
-    battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools?.length === 1 && 
-    battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools[0]?.winners?.length === 1;
-
-  useEffect(() => {
-    console.log('Checking tournament completion:', isTournamentComplete);
-    if (isTournamentComplete && !battleSavedRef.current) {
-      console.log('Tournament is complete. Saving battle history...');
-      const currentBattleRounds = battlesByModel[activeModelId];
-      const winner = currentBattleRounds[currentRoundByModel[activeModelId]].pools[0].cryptos[0];
-      const battleHash = createBattleHash(currentBattleRounds);
-      
-      // Check if this battle already exists
-      const battleExists = battleHistories.some(battle => 
-        createBattleHash(battle.rounds) === battleHash
-      );
-      console.log(`Battle exists: ${battleExists}`);
-
-      if (!battleExists) {
-        const newBattle: BattleHistory = {
-          id: battleHash,
-          date: new Date().toISOString(),
-          rounds: currentBattleRounds,
-          winner,
-          prompt
-        };
-
-        const updatedHistories = [...battleHistories, newBattle];
-        setBattleHistories(updatedHistories);
-        localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
-        battleSavedRef.current = true;
-        console.log('New battle history saved:', newBattle);
-      } else {
-        console.log('Battle already exists. Skipping save.');
-      }
-    }
-  }, [isTournamentComplete, battlesByModel, currentRoundByModel, battleHistories, prompt, activeModelId]);
+  // Move isTournamentComplete inside the component
+  const isTournamentComplete = (modelId: string | null): boolean => {
+    if (!isValidModelId(modelId)) return false;
+    
+    const modelBattles = battlesByModel[modelId];
+    const currentRound = currentRoundByModel[modelId];
+    
+    if (!modelBattles || currentRound === undefined) return false;
+    
+    const finalRound = modelBattles[currentRound];
+    return finalRound?.pools?.length === 1 && 
+           finalRound.pools[0]?.winners?.length === 1;
+  };
 
   // Add effect to fetch models
   useEffect(() => {
@@ -599,14 +732,20 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             className="battle-select"
           >
             <option key="new-battle" value="">Start New Battle</option>
-            {battleHistories.map((battle, index) => (
-              <option 
-                key={`battle-${battle.id}-${index}`} 
-                value={battle.id}
-              >
-                {new Date(battle.date).toLocaleString()} - Winner: {battle.winner?.name}
-              </option>
-            ))}
+            {battleHistories.map((battle, index) => {
+              const winner = battle.results?.globalWinner?.coin || 
+                            (battle.results?.modelResults && 
+                             Object.values(battle.results.modelResults)[0]?.winner);
+              
+              return (
+                <option 
+                  key={`battle-${battle.id}-${index}`} 
+                  value={battle.id}
+                >
+                  {new Date(battle.date).toLocaleString()} - Winner: {winner?.name}
+                </option>
+              );
+            })}
           </select>
         </div>
 
@@ -724,80 +863,143 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
         <button 
           onClick={handleAutoPlay}
-          disabled={isAutoPlaying || isTournamentComplete || selectedBattleId !== null || !prompt.trim()}
+          disabled={
+            isAutoPlaying || 
+            !isValidModelId(activeModelId) || 
+            isTournamentComplete(activeModelId) || 
+            selectedBattleId !== null || 
+            !prompt.trim()
+          }
           className="auto-play-button"
         >
           {isAutoPlaying ? 'Battle in Progress...' : 
-           isTournamentComplete ? 'Tournament Complete!' : 
+           !isValidModelId(activeModelId) ? 'Select a Model' :
+           isTournamentComplete(activeModelId) ? 'Tournament Complete!' : 
            selectedBattleId ? 'Viewing Past Battle' :
            !prompt.trim() ? 'Enter Selection Criteria' :
            'Start Auto Battle'}
         </button>
 
-        {isTournamentComplete && (
+        {isValidModelId(activeModelId) && isTournamentComplete(activeModelId) && (
           <div className="winner-announcement">
-            <h2>🏆 Tournament Winner 🏆</h2>
-            <div className="final-winner">
-              <img 
-                src={`/${battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]]?.pools[0].cryptos[0].logo_local}`} 
-                alt={battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos[0].name}
-                className="winner-logo"
-              />
-              <span className="winner-name">
-                {battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos[0].name}
-              </span>
-              <span className="winner-ticker">
-                {battlesByModel[activeModelId]?.[currentRoundByModel[activeModelId]].pools[0].cryptos[0].ticker}
-              </span>
+            <h2>🏆 Tournament Results 🏆</h2>
+            
+            {/* Show individual model winners */}
+            <div className="model-winners">
+              {selectedModels.map(({ modelId }) => {
+                const modelBattles = battlesByModel[modelId];
+                const currentRound = currentRoundByModel[modelId];
+                if (!modelBattles || currentRound === undefined) return null;
+                
+                const winner = modelBattles[currentRound]?.pools[0]?.cryptos[0];
+                if (!winner) return null;
+
+                return (
+                  <div key={modelId} className="model-winner">
+                    <h3>{models[modelId]?.name} Winner:</h3>
+                    <div className="winner-card">
+                      <img 
+                        src={`/${winner.logo_local}`} 
+                        alt={winner.name}
+                        className="winner-logo"
+                      />
+                      <span className="winner-name">
+                        {winner.name}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+            
+            {/* Show global winner with scores */}
+            {selectedBattleId && battleHistories.find(h => h.id === selectedBattleId)?.results?.globalWinner && (
+              <div className="global-winner">
+                <h3>Global Winner</h3>
+                <div className="winner-card">
+                  {(() => {
+                    const battle = battleHistories.find(h => h.id === selectedBattleId);
+                    const globalWinner = battle?.results?.globalWinner;
+                    if (!globalWinner) return null;
+
+                    return (
+                      <>
+                        <img 
+                          src={`/${globalWinner.coin.logo_local}`}
+                          alt={globalWinner.coin.name}
+                          className="winner-logo"
+                        />
+                        <div className="winner-info">
+                          <span className="winner-name">
+                            {globalWinner.coin.name}
+                          </span>
+                          <span className="winner-score">
+                            Score: {globalWinner.score}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Display active model's battle */}
-      {activeModelId && battlesByModel[activeModelId] && (
-        <div className="rounds-container">
-          {battlesByModel[activeModelId].map((round, roundIndex) => (
+      {/* Display battles for all selected models */}
+      <div className="models-battles-container">
+        {selectedModels.map(({ modelId }) => (
+          battlesByModel[modelId] && (
             <div 
-              key={`round-${roundIndex}`}
-              className={`round ${roundIndex === currentRoundByModel[activeModelId] ? 'active' : ''}`}
+              key={`model-${modelId}`} 
+              className={`model-battle ${modelId === activeModelId ? 'active' : ''}`}
             >
-              <h3 className="round-title">{round.name}</h3>
-              <div className="pools-container">
-                {round.pools.map(pool => (
-                  <div key={`pool-${roundIndex}-${pool.id}`} className="pool">
-                    {pool.isLoading && (
-                      <div className="pool-loading">
-                        <div className="loading-spinner"></div>
-                        <span>AI Analyzing...</span>
-                      </div>
-                    )}
-                    <div className={`pool-cryptos ${pool.isLoading ? 'pool-loading-overlay' : ''}`}>
-                      {pool.cryptos.map(crypto => {
-                        // Determine if the crypto is a winner
-                        const isWinner = pool.winners?.some(w => w.coin.ticker === crypto.ticker) || pool.cryptos.length === 1;
-                        const reason = pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
-                                       pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason;
+              <h3 className="model-battle-title">{models[modelId]?.name}</h3>
+              <div className="rounds-container">
+                {battlesByModel[modelId].map((round, roundIndex) => (
+                  <div 
+                    key={`round-${roundIndex}`}
+                    className={`round ${roundIndex === currentRoundByModel[modelId] ? 'active' : ''}`}
+                  >
+                    <h3 className="round-title">{round.name}</h3>
+                    <div className="pools-container">
+                      {round.pools.map(pool => (
+                        <div key={`pool-${roundIndex}-${pool.id}`} className="pool">
+                          {pool.isLoading && (
+                            <div className="pool-loading">
+                              <div className="loading-spinner"></div>
+                              <span>AI Analyzing...</span>
+                            </div>
+                          )}
+                          <div className={`pool-cryptos ${pool.isLoading ? 'pool-loading-overlay' : ''}`}>
+                            {pool.cryptos.map(crypto => {
+                              const isWinner = pool.winners?.some(w => w.coin.ticker === crypto.ticker) || pool.cryptos.length === 1;
+                              const reason = pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
+                                           pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason;
 
-                        return (
-                          <CryptoCard
-                            key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
-                            crypto={crypto}
-                            isWinner={isWinner || false}
-                            reason={reason}
-                            roundIndex={roundIndex}
-                            poolId={pool.id}
-                          />
-                        );
-                      })}
+                              return (
+                                <CryptoCard
+                                  key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
+                                  crypto={crypto}
+                                  isWinner={isWinner || false}
+                                  reason={reason}
+                                  roundIndex={roundIndex}
+                                  poolId={pool.id}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          )
+        ))}
+      </div>
     </div>
   );
 } 

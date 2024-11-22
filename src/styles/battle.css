@@ -1193,4 +1193,78 @@
 .model-grid.expanded::after {
   opacity: 0;
 }
+
+.models-battles-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}
+
+.model-battle {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.model-battle.active {
+  opacity: 1;
+  border-color: #007bff;
+}
+
+.model-battle-title {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.model-winners {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.model-winner {
+  background: #1e1e1e;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #374151;
+}
+
+.model-winner h3 {
+  color: #f53e98;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.winner-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #272727;
+  border-radius: 0.5rem;
+}
+
+.global-winner {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #2a1f2d;
+  border: 2px solid #f53e98;
+  border-radius: 0.5rem;
+}
+
+.winner-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.winner-score {
+  color: #f53e98;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
  
