@@ -377,8 +377,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
             // Use AI selection for winners with specific model
-            const judgeAPI = '/api/selectWinnersRandom';
-            // const judgeAPI = '/api/selectWinners';
+            // const judgeAPI = '/api/selectWinnersRandom';
+            const judgeAPI = '/api/selectWinners';
             const response = await axios.post(judgeAPI, {
               cryptos: pool.cryptos,
               prompt,
@@ -621,6 +621,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         await handleSaveBattle(newBattle);
       }
       
+      // Refresh the wallet balance
+      await fetchWalletBalance();
+      
     } catch (error) {
       console.error('Error during auto play:', error);
     } finally {
@@ -776,42 +779,43 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   // Add new state for wallet info
   const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
 
-  // Add effect to fetch wallet balance
+  // Move fetchWalletBalance inside the component
+  const fetchWalletBalance = async () => {
+    const apiKey = localStorage.getItem('nanoGptApiKey');
+    if (!apiKey) {
+      setWalletInfo({ balance: '0', error: 'No API key set' });
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/nano-balance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ apiKey })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch balance');
+      }
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setWalletInfo({ balance: data.balance || '0' });
+    } catch (error) {
+      setWalletInfo({ 
+        balance: '0', 
+        error: error instanceof Error ? error.message : 'Failed to fetch balance' 
+      });
+    }
+  };
+
+  // Add effect to fetch initial balance
   useEffect(() => {
-    const fetchWalletBalance = async () => {
-      const apiKey = localStorage.getItem('nanoGptApiKey');
-      if (!apiKey) {
-        setWalletInfo({ balance: '0', error: 'No API key set' });
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/nano-balance', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ apiKey })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch balance');
-        }
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        setWalletInfo({ balance: data.balance || '0' });
-      } catch (error) {
-        setWalletInfo({ 
-          balance: '0', 
-          error: error instanceof Error ? error.message : 'Failed to fetch balance' 
-        });
-      }
-    };
-
     fetchWalletBalance();
   }, []);
 

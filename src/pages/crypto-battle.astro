@@ -1,47 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import CryptoBattleComponent from '../components/CryptoBattle';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { load } from 'js-yaml';
-import '../styles/battle.css';
-import type { CryptoData } from '../components/CryptoTable';
+import CryptoBattle from '../components/CryptoBattle';
 
-// Read the YAML file for default cryptos
-const dataDir = join(process.cwd(), 'data');
-const files = readdirSync(dataDir);
-const latestFile = files
-  .filter(f => f.startsWith('top_500_coins_'))
-  .sort()
-  .reverse()[0];
-
-const yamlContent = readFileSync(join(dataDir, latestFile), 'utf8');
-const cryptoData = load(yamlContent) as CryptoData[];
-
-// Default to top 16 if no selection
-const default_cryptos = cryptoData.slice(0, 16);
-
-// Add console log for debugging
-console.log('Default cryptos loaded:', default_cryptos.length);
+const cryptos = [];
 ---
 
-<Layout title="Crypto Battle Tournament">
-  <main>
-    <div id="battle-container">
-      <CryptoBattleComponent 
-        client:load 
-        cryptos={default_cryptos}
-        data-component="CryptoBattle"
-      />
-    </div>
-  </main>
+<Layout title="Crypto Battle">
+  <CryptoBattle client:load cryptos={cryptos} />
 </Layout>
-
-<style>
-
-</style>
-
-<script>
-  // No need for hydration script anymore, component handles it internally
-  console.log('Battle page loaded');
-</script>
