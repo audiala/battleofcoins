@@ -609,26 +609,34 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       window.history.pushState({}, '', newUrl);
 
       if (battle.results?.modelResults) {
-        // New format with multiple models
+        // Get all model IDs from the battle
+        const modelIds = Object.keys(battle.results.modelResults);
+        
+        // Set up the battles and rounds for each model
         setBattlesByModel(
-          Object.entries(battle.results.modelResults).reduce((acc, [modelId, data]) => ({
+          modelIds.reduce((acc, modelId) => ({
             ...acc,
-            [modelId]: data.rounds
-          }), {})
-        );
-        setCurrentRoundByModel(
-          Object.entries(battle.results.modelResults).reduce((acc, [modelId, data]) => ({
-            ...acc,
-            [modelId]: data.rounds.length - 1
+            [modelId]: (battle.results.modelResults[modelId] as { rounds: Round[] }).rounds
           }), {})
         );
         
+        setCurrentRoundByModel(
+          modelIds.reduce((acc, modelId) => ({
+            ...acc,
+            [modelId]: (battle.results.modelResults[modelId] as { rounds: Round[] }).rounds.length - 1
+          }), {})
+        );
+        
+        // Set up selected models
         setSelectedModels(
-          Object.keys(battle.results.modelResults).map(modelId => ({
+          modelIds.map(modelId => ({
             modelId,
             active: true
           }))
         );
+        
+        // Set the first model as active
+        setActiveModelId(modelIds[0]);
       }
       
       setSelectedBattleId(battleId);
@@ -745,6 +753,24 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           </select>
         </div>
 
+        {selectedModels.length > 0 && (
+          <div className="model-tabs">
+            {selectedModels.map(({ modelId }) => (
+              <button
+                key={modelId}
+                className={`model-tab ${activeModelId === modelId ? 'active' : ''}`}
+                onClick={() => setActiveModelId(modelId)}
+                disabled={isAutoPlaying}
+              >
+                {models[modelId]?.name}
+                {isTournamentComplete(modelId) && (
+                  <span className="completion-indicator" title="Battle Complete">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         {!selectedBattleId ? (
           <>
             <div className="model-selection">
@@ -815,29 +841,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 ))}
               </div>
               
-              {selectedModels.length > 0 && (
-                <div className="model-tabs">
-                  {selectedModels.map(({ modelId }) => (
-                    <button
-                      key={modelId}
-                      className={`model-tab ${activeModelId === modelId ? 'active' : ''}`}
-                      onClick={() => setActiveModelId(modelId)}
-                    >
-                      {models[modelId].name}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {activeModelId && models[activeModelId] && (
-                <div className="model-description">
-                  <p>{models[activeModelId].description}</p>
-                  {models[activeModelId].label && (
-                    <span className={`model-label ${models[activeModelId].labelVariant || ''}`}>
-                      {models[activeModelId].label}
-                    </span>
-                  )}
-                </div>
-              )}
             </div>
 
             <div className="prompt-input">
