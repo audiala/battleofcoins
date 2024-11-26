@@ -162,6 +162,16 @@ const downloadBattleAsJson = (battleResults: any) => {
   URL.revokeObjectURL(url);
 };
 
+// Update the helper function to remove marketcap
+const stripCryptoData = (crypto: CryptoData) => {
+  return {
+    id: crypto.id,
+    name: crypto.name,
+    ticker: crypto.ticker,
+    logo_local: crypto.logo_local,
+  };
+};
+
 export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
   console.log('CryptoBattle received cryptos:', cryptos?.length);
 
@@ -877,13 +887,29 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                                   selectedModels.map(({ modelId }) => [
                                     modelId,
                                     {
-                                      rounds: battlesByModel[modelId],
-                                      winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin
+                                      rounds: battlesByModel[modelId].map(round => ({
+                                        name: round.name,
+                                        pools: round.pools.map(pool => ({
+                                          id: pool.id,
+                                          cryptos: pool.cryptos.map(stripCryptoData),
+                                          winners: pool.winners?.map(w => ({
+                                            coin: stripCryptoData(w.coin),
+                                            reason: w.reason
+                                          })),
+                                          losers: pool.losers?.map(l => ({
+                                            coin: stripCryptoData(l.coin),
+                                            reason: l.reason
+                                          }))
+                                        }))
+                                      })),
+                                      winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin 
+                                        ? stripCryptoData(battlesByModel[modelId].slice(-1)[0].pools[0].winners[0].coin)
+                                        : null
                                     }
                                   ])
                                 ),
-                                globalWinner: null, // You might want to calculate this
-                                scores: {} // You might want to calculate this
+                                globalWinner: null,
+                                scores: {}
                               },
                               prompt
                             };
@@ -954,13 +980,29 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                                 selectedModels.map(({ modelId }) => [
                                   modelId,
                                   {
-                                    rounds: battlesByModel[modelId],
-                                    winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin
+                                    rounds: battlesByModel[modelId].map(round => ({
+                                      name: round.name,
+                                      pools: round.pools.map(pool => ({
+                                        id: pool.id,
+                                        cryptos: pool.cryptos.map(stripCryptoData),
+                                        winners: pool.winners?.map(w => ({
+                                          coin: stripCryptoData(w.coin),
+                                          reason: w.reason
+                                        })),
+                                        losers: pool.losers?.map(l => ({
+                                          coin: stripCryptoData(l.coin),
+                                          reason: l.reason
+                                        }))
+                                      }))
+                                    })),
+                                    winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin 
+                                      ? stripCryptoData(battlesByModel[modelId].slice(-1)[0].pools[0].winners[0].coin)
+                                      : null
                                   }
                                 ])
                               ),
-                              globalWinner: null, // You might want to calculate this
-                              scores: {} // You might want to calculate this
+                              globalWinner: null,
+                              scores: {}
                             },
                             prompt
                           };
