@@ -1371,4 +1371,74 @@
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(245, 62, 152, 0.2);
 }
+
+/* Add these new styles for the dashboard */
+.winners-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.winner-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: #1e1e1e;
+  border-radius: 0.25rem;
+  border: 1px solid #374151;
+}
+
+.models-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.model-entry {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background: #1e1e1e;
+  border-radius: 0.25rem;
+  border: 1px solid #374151;
+}
+
+.model-entry .model-name {
+  color: #f53e98;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actions-cell .download-button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+}
+
+.winner-entry .winner-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid #f53e98;
+}
+
+.winner-entry .winner-name {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
  

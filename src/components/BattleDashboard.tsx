@@ -1,26 +1,56 @@
 import React from 'react';
-import type { CryptoData } from './CryptoTable';
 import { useEffect, useState } from 'react';
+import { getAllBattleHistories } from '../services/BattleDatabase';
+
+interface CryptoData {
+  id: number;
+  name: string;
+  ticker: string;
+  logo_local: string;
+}
 
 interface Winner {
   coin: CryptoData;
   reason: string;
 }
 
+interface Pool {
+  id: number;
+  cryptos: CryptoData[];
+  winners?: Winner[];
+  losers?: Winner[];
+}
+
 interface Round {
   name: string;
-  pools: {
-    id: number;
-    cryptos: CryptoData[];
-    winners?: Winner[];
-  }[];
+  pools: Pool[];
+}
+
+interface ModelResult {
+  rounds: Round[];
+  winner: CryptoData;
+}
+
+interface BattleResults {
+  modelResults: {
+    [modelId: string]: ModelResult;
+  };
+  globalWinner: {
+    coin: CryptoData;
+    score: number;
+  } | null;
+  scores: {
+    [ticker: string]: {
+      coin: CryptoData;
+      score: number;
+    };
+  };
 }
 
 interface BattleHistory {
   id: string;
   date: string;
-  rounds: Round[];
-  winner?: CryptoData;
+  results: BattleResults;
   prompt: string;
 }
 
@@ -28,20 +58,33 @@ export default function BattleDashboard() {
   const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
 
   useEffect(() => {
-    const savedHistories = localStorage.getItem('cryptoBattleHistories');
-    if (savedHistories) {
-      setBattleHistories(JSON.parse(savedHistories));
-    }
+    const loadBattleHistories = async () => {
+      try {
+        const histories = await getAllBattleHistories();
+        setBattleHistories(histories);
+      } catch (error) {
+        console.error('Error loading battle histories:', error);
+      }
+    };
+
+    loadBattleHistories();
   }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
 
-  const getRoundWinners = (round: Round) => {
-    return round.pools
-      .flatMap(pool => pool.winners?.map(w => w.coin.ticker) || [])
-      .join(', ');
+  const downloadBattleAsJson = (battle: BattleHistory) => {
+    const dataStr = JSON.stringify(battle, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `battle-${battle.id}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -53,8 +96,8 @@ export default function BattleDashboard() {
             <tr>
               <th>Date</th>
               <th>Prompt</th>
-              <th>Final Winner</th>
-              <th>Round Winners</th>
+              <th>Models</th>
+              <th>Winners</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -66,31 +109,43 @@ export default function BattleDashboard() {
                   <div className="prompt-content">{battle.prompt}</div>
                 </td>
                 <td>
-                  <div className="winner-cell">
-                    <img 
-                      src={`/${battle.winner?.logo_local}`} 
-                      alt={battle.winner?.name}
-                      className="winner-icon"
-                    />
-                    <span>{battle.winner?.name}</span>
-                  </div>
-                </td>
-                <td>
-                  <div className="rounds-cell">
-                    {battle.rounds.map((round, index) => (
-                      <div key={index} className="round-winners">
-                        <strong>{round.name}:</strong> {getRoundWinners(round)}
+                  <div className="models-cell">
+                    {Object.entries(battle.results.modelResults).map(([modelId, result]) => (
+                      <div key={modelId} className="model-entry">
+                        <span className="model-name">{modelId}</span>
                       </div>
                     ))}
                   </div>
                 </td>
                 <td>
-                  <a 
-                    href={`/crypto-battle?battle=${battle.id}`}
-                    className="view-battle-link"
-                  >
-                    View Battle
-                  </a>
+                  <div className="winners-cell">
+                    {Object.entries(battle.results.modelResults).map(([modelId, result]) => (
+                      <div key={modelId} className="winner-entry">
+                        <img 
+                          src={`/${result.winner.logo_local}`} 
+                          alt={result.winner.name}
+                          className="winner-icon"
+                        />
+                        <span className="winner-name">{result.winner.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </td>
+                <td>
+                  <div className="actions-cell">
+                    <a 
+                      href={`/crypto-battle?battle=${battle.id}`}
+                      className="view-battle-link"
+                    >
+                      View Battle
+                    </a>
+                    <button
+                      onClick={() => downloadBattleAsJson(battle)}
+                      className="download-button"
+                    >
+                      📥 Download
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
