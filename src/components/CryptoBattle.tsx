@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Tooltip } from './Tooltip';
 import { CryptoCard } from './CryptoCard';
 import { ModelTooltip } from './ModelTooltip';
-import { saveBattleHistory as saveHistory, getAllBattleHistories, getBattleById } from '../services/BattleDatabase';
+import { saveBattleHistory as saveHistory, getAllBattleHistories, getBattleById, saveBattleHistoryLocal } from '../services/BattleDatabase';
 
 interface Winner {
   coin: CryptoData;
@@ -377,8 +377,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
             // Use AI selection for winners with specific model
-            // const judgeAPI = '/api/selectWinnersRandom';
-            const judgeAPI = '/api/selectWinners';
+            const judgeAPI = '/api/selectWinnersRandom';
+            // const judgeAPI = '/api/selectWinners';
             const response = await axios.post(judgeAPI, {
               cryptos: pool.cryptos,
               prompt,
@@ -755,10 +755,17 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     setAllModelsSelected(!allModelsSelected);
   };
 
-  // Rename this function to avoid conflict with the imported one
+  // Add new state for save preference
+  const [savePublicly, setSavePublicly] = useState(true);
+
+  // Modify the save function to use the appropriate database
   const handleSaveBattle = async (newBattle: BattleHistory) => {
     try {
-      await saveHistory(newBattle); // Use the renamed import
+      if (savePublicly) {
+        await saveHistory(newBattle); // Supabase
+      } else {
+        await saveBattleHistoryLocal(newBattle); // IndexedDB
+      }
       setBattleHistories(prev => [...prev, newBattle]);
       battleSavedRef.current = true;
     } catch (error) {
@@ -1149,25 +1156,40 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           </div>
         )}
         {/* Auto Play Button: hide if tournament is complete */}
-        <button 
-          onClick={handleAutoPlay}
-          style={{ display: isTournamentComplete(activeModelId) ? 'none' : 'block' }}
-          disabled={
-            isAutoPlaying || 
-            !isValidModelId(activeModelId) || 
-            isTournamentComplete(activeModelId) || 
-            selectedBattleId !== null || 
-            !prompt.trim()
-          }
-          className="auto-play-button"
-        >
-          {isAutoPlaying ? 'Battle in Progress...' : 
-           !isValidModelId(activeModelId) ? 'Select a Model' :
-           isTournamentComplete(activeModelId) ? 'Tournament Complete!' : 
-           selectedBattleId ? 'Viewing Past Battle' :
-           !prompt.trim() ? 'Enter Selection Criteria' :
-           'Start Auto Battle'}
-        </button>
+        <div className="battle-button-group">
+          <button 
+            onClick={handleAutoPlay}
+            style={{ display: isTournamentComplete(activeModelId) ? 'none' : 'block' }}
+            disabled={
+              isAutoPlaying || 
+              !isValidModelId(activeModelId) || 
+              isTournamentComplete(activeModelId) || 
+              selectedBattleId !== null || 
+              !prompt.trim()
+            }
+            className="auto-play-button"
+          >
+            {isAutoPlaying ? 'Battle in Progress...' : 
+             !isValidModelId(activeModelId) ? 'Select a Model' :
+             isTournamentComplete(activeModelId) ? 'Tournament Complete!' : 
+             selectedBattleId ? 'Viewing Past Battle' :
+             !prompt.trim() ? 'Enter Selection Criteria' :
+             'Start Auto Battle'}
+          </button>
+
+          <label className="save-switch">
+            <span>Public</span>
+            <span className="switch">
+              <input
+                type="checkbox"
+                checked={savePublicly}
+                onChange={(e) => setSavePublicly(e.target.checked)}
+                disabled={isAutoPlaying}
+              />
+              <span className="slider"></span>
+            </span>
+          </label>
+        </div>
       </div>
 
       {selectedModels.length > 0 && (

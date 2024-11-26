@@ -1,6 +1,6 @@
 import React from 'react';
 import { useEffect, useState } from 'react';
-import { getAllBattleHistories } from '../services/BattleDatabase';
+import { getAllBattleHistories } from '../services/BattleDatabaseLocal';
 
 interface CryptoData {
   id: number;
@@ -54,7 +54,7 @@ interface BattleHistory {
   prompt: string;
 }
 
-export default function BattleDashboard() {
+export function PrivateBattleDashboard() {
   const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export default function BattleDashboard() {
 
   return (
     <div className="battle-dashboard">
-      <h1 className="dashboard-title">Public Battle History</h1>
+      <h1 className="dashboard-title">Private Battle History</h1>
       <div className="dashboard-table-container">
         <table className="dashboard-table">
           <thead>
@@ -149,6 +149,13 @@ export default function BattleDashboard() {
                 </td>
               </tr>
             ))}
+            {battleHistories.length === 0 && (
+              <tr>
+                <td colSpan={5} className="no-battles">
+                  No private battles found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

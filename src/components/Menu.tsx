@@ -3,6 +3,15 @@ import { useState } from 'react';
 export function Menu() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  const menuItems = [
+    { href: '/crypto-table', label: 'Select Coins' },
+    { href: '/crypto-battle', label: 'Battle Arena' },
+    { href: '/battle-history', label: 'Public History' },
+    { href: '/private-history', label: 'Private History' },
+    { href: '/my-wallet', label: 'My Wallet' },
+    { href: '/settings', label: 'Settings' },
+  ];
+
   return (
     <div className="menu-container">
       <button 
@@ -13,11 +22,9 @@ export function Menu() {
       </button>
       {isMenuOpen && (
         <div className="menu-dropdown">
-          <a href="/my-wallet" className="menu-item">My Wallet</a>
-          <a href="/battle-history" className="menu-item">Battle History</a>
-          <a href="/crypto-table" className="menu-item">Crypto Table</a>
-          <a href="/crypto-battle" className="menu-item">Crypto Battle</a>
-          <a href="/settings" className="menu-item">Settings</a>
+          {menuItems.map((item) => (
+            <a key={item.href} href={item.href} className="menu-item">{item.label}</a>
+          ))}
         </div>
       )}
     </div>

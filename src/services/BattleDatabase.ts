@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { BattleHistory } from '../types/battle';
+import { saveBattleHistory as saveLocalHistory } from './BattleDatabaseLocal';
 
 export async function saveBattleHistory(battle: BattleHistory) {
   try {
@@ -16,6 +17,8 @@ export async function saveBattleHistory(battle: BattleHistory) {
     throw error;
   }
 }
+
+export const saveBattleHistoryLocal = saveLocalHistory;
 
 export async function getAllBattleHistories() {
   try {
