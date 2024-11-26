@@ -949,56 +949,54 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
       {/* Display battles for all selected models */}
       <div className="models-battles-container">
-        {selectedModels.map(({ modelId }) => (
-          battlesByModel[modelId] && (
-            <div 
-              key={`model-${modelId}`} 
-              className={`model-battle ${modelId === activeModelId ? 'active' : ''}`}
-            >
-              <h3 className="model-battle-title">{models[modelId]?.name}</h3>
-              <div className="rounds-container">
-                {battlesByModel[modelId].map((round, roundIndex) => (
-                  <div 
-                    key={`round-${roundIndex}`}
-                    className={`round ${roundIndex === currentRoundByModel[modelId] ? 'active' : ''}`}
-                  >
-                    <h3 className="round-title">{round.name}</h3>
-                    <div className="pools-container">
-                      {round.pools.map(pool => (
-                        <div key={`pool-${roundIndex}-${pool.id}`} className="pool">
-                          {pool.isLoading && (
-                            <div className="pool-loading">
-                              <div className="loading-spinner"></div>
-                              <span>AI Analyzing...</span>
-                            </div>
-                          )}
-                          <div className={`pool-cryptos ${pool.isLoading ? 'pool-loading-overlay' : ''}`}>
-                            {pool.cryptos.map(crypto => {
-                              const isWinner = pool.winners?.some(w => w.coin.ticker === crypto.ticker) || pool.cryptos.length === 1;
-                              const reason = pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
-                                           pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason;
-
-                              return (
-                                <CryptoCard
-                                  key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
-                                  crypto={crypto}
-                                  isWinner={isWinner || false}
-                                  reason={reason}
-                                  roundIndex={roundIndex}
-                                  poolId={pool.id}
-                                />
-                              );
-                            })}
+        {activeModelId && battlesByModel[activeModelId] && (
+          <div 
+            key={`model-${activeModelId}`} 
+            className="model-battle active"
+          >
+            <h3 className="model-battle-title">{models[activeModelId]?.name}</h3>
+            <div className="rounds-container">
+              {battlesByModel[activeModelId].map((round, roundIndex) => (
+                <div 
+                  key={`round-${roundIndex}`}
+                  className={`round ${roundIndex === currentRoundByModel[activeModelId] ? 'active' : ''}`}
+                >
+                  <h3 className="round-title">{round.name}</h3>
+                  <div className="pools-container">
+                    {round.pools.map(pool => (
+                      <div key={`pool-${roundIndex}-${pool.id}`} className="pool">
+                        {pool.isLoading && (
+                          <div className="pool-loading">
+                            <div className="loading-spinner"></div>
+                            <span>AI Analyzing...</span>
                           </div>
+                        )}
+                        <div className={`pool-cryptos ${pool.isLoading ? 'pool-loading-overlay' : ''}`}>
+                          {pool.cryptos.map(crypto => {
+                            const isWinner = pool.winners?.some(w => w.coin.ticker === crypto.ticker) || pool.cryptos.length === 1;
+                            const reason = pool.winners?.find(w => w.coin.ticker === crypto.ticker)?.reason || 
+                                         pool.losers?.find(l => l.coin.ticker === crypto.ticker)?.reason;
+
+                            return (
+                              <CryptoCard
+                                key={`${roundIndex}-${pool.id}-${crypto.ticker}`}
+                                crypto={crypto}
+                                isWinner={isWinner || false}
+                                reason={reason}
+                                roundIndex={roundIndex}
+                                poolId={pool.id}
+                              />
+                            );
+                          })}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          )
-        ))}
+          </div>
+        )}
       </div>
     </div>
   );
