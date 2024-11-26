@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Tooltip } from './Tooltip';
 import { CryptoCard } from './CryptoCard';
 import { ModelTooltip } from './ModelTooltip';
+import { saveBattleHistory as saveHistory, getAllBattleHistories, getBattleById } from '../services/BattleDatabase';
 
 interface Winner {
   coin: CryptoData;
@@ -185,8 +186,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   useEffect(() => {
     const initializeBattle = async () => {
       console.log('Initializing battle...');
-      // First, fetch the models
       try {
+        // First, fetch the models
         const response = await axios.get('/api/models');
         const modelsData = response.data.models.text;
         setModels(modelsData);
@@ -197,29 +198,26 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         setSelectedModels(initialSelectedModels);
         setActiveModelId(defaultModel);
 
-        // Check for saved battle history
-        const savedHistories = localStorage.getItem('cryptoBattleHistories');
-        if (savedHistories) {
-          const histories = JSON.parse(savedHistories);
-          setBattleHistories(histories);
-          
-          // Check URL for battle ID
-          const params = new URLSearchParams(window.location.search);
-          const battleId = params.get('battle');
-          if (battleId) {
-            const battle = histories.find((h: BattleHistory) => h.id === battleId);
-            if (battle) {
-              setBattlesByModel({
-                [defaultModel]: battle.results.modelResults[defaultModel].rounds
-              });
-              setCurrentRoundByModel({
-                [defaultModel]: battle.results.modelResults[defaultModel].rounds.length - 1
-              });
-              setSelectedBattleId(battleId);
-              setPrompt(battle.prompt);
-              battleSavedRef.current = true;
-              return;
-            }
+        // Load battle histories from IndexedDB
+        const histories = await getAllBattleHistories();
+        setBattleHistories(histories);
+        
+        // Check URL for battle ID
+        const params = new URLSearchParams(window.location.search);
+        const battleId = params.get('battle');
+        if (battleId) {
+          const battle = await getBattleById(battleId);
+          if (battle) {
+            setBattlesByModel({
+              [defaultModel]: battle.results.modelResults[defaultModel].rounds
+            });
+            setCurrentRoundByModel({
+              [defaultModel]: battle.results.modelResults[defaultModel].rounds.length - 1
+            });
+            setSelectedBattleId(battleId);
+            setPrompt(battle.prompt);
+            battleSavedRef.current = true;
+            return;
           }
         }
 
@@ -581,10 +579,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           prompt
         };
         
-        const updatedHistories = [...battleHistories, newBattle];
-        setBattleHistories(updatedHistories);
-        localStorage.setItem('cryptoBattleHistories', JSON.stringify(updatedHistories));
-        battleSavedRef.current = true;
+        await handleSaveBattle(newBattle);
       }
       
     } catch (error) {
@@ -603,9 +598,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     currentRoundByModelRef.current = currentRoundByModel;
   }, [currentRoundByModel]);
 
-  const loadBattle = (battleId: string) => {
+  const loadBattle = async (battleId: string) => {
     console.log(`Loading battle with ID: ${battleId}`);
-    const battle = battleHistories.find(h => h.id === battleId);
+    const battle = await getBattleById(battleId);
     if (battle) {
       // Update URL without reloading the page
       const newUrl = battleId ? 
@@ -613,7 +608,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         window.location.pathname;
       window.history.pushState({}, '', newUrl);
 
-      // Handle both old and new battle history formats
       if (battle.results?.modelResults) {
         // New format with multiple models
         setBattlesByModel(
@@ -629,21 +623,12 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           }), {})
         );
         
-        // Update selected models based on the battle results
         setSelectedModels(
           Object.keys(battle.results.modelResults).map(modelId => ({
             modelId,
             active: true
           }))
         );
-      } else {
-        // Old format with single model
-        setBattlesByModel({
-          [activeModelId]: battle.rounds || []
-        });
-        setCurrentRoundByModel({
-          [activeModelId]: (battle.rounds || []).length - 1
-        });
       }
       
       setSelectedBattleId(battleId);
@@ -720,6 +705,17 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       setSelectedModels(allModels);
     }
     setAllModelsSelected(!allModelsSelected);
+  };
+
+  // Rename this function to avoid conflict with the imported one
+  const handleSaveBattle = async (newBattle: BattleHistory) => {
+    try {
+      await saveHistory(newBattle); // Use the renamed import
+      setBattleHistories(prev => [...prev, newBattle]);
+      battleSavedRef.current = true;
+    } catch (error) {
+      console.error('Error saving battle history:', error);
+    }
   };
 
   return (
