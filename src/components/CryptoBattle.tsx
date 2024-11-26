@@ -6,9 +6,13 @@ import { CryptoCard } from './CryptoCard';
 import { ModelTooltip } from './ModelTooltip';
 import { 
   saveBattleHistory as saveHistory,
+  getBattleById as getPublicBattleById 
+} from '../services/BattleDatabase';
+
+import {
   saveBattleHistory as saveBattleHistoryLocal,
   getAllBattleHistories as getAllBattleHistoriesLocal,
-  getBattleById as getBattleByIdLocal 
+  getBattleById as getPrivateBattleById
 } from '../services/BattleDatabaseLocal';
 
 interface Winner {
@@ -648,7 +652,15 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
   const loadBattle = async (battleId: string) => {
     console.log(`Loading battle with ID: ${battleId}`);
-    const battle = await getBattleById(battleId);
+    
+    // Try to load from private history first
+    let battle = await getPrivateBattleById(battleId);
+    
+    // If not found in private history, try public history
+    if (!battle) {
+      battle = await getPublicBattleById(battleId);
+    }
+
     if (battle) {
       // Update URL without reloading the page
       const newUrl = battleId ? 
@@ -1129,7 +1141,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 {/* Show global winner with scores */}
                 {selectedBattleId && battleHistories.find(h => h.id === selectedBattleId)?.results?.globalWinner && (
                   <div className="global-winner">
-                    <h3>Global Winner</h3>
+                    <h3>Tournament Winner</h3>
                     <div className="winner-card">
                       {(() => {
                         const battle = battleHistories.find(h => h.id === selectedBattleId);
