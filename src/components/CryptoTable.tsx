@@ -239,8 +239,8 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
 
   const startBattle = () => {
     const selectedCryptos = data.filter((_, index) => rowSelection[index.toString()]);
-    if (selectedCryptos.length < 8) {
-      alert('Please select at least 8 cryptocurrencies for the battle');
+    if (selectedCryptos.length < 2) {
+      alert('Please select at least 2 cryptocurrencies for the battle');
       return;
     }
 
@@ -299,7 +299,7 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
           </div>
           <button 
             onClick={startBattle}
-            disabled={Object.keys(rowSelection).length < 8}
+            disabled={Object.keys(rowSelection).length < 2}
             className="start-battle-button"
           >
             <span className="battle-icon">⚔️</span>

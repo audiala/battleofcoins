@@ -1,46 +1,52 @@
-import Dexie, { Table } from 'dexie';
-import type { BattleHistory } from '../components/CryptoBattle';
+import { supabase } from './supabase';
+import type { BattleHistory } from '../types/battle';
 
-export class BattleDatabase extends Dexie {
-  battleHistories!: Table<BattleHistory>;
+export async function saveBattleHistory(battle: BattleHistory) {
+  try {
+    const { data, error } = await supabase
+      .from('battle_histories')
+      .insert([battle])
+      .select()
+      .single();
 
-  constructor() {
-    super('CryptoBattleDB');
-    this.version(1).stores({
-      battleHistories: 'id, date'
-    });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error saving battle history:', error);
+    throw error;
   }
 }
 
-export const db = new BattleDatabase();
-
-// Helper functions for database operations
-export const saveBattleHistory = async (battle: BattleHistory) => {
+export async function getAllBattleHistories() {
   try {
-    await db.battleHistories.put(battle);
+    const { data, error } = await supabase
+      .from('battle_histories')
+      .select('*')
+      .order('date', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error('Error saving battle to IndexedDB:', error);
+    console.error('Error getting battle histories:', error);
     throw error;
   }
-};
+}
 
-export const getAllBattleHistories = async (): Promise<BattleHistory[]> => {
+export async function getBattleById(id: string) {
   try {
-    return await db.battleHistories.orderBy('date').reverse().toArray();
-  } catch (error) {
-    console.error('Error getting battle histories from IndexedDB:', error);
-    return [];
-  }
-};
+    const { data, error } = await supabase
+      .from('battle_histories')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-export const getBattleById = async (id: string): Promise<BattleHistory | undefined> => {
-  try {
-    return await db.battleHistories.get(id);
+    if (error) throw error;
+    return data;
   } catch (error) {
-    console.error('Error getting battle by ID from IndexedDB:', error);
-    return undefined;
+    console.error('Error getting battle by ID:', error);
+    throw error;
   }
-};
+}
 
 export const deleteBattleHistory = async (id: string) => {
   try {
