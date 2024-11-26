@@ -2,9 +2,9 @@
   padding: 2rem;
   background: #121212;
   min-height: 100vh;
-  width: 80%;
-  margin: 0 auto;
-  max-width: 1800px;
+  width: 100%;
+  margin: 0;
+  max-width: none;
   box-sizing: border-box;
 }
 
@@ -175,18 +175,21 @@
 }
 
 .winner-announcement {
-  margin-top: 2rem;
-  padding: 2rem;
+  margin-top: 1rem;
+  padding: 1rem;
   background: #1e1e1e;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   border: 2px solid #f53e98;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .winner-announcement h2 {
   color: #f53e98;
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
 .final-winner {
@@ -1022,7 +1025,7 @@
 
 @media (max-width: 600px) {
   .crypto-battle {
-    width: 95%;
+    width: 100%;
     padding: 1rem;
   }
   
@@ -1222,49 +1225,118 @@
 
 .model-winners {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin: 0.5rem 0;
 }
 
 .model-winner {
   background: #1e1e1e;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  border: 1px solid #374151;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
 }
 
 .model-winner h3 {
   color: #f53e98;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+  margin-bottom: 0.25rem;
 }
 
 .winner-card {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem;
+  padding: 0.25rem;
   background: #272727;
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.winner-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 1px solid #f53e98;
+}
+
+.winner-name {
+  color: white;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .global-winner {
-  margin-top: 2rem;
-  padding: 1rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
   background: #2a1f2d;
-  border: 2px solid #f53e98;
-  border-radius: 0.5rem;
+  border: 1px solid #f53e98;
+  border-radius: 0.25rem;
 }
 
 .winner-info {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 
 .winner-score {
   color: #f53e98;
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 500;
+}
+
+/* Add new styles for the battle view layout */
+.battle-view {
+  display: grid;
+  grid-template-columns: 300px 1fr; /* Fixed width for results, rest for criteria */
+  gap: 1rem;
+  align-items: start;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.prompt-display {
+  margin-top: 0;
+  padding: 1rem;
+  background: #1e1e1e;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+  text-align: left;
+  width: 100%; /* Take full width of its grid column */
+}
+
+.prompt-display h4 {
+  color: #f53e98;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.prompt-display p {
+  color: white;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Update winner announcement for side-by-side layout */
+.winner-announcement {
+  margin-top: 0;
+  padding: 1rem;
+  background: #1e1e1e;
+  border-radius: 0.5rem;
+  border: 2px solid #f53e98;
+  width: 100%; /* Take full width of its grid column */
+}
+
+/* Add responsive layout */
+@media (max-width: 900px) {
+  .battle-view {
+    grid-template-columns: 1fr; /* Stack vertically on smaller screens */
+  }
+  
+  .winner-announcement {
+    width: 100%;
+  }
 }
  

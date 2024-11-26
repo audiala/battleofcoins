@@ -846,14 +846,90 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             </div>
           </>
         ) : (
-          <div className="prompt-display">
-            <h4>Selection Criteria:</h4>
-            <p>{prompt}</p>
+          <div className="battle-view">
+
+            {!isTournamentComplete(activeModelId) && (
+              <div className="prompt-display">
+                <h4>Selection Criteria:</h4>
+                <p>{prompt}</p>
+              </div>
+            )}
+            
+            {isValidModelId(activeModelId) && isTournamentComplete(activeModelId) && (
+              <div className="winner-announcement">
+                <h2>🏆 Tournament Results 🏆</h2>
+                
+                {/* Show individual model winners */}
+                <div className="model-winners">
+                  {selectedModels.map(({ modelId }) => {
+                    const modelBattles = battlesByModel[modelId];
+                    const currentRound = currentRoundByModel[modelId];
+                    if (!modelBattles || currentRound === undefined) return null;
+                    
+                    const winner = modelBattles[currentRound]?.pools[0]?.cryptos[0];
+                    if (!winner) return null;
+
+                    return (
+                      <div key={modelId} className="model-winner">
+                        <h3>{models[modelId]?.name} Winner:</h3>
+                        <div className="winner-card">
+                          <img 
+                            src={`/${winner.logo_local}`} 
+                            alt={winner.name}
+                            className="winner-logo"
+                          />
+                          <span className="winner-name">
+                            {winner.name}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Show global winner with scores */}
+                {selectedBattleId && battleHistories.find(h => h.id === selectedBattleId)?.results?.globalWinner && (
+                  <div className="global-winner">
+                    <h3>Global Winner</h3>
+                    <div className="winner-card">
+                      {(() => {
+                        const battle = battleHistories.find(h => h.id === selectedBattleId);
+                        const globalWinner = battle?.results?.globalWinner;
+                        if (!globalWinner) return null;
+
+                        return (
+                          <>
+                            <img 
+                              src={`/${globalWinner.coin.logo_local}`}
+                              alt={globalWinner.coin.name}
+                              className="winner-logo"
+                            />
+                            <div className="winner-info">
+                              <span className="winner-name">
+                                {globalWinner.coin.name}
+                              </span>
+                              <span className="winner-score">
+                                Score: {globalWinner.score}
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="prompt-display">
+                <h4>Selection Criteria:</h4>
+                <p>{prompt}</p>
+              </div>
           </div>
         )}
-
+        {/* Auto Play Button: hide if tournament is complete */}
         <button 
           onClick={handleAutoPlay}
+          style={{ display: isTournamentComplete(activeModelId) ? 'none' : 'block' }}
           disabled={
             isAutoPlaying || 
             !isValidModelId(activeModelId) || 
@@ -870,72 +946,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
            !prompt.trim() ? 'Enter Selection Criteria' :
            'Start Auto Battle'}
         </button>
-
-        {isValidModelId(activeModelId) && isTournamentComplete(activeModelId) && (
-          <div className="winner-announcement">
-            <h2>🏆 Tournament Results 🏆</h2>
-            
-            {/* Show individual model winners */}
-            <div className="model-winners">
-              {selectedModels.map(({ modelId }) => {
-                const modelBattles = battlesByModel[modelId];
-                const currentRound = currentRoundByModel[modelId];
-                if (!modelBattles || currentRound === undefined) return null;
-                
-                const winner = modelBattles[currentRound]?.pools[0]?.cryptos[0];
-                if (!winner) return null;
-
-                return (
-                  <div key={modelId} className="model-winner">
-                    <h3>{models[modelId]?.name} Winner:</h3>
-                    <div className="winner-card">
-                      <img 
-                        src={`/${winner.logo_local}`} 
-                        alt={winner.name}
-                        className="winner-logo"
-                      />
-                      <span className="winner-name">
-                        {winner.name}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Show global winner with scores */}
-            {selectedBattleId && battleHistories.find(h => h.id === selectedBattleId)?.results?.globalWinner && (
-              <div className="global-winner">
-                <h3>Global Winner</h3>
-                <div className="winner-card">
-                  {(() => {
-                    const battle = battleHistories.find(h => h.id === selectedBattleId);
-                    const globalWinner = battle?.results?.globalWinner;
-                    if (!globalWinner) return null;
-
-                    return (
-                      <>
-                        <img 
-                          src={`/${globalWinner.coin.logo_local}`}
-                          alt={globalWinner.coin.name}
-                          className="winner-logo"
-                        />
-                        <div className="winner-info">
-                          <span className="winner-name">
-                            {globalWinner.coin.name}
-                          </span>
-                          <span className="winner-score">
-                            Score: {globalWinner.score}
-                          </span>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {selectedModels.length > 0 && (
