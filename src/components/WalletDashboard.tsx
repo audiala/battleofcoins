@@ -148,13 +148,13 @@ export function WalletDashboard() {
     <div className="wallet-dashboard">
       <h1 className="wallet-title">My Nano Wallet</h1>
       
-      <div className="wallet-card">
-        <div className="wallet-balance">
+      <div className="wallet-card2">
+        <div className="wallet-balance2">
           <h2>Balance</h2>
-          <p className="balance-amount">{walletInfo.balance} NANO</p>
+          <p className="balance-amount2">Ӿ {parseFloat(walletInfo.balance.toString())}</p>
           <div className="balance-details">
-            <p>Receivable: {walletInfo.receivable} NANO</p>
-            <p>Earned: {walletInfo.earned} NANO</p>
+            <p>Receivable: {parseFloat(walletInfo.receivable.toString())} NANO</p>
+            <p>Earned: {parseFloat(walletInfo.earned.toString())} NANO</p>
           </div>
           <div className="buy-nano-section">
             <p className="buy-nano-text">Need more NANO?</p>

@@ -1441,4 +1441,98 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Update battle header styles */
+.battle-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem;
+  margin-bottom: 1rem;
+}
+
+/* Update wallet balance styles to show it's clickable */
+.wallet-balance {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  background: #2a1f2d;
+  border-radius: 0.5rem;
+  border: 2px solid #f53e98;
+  position: absolute;
+  right: 5rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.wallet-balance:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 62, 152, 0.2);
+  background: #3a2f3d;
+}
+
+.balance-label {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+.balance-amount {
+  color: #f53e98;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.balance-error {
+  color: #f53e98;
+  cursor: help;
+}
+
+/* Add media query for smaller screens */
+@media (max-width: 600px) {
+  .wallet-balance {
+    right: 4rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  .balance-label {
+    font-size: 0.75rem;
+  }
+  
+  .balance-amount {
+    font-size: 0.8rem;
+  }
+}
  
+.selection-container {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.select-coins-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f53e98;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.select-coins-button:hover {
+  background: #f52e88;
+  transform: translateY(-2px);
+}
+
+.arrow {
+  transition: transform 0.2s ease;
+}
+
+.select-coins-button:hover .arrow {
+  transform: translateX(4px);
+}

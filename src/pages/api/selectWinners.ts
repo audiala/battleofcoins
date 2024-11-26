@@ -1,12 +1,27 @@
 import type { APIRoute } from 'astro';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: import.meta.env.OPENAI_API_KEY,
-});
+import nanogptjs from 'nanogptjs';
 
 export const POST: APIRoute = async ({ request }) => {
-  const { cryptos, prompt } = await request.json();
+  const { cryptos, prompt, model, apiKey } = await request.json();
+  
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'No API key provided',
+        details: 'Please set your NanoGPT API key in Settings'
+      }), 
+      {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+  }
+
+  const nanogpt = nanogptjs({
+    apiKey: apiKey,
+  });
   
   // Calculate the number of winners needed (half of the pool)
   const numWinners = Math.ceil(cryptos.length / 2);
@@ -23,50 +38,32 @@ $Losers$
 ${Array(cryptos.length - numWinners).fill('COIN: reason for losing').join('\n')}
             
 Pool:
-${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name} (price: ${crypto.market_stats.price} marketcap: ${crypto.market_stats.market_cap} marketcap_fdv_ratio: ${crypto.market_stats.market_cap_fdv_ratio})`).join('\n')}`
+${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name}`).join('\n')}`
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are an expert cryptocurrency analyst. Your task is to analyze cryptocurrencies and provide clear, concise explanations for your selections."
-        },
-        {
-            role: "system",
-            content: "You never choose staked assets, wrapped assets or stablecoins."
-          },
-        {
-          role: "user",
-          content: prompt
-        },
-        {
-            role: "user",
-            content: basePrompt
-          }
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
+    // Use NanoGPT chat with the specified model
+    const { reply } = await nanogpt.chat({
+      prompt: prompt + '\n\n' + basePrompt,
+      model: model,
+      context: []
     });
 
-    const aiResponse = response.choices[0].message.content;
+    if (!reply) {
+      throw new Error('Empty response from NanoGPT');
+    }
+
     console.log('--------------------------------');
     console.log('--------------------------------');
     console.log(prompt);
     console.log('--------------------------------');
-    console.log(aiResponse);
+    console.log(reply);
     console.log('--------------------------------');
     console.log('--------------------------------');
-
-    if (!aiResponse) {
-      throw new Error('Empty response from OpenAI');
-    }
 
     // Split the response into winners and losers sections
-    const [winnersSection, losersSection] = aiResponse.split('$Losers$');
+    const [winnersSection, losersSection] = reply.split('$Losers$');
     
     if (!winnersSection || !losersSection) {
-      throw new Error('Invalid response format from OpenAI');
+      throw new Error('Invalid response format from NanoGPT');
     }
 
     // Parse winners
@@ -118,7 +115,7 @@ ${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name} (price: ${crypt
     }
 
     const mappedResponse = {
-      winners, // No need to slice, we want all winners
+      winners,
       losers
     };
 

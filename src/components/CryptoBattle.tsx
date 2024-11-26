@@ -90,6 +90,11 @@ interface BattleResults {
   scores: GlobalScore;
 }
 
+interface WalletInfo {
+  balance: string;
+  error?: string;
+}
+
 const createInitialPools = (cryptos: CryptoData[]): Pool[] => {
   const pools: Pool[] = [];
   for (let i = 0; i < cryptos.length; i += 8) {
@@ -378,7 +383,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               cryptos: pool.cryptos,
               prompt,
               model: modelId,
-              winnersCount: Math.floor(pool.cryptos.length / 2)
+              winnersCount: Math.floor(pool.cryptos.length / 2),
+              apiKey: localStorage.getItem('nanoGptApiKey')
             });
 
             const data: RoundWinners = response.data;
@@ -760,8 +766,68 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
+  // Add new state for wallet info
+  const [walletInfo, setWalletInfo] = useState<WalletInfo | null>(null);
+
+  // Add effect to fetch wallet balance
+  useEffect(() => {
+    const fetchWalletBalance = async () => {
+      const apiKey = localStorage.getItem('nanoGptApiKey');
+      if (!apiKey) {
+        setWalletInfo({ balance: '0', error: 'No API key set' });
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/nano-balance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ apiKey })
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch balance');
+        }
+
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        setWalletInfo({ balance: data.balance || '0' });
+      } catch (error) {
+        setWalletInfo({ 
+          balance: '0', 
+          error: error instanceof Error ? error.message : 'Failed to fetch balance' 
+        });
+      }
+    };
+
+    fetchWalletBalance();
+  }, []);
+
   return (
     <div className="crypto-battle" data-component="CryptoBattle" {...props}>
+      <div className="battle-header">
+        <a href="/my-wallet" className="wallet-balance">
+          <span className="balance-label">Balance:</span>
+          <span className="balance-amount">
+          Ӿ {parseFloat(walletInfo?.balance || '0').toString()} 
+          </span>
+          {walletInfo?.error && (
+            <span className="balance-error" title={walletInfo.error}>⚠️</span>
+          )}
+        </a>
+      </div>
+      <div className="selection-container">
+      <a href="/crypto-table" className="select-coins-button">
+        Select Coins
+        <span className="arrow">→</span>
+      </a>
+    </div>
+
       <div className="battle-controls">
         <div className="battle-history">
           <select 

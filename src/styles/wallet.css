@@ -13,7 +13,7 @@
   text-align: center;
 }
 
-.wallet-card {
+.wallet-card2 {
   background: #1e1e1e;
   border-radius: 1rem;
   padding: 2rem;
@@ -25,15 +25,15 @@
   border: 1px solid #2a2a2a;
 }
 
-.wallet-balance h2,
+.wallet-balance2 h2,
 .wallet-address h2 {
   color: #f53e98;
   font-size: 1.25rem;
   margin-bottom: 1rem;
 }
 
-.balance-amount {
-  font-size: 2.5rem;
+.balance-amount2 {
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
@@ -142,7 +142,7 @@
 }
 
 @media (max-width: 768px) {
-  .wallet-card {
+  .wallet-card2 {
     grid-template-columns: 1fr;
   }
 
@@ -318,7 +318,7 @@
 }
 
 @media (max-width: 1200px) {
-  .wallet-card {
+  .wallet-card2 {
     grid-template-columns: 1fr 1fr;
   }
   
@@ -328,7 +328,7 @@
 }
 
 @media (max-width: 768px) {
-  .wallet-card {
+  .wallet-card2 {
     grid-template-columns: 1fr;
   }
   
