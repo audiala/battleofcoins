@@ -372,7 +372,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
             // Use AI selection for winners with specific model
-            const response = await axios.post('/api/selectWinnersRandom', {
+            // const judgeAPI = '/api/selectWinnersRandom';
+            const judgeAPI = '/api/selectWinners';
+            const response = await axios.post(judgeAPI, {
               cryptos: pool.cryptos,
               prompt,
               model: modelId,
