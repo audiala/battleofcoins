@@ -540,7 +540,14 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               continue;
             }
             
-            const winner = finalRound.pools[0].cryptos[0];
+            // Get the winner from the winners array instead of just the first crypto
+            const winner = finalRound.pools[0].winners?.[0]?.coin;
+            if (!winner) {
+              console.error(`No winner found in final round for model ${modelId}`);
+              completed = true;
+              continue;
+            }
+
             modelResults[modelId] = {
               rounds: battlesByModelRef.current[modelId],
               winner
@@ -659,7 +666,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     
     const finalRound = modelBattles[currentRound];
     return finalRound?.pools?.length === 1 && 
-           finalRound.pools[0]?.winners?.length === 1;
+           finalRound.pools[0]?.winners?.length === 1 &&
+           finalRound.pools[0]?.winners[0]?.coin !== undefined;
   };
 
   // Add effect to fetch models
@@ -753,23 +761,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           </select>
         </div>
 
-        {selectedModels.length > 0 && (
-          <div className="model-tabs">
-            {selectedModels.map(({ modelId }) => (
-              <button
-                key={modelId}
-                className={`model-tab ${activeModelId === modelId ? 'active' : ''}`}
-                onClick={() => setActiveModelId(modelId)}
-                disabled={isAutoPlaying}
-              >
-                {models[modelId]?.name}
-                {isTournamentComplete(modelId) && (
-                  <span className="completion-indicator" title="Battle Complete">✓</span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+        
 
         {!selectedBattleId ? (
           <>
@@ -946,6 +938,24 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         )}
       </div>
 
+      {selectedModels.length > 0 && (
+          <div className="model-tabs">
+            {selectedModels.map(({ modelId }) => (
+              <button
+                key={modelId}
+                className={`model-tab ${activeModelId === modelId ? 'active' : ''}`}
+                onClick={() => setActiveModelId(modelId)}
+                disabled={isAutoPlaying}
+              >
+                {models[modelId]?.name}
+                {isTournamentComplete(modelId) && (
+                  <span className="completion-indicator" title="Battle Complete">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
       {/* Display battles for all selected models */}
       <div className="models-battles-container">
         {activeModelId && battlesByModel[activeModelId] && (
@@ -953,7 +963,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             key={`model-${activeModelId}`} 
             className="model-battle active"
           >
-            <h3 className="model-battle-title">{models[activeModelId]?.name}</h3>
             <div className="rounds-container">
               {battlesByModel[activeModelId].map((round, roundIndex) => (
                 <div 
