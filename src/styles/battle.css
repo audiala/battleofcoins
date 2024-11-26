@@ -1339,4 +1339,36 @@
     width: 100%;
   }
 }
+
+/* Add styles for the winner header and download button */
+.winner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.winner-header h2 {
+  margin: 0;
+}
+
+.download-button {
+  background: transparent;
+  border: 1px solid #f53e98;
+  color: #f53e98;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.download-button:hover {
+  background: #2a1f2d;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 62, 152, 0.2);
+}
  

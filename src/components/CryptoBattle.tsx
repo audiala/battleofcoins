@@ -148,6 +148,20 @@ const isValidModelId = (modelId: string | null): modelId is string => {
   return modelId !== null;
 };
 
+// Add this helper function at the top of the file, outside the component
+const downloadBattleAsJson = (battleResults: any) => {
+  const dataStr = JSON.stringify(battleResults, null, 2);
+  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(dataBlob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `battle-${new Date().toISOString()}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
   console.log('CryptoBattle received cryptos:', cryptos?.length);
 
@@ -849,8 +863,37 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             {isValidModelId(activeModelId) && isTournamentComplete(activeModelId) && (
               <div className="battle-view">
                 <div className="winner-announcement">
-                  <h2>🏆 Tournament Results 🏆</h2>
-                  
+                  <div className="winner-header">
+                    <h2>🏆 Results 🏆</h2>
+                    <button 
+                      onClick={() => {
+                        const battle = selectedBattleId 
+                          ? battleHistories.find(h => h.id === selectedBattleId)
+                          : {
+                              id: createBattleHash(Object.values(battlesByModel).flatMap(r => r)),
+                              date: new Date().toISOString(),
+                              results: {
+                                modelResults: Object.fromEntries(
+                                  selectedModels.map(({ modelId }) => [
+                                    modelId,
+                                    {
+                                      rounds: battlesByModel[modelId],
+                                      winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin
+                                    }
+                                  ])
+                                ),
+                                globalWinner: null, // You might want to calculate this
+                                scores: {} // You might want to calculate this
+                              },
+                              prompt
+                            };
+                        downloadBattleAsJson(battle);
+                      }}
+                      className="download-button"
+                    >
+                      📥 Download Results
+                    </button>
+                  </div>
                   <div className="model-winners">
                     {selectedModels.map(({ modelId }) => {
                       const modelBattles = battlesByModel[modelId];
@@ -897,9 +940,37 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             
             {isValidModelId(activeModelId) && isTournamentComplete(activeModelId) && (
               <div className="winner-announcement">
-                <h2>🏆 Tournament Results 🏆</h2>
-                
-                {/* Show individual model winners */}
+                <div className="winner-header">
+                  <h2>🏆 Results 🏆</h2>
+                  <button 
+                    onClick={() => {
+                      const battle = selectedBattleId 
+                        ? battleHistories.find(h => h.id === selectedBattleId)
+                        : {
+                            id: createBattleHash(Object.values(battlesByModel).flatMap(r => r)),
+                            date: new Date().toISOString(),
+                            results: {
+                              modelResults: Object.fromEntries(
+                                selectedModels.map(({ modelId }) => [
+                                  modelId,
+                                  {
+                                    rounds: battlesByModel[modelId],
+                                    winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin
+                                  }
+                                ])
+                              ),
+                              globalWinner: null, // You might want to calculate this
+                              scores: {} // You might want to calculate this
+                            },
+                            prompt
+                          };
+                      downloadBattleAsJson(battle);
+                    }}
+                    className="download-button"
+                  >
+                    📥 Download Results
+                  </button>
+                </div>
                 <div className="model-winners">
                   {selectedModels.map(({ modelId }) => {
                     const modelBattles = battlesByModel[modelId];
