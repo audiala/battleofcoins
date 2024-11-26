@@ -20,18 +20,31 @@ export async function saveBattleHistory(battle: BattleHistory) {
 
 export const saveBattleHistoryLocal = saveLocalHistory;
 
-export async function getAllBattleHistories() {
+export async function getAllBattleHistories(page: number, perPage: number) {
   try {
+    // First get total count
+    const { count, error: countError } = await supabase
+      .from('battle_histories')
+      .select('*', { count: 'exact', head: true });
+
+    if (countError) throw countError;
+
+    // Then get paginated data
     const { data, error } = await supabase
       .from('battle_histories')
       .select('*')
-      .order('date', { ascending: false });
+      .order('date', { ascending: false })
+      .range((page - 1) * perPage, page * perPage - 1);
 
     if (error) throw error;
-    return data || [];
+
+    return {
+      battles: data || [],
+      total: count || 0
+    };
   } catch (error) {
     console.error('Error getting battle histories:', error);
-    throw error;
+    return { battles: [], total: 0 };
   }
 }
 

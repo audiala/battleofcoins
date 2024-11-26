@@ -1,0 +1,170 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Terms and Conditions">
+  <div class="terms-container">
+    <h1>Terms and Conditions</h1>
+    
+    <section>
+      <h2>1. Disclaimer</h2>
+      <p>
+        The content provided on this platform is for informational and entertainment purposes only. 
+        None of the information presented constitutes financial advice, investment advice, trading advice, 
+        or any other sort of advice. You should not treat any of the platform's content as such.
+      </p>
+      <p>
+        The AI-powered battles and their results should be considered as entertainment only. 
+        Do not make any investment, trading, or financial decisions based on the results or 
+        analysis provided by our AI models.
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Risk Warning</h2>
+      <p>
+        Cryptocurrency trading involves substantial risk and is not suitable for every investor. 
+        The high degree of leverage can work against you as well as for you. Before deciding to 
+        trade cryptocurrencies, you should carefully consider your investment objectives, level of 
+        experience, and risk appetite.
+      </p>
+      <p>
+        The possibility exists that you could sustain a loss of some or all of your initial investment 
+        and therefore you should not invest money that you cannot afford to lose.
+      </p>
+    </section>
+
+    <section>
+      <h2>3. AI Model Limitations</h2>
+      <p>
+        The AI models used in our platform are experimental and may produce inaccurate, biased, or 
+        inconsistent results. The analysis and decisions made by these models should not be considered 
+        as professional recommendations or predictions of future performance.
+      </p>
+    </section>
+
+    <section>
+      <h2>4. No Guarantees</h2>
+      <p>
+        We make no guarantees regarding the accuracy, reliability, or completeness of any information 
+        provided on this platform. Market data may be delayed or incorrect. Past performance is not 
+        indicative of future results.
+      </p>
+    </section>
+
+    <section>
+      <h2>5. User Responsibility</h2>
+      <p>
+        By using this platform, you acknowledge and agree that:
+      </p>
+      <ul>
+        <li>You are solely responsible for your trading and investment decisions</li>
+        <li>You will conduct your own research and due diligence</li>
+        <li>You understand that cryptocurrency trading is highly speculative</li>
+        <li>You accept all risks associated with trading cryptocurrencies</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. Third-Party Content</h2>
+      <p>
+        Our platform may display information from third-party sources. We do not endorse, verify, or 
+        guarantee the accuracy of such information. Use of third-party content is at your own risk.
+      </p>
+    </section>
+
+    <section>
+      <h2>7. Intellectual Property</h2>
+      <p>
+        All content on this platform, including but not limited to text, graphics, logos, AI models, 
+        and battle results, is protected by intellectual property rights and may not be used without 
+        our express permission.
+      </p>
+    </section>
+
+    <section>
+      <h2>8. Changes to Terms</h2>
+      <p>
+        We reserve the right to modify these terms at any time without prior notice. Your continued 
+        use of the platform after any changes indicates your acceptance of the modified terms.
+      </p>
+    </section>
+
+    <section>
+      <h2>9. Contact</h2>
+      <p>
+        If you have any questions about these Terms and Conditions, please contact us at [Your Contact Information].
+      </p>
+    </section>
+
+    <div class="terms-footer">
+      <p>Last updated: {new Date().toLocaleDateString()}</p>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .terms-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    color: white;
+  }
+
+  h1 {
+    color: #f53e98;
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  section {
+    margin-bottom: 3rem;
+  }
+
+  h2 {
+    color: #f53e98;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    color: #e1e1e1;
+  }
+
+  ul {
+    list-style-type: disc;
+    margin-left: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  li {
+    margin-bottom: 0.5rem;
+    color: #e1e1e1;
+  }
+
+  .terms-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid #374151;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .terms-container {
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+    }
+  }
+</style> 

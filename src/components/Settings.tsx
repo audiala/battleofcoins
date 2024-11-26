@@ -1,11 +1,13 @@
 /** @jsxImportSource react */
 import { useState, useEffect } from 'react';
+import { clearAllBattleHistories } from '../services/BattleDatabaseLocal';
 import '../styles/settings.css';
 
 export function Settings() {
   const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [isClearing, setIsClearing] = useState(false);
 
   useEffect(() => {
     const savedApiKey = localStorage.getItem('nanoGptApiKey');
@@ -53,6 +55,28 @@ export function Settings() {
     setTimeout(() => {
       setMessage(null);
     }, 3000);
+  };
+
+  const handleClearHistory = async () => {
+    if (window.confirm('Are you sure you want to clear your private battle history? This action cannot be undone.')) {
+      setIsClearing(true);
+      try {
+        await clearAllBattleHistories();
+        setMessage({ text: 'Private battle history cleared successfully', type: 'success' });
+      } catch (error) {
+        setMessage({ 
+          text: error instanceof Error ? error.message : 'Failed to clear history', 
+          type: 'error' 
+        });
+      } finally {
+        setIsClearing(false);
+      }
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setMessage(null);
+      }, 3000);
+    }
   };
 
   if (isLoading) {
@@ -109,6 +133,21 @@ export function Settings() {
               {message.text}
             </div>
           )}
+        </div>
+
+        <div className="settings-section">
+          <h2>Private Battle History</h2>
+          <p className="settings-description">
+            Clear your locally stored battle history. This action cannot be undone.
+          </p>
+          
+          <button 
+            onClick={handleClearHistory}
+            className="clear-button danger"
+            disabled={isClearing}
+          >
+            {isClearing ? 'Clearing...' : 'Clear Private History'}
+          </button>
         </div>
       </div>
     </div>

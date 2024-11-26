@@ -56,6 +56,8 @@ interface BattleHistory {
 
 export function PrivateBattleDashboard() {
   const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const battlesPerPage = 20;
 
   useEffect(() => {
     const loadBattleHistories = async () => {

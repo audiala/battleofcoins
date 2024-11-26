@@ -4,7 +4,12 @@ import axios from 'axios';
 import { Tooltip } from './Tooltip';
 import { CryptoCard } from './CryptoCard';
 import { ModelTooltip } from './ModelTooltip';
-import { saveBattleHistory as saveHistory, getAllBattleHistories, getBattleById, saveBattleHistoryLocal } from '../services/BattleDatabase';
+import { 
+  saveBattleHistory as saveHistory,
+  saveBattleHistory as saveBattleHistoryLocal,
+  getAllBattleHistories as getAllBattleHistoriesLocal,
+  getBattleById as getBattleByIdLocal 
+} from '../services/BattleDatabaseLocal';
 
 interface Winner {
   coin: CryptoData;
@@ -227,15 +232,16 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         setSelectedModels(initialSelectedModels);
         setActiveModelId(defaultModel);
 
-        // Load battle histories from IndexedDB
-        const histories = await getAllBattleHistories();
+        // Load battle histories from IndexedDB instead of Supabase
+        const histories = await getAllBattleHistoriesLocal();
         setBattleHistories(histories);
         
         // Check URL for battle ID
         const params = new URLSearchParams(window.location.search);
         const battleId = params.get('battle');
         if (battleId) {
-          const battle = await getBattleById(battleId);
+          // Use local getBattleById instead of Supabase
+          const battle = await getBattleByIdLocal(battleId);
           if (battle) {
             setBattlesByModel({
               [defaultModel]: battle.results.modelResults[defaultModel].rounds
@@ -847,7 +853,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             className="battle-select"
           >
             <option key="new-battle" value="">Start New Battle</option>
-            {battleHistories.map((battle, index) => {
+            {Array.isArray(battleHistories) && battleHistories.map((battle, index) => {
               const winner = battle.results?.globalWinner?.coin || 
                             (battle.results?.modelResults && 
                              Object.values(battle.results.modelResults)[0]?.winner);
@@ -1160,7 +1166,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           </div>
         )}
         {/* Auto Play Button: hide if tournament is complete */}
-        <div className="battle-button-group">
+        <div className={`battle-button-group ${isTournamentComplete(activeModelId) ? 'tournament-complete' : ''}`}>
           <button 
             onClick={handleAutoPlay}
             style={{ display: isTournamentComplete(activeModelId) ? 'none' : 'block' }}

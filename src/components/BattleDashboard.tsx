@@ -56,19 +56,48 @@ interface BattleHistory {
 
 export default function BattleDashboard() {
   const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalBattles, setTotalBattles] = useState(0);
+  const battlesPerPage = 20;
 
   useEffect(() => {
     const loadBattleHistories = async () => {
       try {
-        const histories = await getAllBattleHistories();
-        setBattleHistories(histories);
+        const { battles, total } = await getAllBattleHistories(currentPage, battlesPerPage);
+        setBattleHistories(battles);
+        setTotalBattles(total);
       } catch (error) {
         console.error('Error loading battle histories:', error);
       }
     };
 
     loadBattleHistories();
-  }, []);
+  }, [currentPage]);
+
+  const totalPages = Math.ceil(totalBattles / battlesPerPage);
+
+  // Add pagination controls
+  const Pagination = () => (
+    <div className="pagination">
+      <button 
+        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className="pagination-button"
+      >
+        Previous
+      </button>
+      <span className="page-info">
+        Page {currentPage} of {totalPages} ({totalBattles} total)
+      </span>
+      <button 
+        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        className="pagination-button"
+      >
+        Next
+      </button>
+    </div>
+  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -149,8 +178,16 @@ export default function BattleDashboard() {
                 </td>
               </tr>
             ))}
+            {battleHistories.length === 0 && (
+              <tr>
+                <td colSpan={5} className="no-battles">
+                  No battles found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
+        {totalBattles > battlesPerPage && <Pagination />}
       </div>
     </div>
   );

@@ -1609,3 +1609,50 @@ input:checked + .slider:before {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Update battle button group styles */
+.battle-button-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Add style to hide save switch when tournament is complete */
+.tournament-complete .save-switch {
+  display: none;
+}
+
+/* Add pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.pagination-button {
+  background: #2a1f2d;
+  color: #f53e98;
+  border: 1px solid #f53e98;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background: #3a2f3d;
+  transform: translateY(-1px);
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-info {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}

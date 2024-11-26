@@ -10,6 +10,7 @@ export function Menu() {
     { href: '/private-history', label: 'Private History' },
     { href: '/my-wallet', label: 'My Wallet' },
     { href: '/settings', label: 'Settings' },
+    { href: '/terms', label: 'Terms & Conditions' },
   ];
 
   return (

@@ -49,4 +49,13 @@ export const deleteBattleHistory = async (id: string) => {
     console.error('Error deleting battle from IndexedDB:', error);
     throw error;
   }
+};
+
+export const clearAllBattleHistories = async () => {
+  try {
+    await db.battleHistories.clear();
+  } catch (error) {
+    console.error('Error clearing battle histories from IndexedDB:', error);
+    throw error;
+  }
 }; 
