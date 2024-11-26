@@ -866,7 +866,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                     const currentRound = currentRoundByModel[modelId];
                     if (!modelBattles || currentRound === undefined) return null;
                     
-                    const winner = modelBattles[currentRound]?.pools[0]?.cryptos[0];
+                    // Get the winner from the winners array instead of cryptos array
+                    const winner = modelBattles[currentRound]?.pools[0]?.winners?.[0]?.coin;
                     if (!winner) return null;
 
                     return (
