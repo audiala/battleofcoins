@@ -844,6 +844,46 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 className="prompt-textarea"
               />
             </div>
+
+            {/* Add winners announcement when tournament completes */}
+            {isValidModelId(activeModelId) && isTournamentComplete(activeModelId) && (
+              <div className="battle-view">
+                <div className="winner-announcement">
+                  <h2>🏆 Tournament Results 🏆</h2>
+                  
+                  <div className="model-winners">
+                    {selectedModels.map(({ modelId }) => {
+                      const modelBattles = battlesByModel[modelId];
+                      const currentRound = currentRoundByModel[modelId];
+                      if (!modelBattles || currentRound === undefined) return null;
+                      
+                      const winner = modelBattles[currentRound]?.pools[0]?.winners?.[0]?.coin;
+                      if (!winner) return null;
+
+                      return (
+                        <div key={modelId} className="model-winner">
+                          <h3>{models[modelId]?.name} Winner:</h3>
+                          <div className="winner-card">
+                            <img 
+                              src={`/${winner.logo_local}`} 
+                              alt={winner.name}
+                              className="winner-logo"
+                            />
+                            <span className="winner-name">
+                              {winner.name}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div className="prompt-display">
+                  <h4>Selection Criteria:</h4>
+                  <p>{prompt}</p>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <div className="battle-view">
