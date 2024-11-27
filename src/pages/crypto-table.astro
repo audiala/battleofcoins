@@ -23,5 +23,5 @@ console.log('Loaded crypto data:', cryptoData.length);
 ---
 
 <Layout title="Crypto Table">
-  <CryptoTableComponent client:load data={cryptoData} />
+  <CryptoTableComponent client:load data={cryptoData.slice(0, 10)} />
 </Layout> 

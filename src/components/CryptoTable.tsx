@@ -8,6 +8,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import type { SortingState } from '@tanstack/react-table';
+import { useBinanceWebSocket } from '../hooks/useBinanceWebSocket';
 
 export type CryptoData = {
   id: number;
@@ -47,123 +48,39 @@ function parseNumberValue(value: string | null): number {
   return Number(value.replace(/,/g, ''));
 }
 
-const columns = [
-  columnHelper.accessor('selected', {
-    header: ({ table }) => (
-      <input
-        type="checkbox"
-        checked={table.getIsAllRowsSelected()}
-        onChange={table.getToggleAllRowsSelectedHandler()}
-        className="checkbox"
-      />
-    ),
-    cell: ({ row }) => (
-      <input
-        type="checkbox"
-        checked={row.getIsSelected()}
-        onChange={row.getToggleSelectedHandler()}
-        className="checkbox"
-      />
-    ),
-  }),
-  columnHelper.accessor('logo_local', {
-    header: '',
-    cell: info => (
-      <img 
-        src={`/${info.getValue()}`} 
-        alt="" 
-        className="w-8 h-8 rounded-full ring-1 ring-gray-700"
-      />
-    ),
-  }),
-  columnHelper.accessor('name', {
-    header: 'Name',
-    cell: info => (
-      <div className="flex items-center">
-        <span className="font-medium text-white">{info.getValue()}</span>
-      </div>
-    ),
-  }),
-  columnHelper.accessor('ticker', {
-    header: 'Ticker',
-    cell: info => (
-      <div className="flex items-center">
-        <span className="ml-2 text-gray-400 text-sm">{info.row.original.ticker}</span>
-      </div>
-    ),
-  }),
-  columnHelper.accessor(row => row.market_stats.market_cap, {
-    id: 'market_cap',
-    header: 'Market Cap',
-    cell: info => formatCurrency(info.getValue()),
-    sortingFn: (rowA, rowB) => {
-      const a = parseCurrencyValue(rowA.original.market_stats.market_cap);
-      const b = parseCurrencyValue(rowB.original.market_stats.market_cap);
-      return a - b;
-    },
-  }),
-  columnHelper.accessor(row => row.market_stats.fully_diluted_valuation, {
-    id: 'fdv',
-    header: 'Fully Diluted Valuation',
-    cell: info => formatCurrency(info.getValue()),
-    sortingFn: (rowA, rowB) => {
-      const a = parseCurrencyValue(rowA.original.market_stats.fully_diluted_valuation);
-      const b = parseCurrencyValue(rowB.original.market_stats.fully_diluted_valuation);
-      return a - b;
-    },
-  }),
-  columnHelper.accessor(row => row.market_stats.trading_volume_24h, {
-    id: 'volume',
-    header: '24h Volume',
-    cell: info => formatCurrency(info.getValue()),
-    sortingFn: (rowA, rowB) => {
-      const a = parseCurrencyValue(rowA.original.market_stats.trading_volume_24h);
-      const b = parseCurrencyValue(rowB.original.market_stats.trading_volume_24h);
-      return a - b;
-    },
-  }),
-  columnHelper.accessor(row => row.market_stats.circulating_supply, {
-    id: 'circulating_supply',
-    header: 'Circulating Supply',
-    cell: info => formatNumber(info.getValue()),
-    sortingFn: (rowA, rowB) => {
-      const a = parseNumberValue(rowA.original.market_stats.circulating_supply);
-      const b = parseNumberValue(rowB.original.market_stats.circulating_supply);
-      return a - b;
-    },
-  }),
-  columnHelper.accessor(row => row.market_stats.total_supply, {
-    id: 'total_supply',
-    header: 'Total Supply',
-    cell: info => formatNumber(info.getValue()),
-    sortingFn: (rowA, rowB) => {
-      const a = parseNumberValue(rowA.original.market_stats.total_supply);
-      const b = parseNumberValue(rowB.original.market_stats.total_supply);
-      return a - b;
-    },
-  }),
-  columnHelper.accessor(row => row.market_stats.max_supply, {
-    id: 'max_supply',
-    header: 'Max Supply',
-    cell: info => formatNumber(info.getValue()),
-    sortingFn: (rowA, rowB) => {
-      const a = parseNumberValue(rowA.original.market_stats.max_supply);
-      const b = parseNumberValue(rowB.original.market_stats.max_supply);
-      return a - b;
-    },
-  }),
-];
+// Add these functions before the CryptoTable component definition
 
 function formatCurrency(value: string | null): string {
-  if (!value) return '-';
+  if (!value || value === 'NaN') return 'NaN';
   const num = Number(value.replace(/[$,]/g, ''));
-  const formatted = new Intl.NumberFormat('en-US', {
+  if (isNaN(num)) return 'NaN';
+  
+  // Handle small numbers
+  if (Math.abs(num) < 0.01) {
+    // Convert to scientific notation first
+    const scientificStr = num.toExponential(6);
+    
+    // If it's extremely small (e < -20), keep scientific notation
+    if (num < 1e-20) {
+      return `$${scientificStr}`;
+    }
+    
+    // Otherwise, show decimal notation with up to 8 decimal places
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 8,
+      maximumFractionDigits: 8
+    }).format(num);
+  }
+  
+  // For normal numbers (≥ 0.01), use compact notation
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     notation: 'compact',
     maximumFractionDigits: 2
   }).format(num);
-  return `${formatted}`;
 }
 
 function formatNumber(value: string | null): string {
@@ -175,20 +92,180 @@ function formatNumber(value: string | null): string {
   }).format(num);
 }
 
-// Update the RowSelection interface to include string index signature
-interface RowSelection {
-  [key: string]: boolean;
-}
+// Add these memoized components at the top level
+const LogoCell = React.memo(({ logoPath }: { logoPath: string }) => {
+  return (
+    <img 
+      src={`/${logoPath}`} 
+      alt="" 
+      className="w-8 h-8 rounded-full ring-1 ring-gray-700"
+    />
+  );
+});
 
-// Add type for the table's row selection state
-type TableRowSelection = {
-  [key: string]: boolean;
-}
+const PriceCell = React.memo(({ symbol, marketData }: { 
+  symbol: string, 
+  marketData: Record<string, { price: string, lastUpdate: number }> 
+}) => {
+  const data = marketData[symbol];
+  const price = data?.price;
+
+  if (!price) {
+    return <span className="text-gray-400">NaN</span>;
+  }
+
+  return (
+    <div className="text-right">
+      {formatCurrency(price)}
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  const prevData = prevProps.marketData[prevProps.symbol];
+  const nextData = nextProps.marketData[nextProps.symbol];
+  return prevData?.price === nextData?.price;
+});
+
+const TableRow = React.memo(({ row }: { row: any }) => {
+  return (
+    <tr key={row.id}>
+      {row.getVisibleCells().map(cell => (
+        <td key={cell.id}>
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </td>
+      ))}
+    </tr>
+  );
+});
 
 export default function CryptoTable({ data, onSelectionChange }: CryptoTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<TableRowSelection>({});
   const [selectedPreset, setSelectedPreset] = useState<string>('');
+
+  const symbols = data.map(crypto => `${crypto.ticker}USDT`);
+  const marketData = useBinanceWebSocket(symbols);
+
+  // Move columns definition inside component to access marketData
+  const columns = React.useMemo(() => [
+    columnHelper.accessor('selected', {
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+          className="checkbox"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          className="checkbox"
+        />
+      ),
+    }),
+    columnHelper.accessor('logo_local', {
+      header: '',
+      cell: info => <LogoCell logoPath={info.getValue()} />,
+    }),
+    columnHelper.accessor('name', {
+      header: 'Name',
+      cell: info => (
+        <div className="flex items-center">
+          <span className="font-medium text-white">{info.getValue()}</span>
+        </div>
+      ),
+    }),
+    columnHelper.accessor('ticker', {
+      header: 'Ticker',
+      cell: info => (
+        <div className="flex items-center">
+          <span className="ml-2 text-gray-400 text-sm">{info.getValue()}</span>
+        </div>
+      ),
+    }),
+    // Add price column after ticker
+    columnHelper.accessor(row => {
+      return `${row.ticker}USDT`.toUpperCase();
+    }, {
+      id: 'price',
+      header: 'Price',
+      cell: info => (
+        <PriceCell 
+          symbol={info.getValue()} 
+          marketData={marketData}
+        />
+      ),
+      sortingFn: (rowA, rowB) => {
+        const symbolA = `${rowA.original.ticker}USDT`.toUpperCase();
+        const symbolB = `${rowB.original.ticker}USDT`.toUpperCase();
+        const a = Number(marketData[symbolA]?.price || 0);
+        const b = Number(marketData[symbolB]?.price || 0);
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.market_cap, {
+      id: 'market_cap',
+      header: 'Market Cap',
+      cell: info => formatCurrency(info.getValue()),
+      sortingFn: (rowA, rowB) => {
+        const a = parseCurrencyValue(rowA.original.market_stats.market_cap);
+        const b = parseCurrencyValue(rowB.original.market_stats.market_cap);
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.fully_diluted_valuation, {
+      id: 'fdv',
+      header: 'Fully Diluted Valuation',
+      cell: info => formatCurrency(info.getValue()),
+      sortingFn: (rowA, rowB) => {
+        const a = parseCurrencyValue(rowA.original.market_stats.fully_diluted_valuation);
+        const b = parseCurrencyValue(rowB.original.market_stats.fully_diluted_valuation);
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.trading_volume_24h, {
+      id: 'volume',
+      header: '24h Volume',
+      cell: info => formatCurrency(info.getValue()),
+      sortingFn: (rowA, rowB) => {
+        const a = parseCurrencyValue(rowA.original.market_stats.trading_volume_24h);
+        const b = parseCurrencyValue(rowB.original.market_stats.trading_volume_24h);
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.circulating_supply, {
+      id: 'circulating_supply',
+      header: 'Circulating Supply',
+      cell: info => formatNumber(info.getValue()),
+      sortingFn: (rowA, rowB) => {
+        const a = parseNumberValue(rowA.original.market_stats.circulating_supply);
+        const b = parseNumberValue(rowB.original.market_stats.circulating_supply);
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.total_supply, {
+      id: 'total_supply',
+      header: 'Total Supply',
+      cell: info => formatNumber(info.getValue()),
+      sortingFn: (rowA, rowB) => {
+        const a = parseNumberValue(rowA.original.market_stats.total_supply);
+        const b = parseNumberValue(rowB.original.market_stats.total_supply);
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.max_supply, {
+      id: 'max_supply',
+      header: 'Max Supply',
+      cell: info => formatNumber(info.getValue()),
+      sortingFn: (rowA, rowB) => {
+        const a = parseNumberValue(rowA.original.market_stats.max_supply);
+        const b = parseNumberValue(rowB.original.market_stats.max_supply);
+        return a - b;
+      },
+    }),
+  ], [marketData]); // Add marketData as dependency
 
   const table = useReactTable({
     data,
@@ -329,13 +406,7 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
         </thead>
         <tbody>
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map(cell => (
-                <td key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
+            <TableRow key={row.id} row={row} />
           ))}
         </tbody>
       </table>
