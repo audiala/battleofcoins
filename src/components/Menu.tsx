@@ -5,7 +5,7 @@ export function Menu() {
 
   const menuItems = [
     { href: '/crypto-table', label: 'Select Coins' },
-    { href: '/crypto-battle', label: 'Battle Arena' },
+    { href: '/', label: 'Battle Arena' },
     { href: '/battle-history', label: 'Public History' },
     { href: '/private-history', label: 'Private History' },
     { href: '/my-wallet', label: 'My Wallet' },
