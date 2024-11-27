@@ -163,7 +163,7 @@ export default function BattleDashboard() {
                 <td>
                   <div className="actions-cell">
                     <a 
-                      href={`/crypto-battle?battle=${battle.id}`}
+                      href={`/?battle=${battle.id}`}
                       className="view-battle-link"
                     >
                       View Battle

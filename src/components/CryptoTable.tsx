@@ -247,7 +247,7 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
     try {
       localStorage.setItem('selectedCryptos', JSON.stringify(selectedCryptos));
       console.log('Stored selected cryptos:', selectedCryptos);
-      window.location.href = '/crypto-battle';
+      window.location.href = '/';
     } catch (error) {
       console.error('Error storing selected cryptos:', error);
       alert('Failed to store selected cryptos. Please try again.');
