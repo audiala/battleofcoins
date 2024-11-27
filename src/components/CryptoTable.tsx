@@ -28,9 +28,18 @@ export type CryptoData = {
   selected?: boolean;
 };
 
+interface TaggedCoinData {
+  [key: string]: {
+    name: string;
+    ticker: string;
+    tags: string[];
+  };
+}
+
 interface CryptoTableProps {
   data: CryptoData[];
   onSelectionChange?: (selectedCryptos: CryptoData[]) => void;
+  taggedCoins?: TaggedCoinData;
 }
 
 const columnHelper = createColumnHelper<CryptoData>();
@@ -137,10 +146,23 @@ const TableRow = React.memo(({ row }: { row: any }) => {
   );
 });
 
-export default function CryptoTable({ data, onSelectionChange }: CryptoTableProps) {
+const getUniqueTagsFromData = (taggedCoins: TaggedCoinData): string[] => {
+  const tagsSet = new Set<string>();
+  Object.values(taggedCoins).forEach(coin => {
+    coin.tags.forEach(tag => {
+      // Clean up the tag by removing leading/trailing spaces
+      const cleanTag = tag.trim().replace(/^[, ]+|[, ]+$/g, '');
+      if (cleanTag) tagsSet.add(cleanTag);
+    });
+  });
+  return Array.from(tagsSet).sort();
+};
+
+export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} }: CryptoTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<TableRowSelection>({});
   const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [selectedTag, setSelectedTag] = useState<string>('');
 
   const symbols = data.map(crypto => `${crypto.ticker}USDT`);
   const marketData = useBinanceWebSocket(symbols);
@@ -186,25 +208,25 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
       ),
     }),
     // Add price column after ticker
-    columnHelper.accessor(row => {
-      return `${row.ticker}USDT`.toUpperCase();
-    }, {
-      id: 'price',
-      header: 'Price',
-      cell: info => (
-        <PriceCell 
-          symbol={info.getValue()} 
-          marketData={marketData}
-        />
-      ),
-      sortingFn: (rowA, rowB) => {
-        const symbolA = `${rowA.original.ticker}USDT`.toUpperCase();
-        const symbolB = `${rowB.original.ticker}USDT`.toUpperCase();
-        const a = Number(marketData[symbolA]?.price || 0);
-        const b = Number(marketData[symbolB]?.price || 0);
-        return a - b;
-      },
-    }),
+    // columnHelper.accessor(row => {
+    //   return `${row.ticker}USDT`.toUpperCase();
+    // }, {
+    //   id: 'price',
+    //   header: 'Price',
+    //   cell: info => (
+    //     <PriceCell 
+    //       symbol={info.getValue()} 
+    //       marketData={marketData}
+    //     />
+    //   ),
+    //   sortingFn: (rowA, rowB) => {
+    //     const symbolA = `${rowA.original.ticker}USDT`.toUpperCase();
+    //     const symbolB = `${rowB.original.ticker}USDT`.toUpperCase();
+    //     const a = Number(marketData[symbolA]?.price || 0);
+    //     const b = Number(marketData[symbolB]?.price || 0);
+    //     return a - b;
+    //   },
+    // }),
     columnHelper.accessor(row => row.market_stats.market_cap, {
       id: 'market_cap',
       header: 'Market Cap',
@@ -314,6 +336,26 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
     }
   };
 
+  const handleTagSelect = (tag: string) => {
+    setSelectedTag(tag);
+    let selectedRows: TableRowSelection = {};
+
+    // Find all coins that have the selected tag
+    data.forEach((crypto, index) => {
+      const coinData = taggedCoins[crypto.ticker];
+      if (coinData && coinData.tags.some(t => t.trim().includes(tag))) {
+        selectedRows[index.toString()] = true;
+      }
+    });
+
+    setRowSelection(selectedRows);
+    
+    if (onSelectionChange) {
+      const selectedCryptos = data.filter((_, index) => selectedRows[index.toString()]);
+      onSelectionChange(selectedCryptos);
+    }
+  };
+
   const startBattle = () => {
     const selectedCryptos = data.filter((_, index) => rowSelection[index.toString()]);
     if (selectedCryptos.length < 2) {
@@ -367,6 +409,22 @@ export default function CryptoTable({ data, onSelectionChange }: CryptoTableProp
                 <span className="preset-description">Reset selection</span>
               </span>
             </button>
+          </div>
+          
+          <h2 className="presets-title mt-4">Select by Category</h2>
+          <div className="tag-buttons flex flex-wrap gap-2 mt-2">
+            {getUniqueTagsFromData(taggedCoins).map(tag => (
+              <button
+                key={tag}
+                onClick={() => handleTagSelect(tag)}
+                className={`tag-button px-3 py-1 rounded-full text-sm 
+                  ${selectedTag === tag 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-700 text-gray-200 hover:bg-gray-600'}`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         </div>
 

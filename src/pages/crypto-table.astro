@@ -7,6 +7,7 @@ import { join } from 'path';
 import { load } from 'js-yaml';
 import '../styles/main.css';
 import type { CryptoData } from '../components/CryptoTable';
+import taggedCoinsData from '../../data/tagged_coins.json';
 
 // Read the YAML file
 const dataDir = join(process.cwd(), 'data');
@@ -23,5 +24,5 @@ console.log('Loaded crypto data:', cryptoData.length);
 ---
 
 <Layout title="Crypto Table">
-  <CryptoTableComponent client:load data={cryptoData.slice(0, 10)} />
+  <CryptoTableComponent client:load data={cryptoData} taggedCoins={taggedCoinsData} />
 </Layout> 
