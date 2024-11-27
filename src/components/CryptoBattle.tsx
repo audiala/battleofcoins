@@ -12,7 +12,7 @@ import {
 import {
   saveBattleHistory as saveBattleHistoryLocal,
   getAllBattleHistories as getAllBattleHistoriesLocal,
-  getBattleById as getPrivateBattleById
+  getBattleById as getBattleByIdLocal
 } from '../services/BattleDatabaseLocal';
 
 interface Winner {
@@ -186,6 +186,31 @@ const stripCryptoData = (crypto: CryptoData) => {
   };
 };
 
+// Add this helper function to calculate total rounds and pools
+const calculateBattleStats = (cryptoCount: number) => {
+  let totalPools = 0;
+  let currentCount = cryptoCount;
+  let rounds = 0;
+
+  while (currentCount > 1) {
+    // Calculate number of pools for this round
+    const poolsInRound = Math.ceil(currentCount / 8);
+    totalPools += poolsInRound;
+    
+    // For next round, we'll have half the cryptos
+    currentCount = Math.ceil(currentCount / 2);
+    rounds++;
+  }
+
+  return { totalPools, rounds };
+};
+
+// Add this function to calculate total cost
+const calculateTotalCost = (cryptoCount: number, modelCost: number) => {
+  const { totalPools } = calculateBattleStats(cryptoCount);
+  return (totalPools * modelCost).toFixed(4);
+};
+
 export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
   console.log('CryptoBattle received cryptos:', cryptos?.length);
 
@@ -244,15 +269,54 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         const params = new URLSearchParams(window.location.search);
         const battleId = params.get('battle');
         if (battleId) {
-          // Use local getBattleById instead of Supabase
-          const battle = await getBattleByIdLocal(battleId);
-          if (battle) {
-            setBattlesByModel({
-              [defaultModel]: battle.results.modelResults[defaultModel].rounds
-            });
-            setCurrentRoundByModel({
-              [defaultModel]: battle.results.modelResults[defaultModel].rounds.length - 1
-            });
+          // Try private battle first
+          let battle = await getBattleByIdLocal(battleId);
+          
+          // If not found in private, try public
+          if (!battle) {
+            battle = await getPublicBattleById(battleId);
+          }
+
+          if (battle && battle.results?.modelResults) {
+            // Get all model IDs from the battle that have completed rounds
+            const modelIds = Object.entries(battle.results.modelResults)
+              .filter(([_, result]) => result && result.rounds) // Only include models with valid rounds
+              .map(([modelId]) => modelId);
+
+            if (modelIds.length > 0) {
+              // Set up the battles and rounds for each valid model
+              setBattlesByModel(
+                modelIds.reduce((acc, modelId) => {
+                  const modelResult = battle.results.modelResults[modelId];
+                  if (modelResult && modelResult.rounds) {
+                    acc[modelId] = modelResult.rounds;
+                  }
+                  return acc;
+                }, {})
+              );
+              
+              setCurrentRoundByModel(
+                modelIds.reduce((acc, modelId) => {
+                  const modelResult = battle.results.modelResults[modelId];
+                  if (modelResult && modelResult.rounds) {
+                    acc[modelId] = modelResult.rounds.length - 1;
+                  }
+                  return acc;
+                }, {})
+              );
+              
+              // Set up selected models
+              setSelectedModels(
+                modelIds.map(modelId => ({
+                  modelId,
+                  active: true
+                }))
+              );
+              
+              // Set the first valid model as active
+              setActiveModelId(modelIds[0]);
+            }
+            
             setSelectedBattleId(battleId);
             setPrompt(battle.prompt);
             battleSavedRef.current = true;
@@ -379,17 +443,26 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               }];
               pool.losers = [];
               console.log(`Model ${modelId} - Pool ${pool.id} has a single crypto. Auto-winning.`);
+              
+              // Force a re-render after updating pool
+              setBattlesByModel(prev => ({
+                ...prev,
+                [modelId]: modelBattles
+              }));
               return;
             }
 
             // Set loading state
             pool.isLoading = true;
+            // Force a re-render to show loading state
+            setBattlesByModel(prev => ({
+              ...prev,
+              [modelId]: modelBattles
+            }));
+            
             console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
-            // Use AI selection for winners with specific model
-            // const judgeAPI = '/api/selectWinnersRandom';
-            const judgeAPI = '/api/selectWinners';
-            const response = await axios.post(judgeAPI, {
+            const response = await axios.post('/api/selectWinners', {
               cryptos: pool.cryptos,
               prompt,
               model: modelId,
@@ -401,10 +474,21 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             pool.winners = data.winners;
             pool.losers = data.losers;
             console.log(`Model ${modelId} - Pool ${pool.id} winners:`, data.winners);
+            
+            // Force a re-render after updating winners/losers
+            setBattlesByModel(prev => ({
+              ...prev,
+              [modelId]: modelBattles
+            }));
           } catch (error) {
             console.error(`Error processing pool ${pool.id} for model ${modelId}:`, error);
           } finally {
             pool.isLoading = false;
+            // Force a re-render after loading completes
+            setBattlesByModel(prev => ({
+              ...prev,
+              [modelId]: modelBattles
+            }));
             console.log(`Model ${modelId} - Pool ${pool.id} loading complete`);
           }
         });
@@ -412,16 +496,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         // Wait for all pools to complete
         await Promise.all(poolPromises);
         console.log(`Model ${modelId} - All pools processed for round ${currentRoundIndex}`);
-
-        // Update the state with the modified pools
-        setBattlesByModel(prev => {
-          const updated = {
-            ...prev,
-            [modelId]: modelBattles
-          };
-          battlesByModelRef.current = updated;
-          return updated;
-        });
 
         // Check if all pools have winners before creating the next round
         if (currentRoundPools.every(pool => pool.winners)) {
@@ -446,7 +520,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
             console.log(`Model ${modelId} - Next round created: Round ${modelBattles.length}`);
 
-            // Update states
+            // Update states with force re-render
             setBattlesByModel(prev => {
               const updated = {
                 ...prev,
@@ -654,7 +728,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     console.log(`Loading battle with ID: ${battleId}`);
     
     // Try to load from private history first
-    let battle = await getPrivateBattleById(battleId);
+    let battle = await getBattleByIdLocal(battleId);
     
     // If not found in private history, try public history
     if (!battle) {
@@ -1179,6 +1253,14 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         )}
         {/* Auto Play Button: hide if tournament is complete */}
         <div className={`battle-button-group ${isTournamentComplete(activeModelId) ? 'tournament-complete' : ''}`}>
+          <div className="cost-estimate">
+            Est. Cost: Ӿ {
+              selectedModels.reduce((total, { modelId }) => {
+                const modelCost = models[modelId]?.costEstimate || 0;
+                return total + Number(calculateTotalCost(initialCryptosRef.current.length, modelCost));
+              }, 0).toFixed(4)
+            }
+          </div>
           <button 
             onClick={handleAutoPlay}
             style={{ display: isTournamentComplete(activeModelId) ? 'none' : 'block' }}
@@ -1191,7 +1273,12 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             }
             className="auto-play-button"
           >
-            {isAutoPlaying ? 'Battle in Progress...' : 
+            {isAutoPlaying ? (
+              <>
+                <span className="button-spinner"></span>
+                Battle in Progress...
+              </>
+            ) : 
              !isValidModelId(activeModelId) ? 'Select a Model' :
              isTournamentComplete(activeModelId) ? 'Tournament Complete!' : 
              selectedBattleId ? 'Viewing Past Battle' :

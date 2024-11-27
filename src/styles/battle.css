@@ -1657,3 +1657,45 @@ input:checked + .slider:before {
   color: #9ca3af;
   font-size: 0.9rem;
 }
+
+/* Add styles for cost estimate */
+.cost-estimate {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  padding: 0.5rem 1rem;
+  background: #2a1f2d;
+  border-radius: 0.5rem;
+  border: 1px solid #374151;
+}
+
+/* Update battle button group to accommodate cost estimate */
+.battle-button-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Add spinner styles for the button */
+.button-spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Update tournament complete styles */
+.tournament-complete .save-switch,
+.tournament-complete .cost-estimate {
+  display: none;
+}
