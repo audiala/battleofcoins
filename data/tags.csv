@@ -1,0 +1,494 @@
+Bitcoin,BTC,"Large Cap Cryptocurrencies, Payment Coins"
+Ethereum,ETH,"Large Cap Cryptocurrencies, Smart-contracts, Platform Tokens"
+Tether,USDT,Stablecoins
+Solana,SOL,"Large Cap Cryptocurrencies, Smart-contracts, Platform Tokens"
+BNB,BNB,"Large Cap Cryptocurrencies, Smart-contracts, Platform Tokens"
+XRP,XRP,"Large Cap Cryptocurrencies, Payment Coins"
+Dogecoin,DOGE,Meme Coins
+USDC,USDC,Stablecoins
+Lido Staked Ether,STETH,"Smart-contracts, DEFI, Lending, Borrowing, and Savings"
+Cardano,ADA,"Large Cap Cryptocurrencies, Smart-contracts, Platform Tokens"
+TRON,TRX,"Smart-contracts, Platform Tokens"
+Shiba Inu,SHIB,Meme Coins
+Avalanche,AVAX,"Smart-contracts, Platform Tokens"
+Toncoin,TON,"Large Cap Cryptocurrencies, Smart-contracts, Platform Tokens"
+Wrapped Bitcoin,WBTC,"Large Cap Cryptocurrencies, Payment Coins"
+Wrapped stETH,WSTETH,"DEFI, Lending, Borrowing, and Savings"
+Sui,SUI,"Smart-contracts, Platform Tokens"
+Chainlink,LINK,Infrastructure and Scalability Solutions
+WETH,WETH,"Smart-contracts, Platform Tokens"
+Pepe,PEPE,Meme Coins
+Bitcoin Cash,BCH,Payment Coins
+Polkadot,DOT,"Large Cap Cryptocurrencies, Smart-contracts, Platform Tokens"
+Stellar,XLM,Payment Coins
+NEAR Protocol,NEAR,"Smart-contracts, Platform Tokens"
+LEO Token,LEO,Utility Tokens
+Litecoin,LTC,Payment Coins
+Aptos,APT,"Smart-contracts, Platform Tokens"
+Wrapped eETH,WEETH,"Smart-contracts, DEFI"
+Uniswap,UNI,"DEXs, DEFI, Governance Tokens"
+USDS,USDS,Stablecoins
+Hedera,HBAR,"Smart-contracts, Platform Tokens"
+Cronos,CRO,Platform Tokens
+Internet Computer,ICP,Platform Tokens
+Kaspa,KAS,Large Cap Cryptocurrencies
+Ethereum Classic,ETC,"Smart-contracts, Platform Tokens"
+Render,RENDER,Utility Tokens
+MANTRA,OM,"DEFI, Governance Tokens"
+Bittensor,TAO,DEFI
+dogwifhat,WIF,Meme Coins
+Bonk,BONK,Meme Coins
+Artificial Superintelligence Alliance,FET,Infrastructure and Scalability Solutions
+POL (ex-MATIC),POL,"Smart-contracts, Platform Tokens"
+Ethena USDe,USDE,Stablecoins
+Dai,DAI,Stablecoins
+WhiteBIT Coin,WBT,Utility Tokens
+Stacks,STX,"Smart-contracts, Platform Tokens"
+Arbitrum,ARB,"DEFI, Smart-contracts, Platform Tokens"
+Monero,XMR,Privacy Coins
+Filecoin,FIL,Utility Tokens
+OKB,OKB,Utility Tokens
+First Digital USD,FDUSD,Stablecoins
+VeChain,VET,Industry-Specific Coins
+Aave,AAVE,"DEFI, Lending, Borrowing, and Savings"
+FLOKI,FLOKI,Meme Coins
+Injective,INJ,"DEFI, Governance Tokens"
+Mantle,MNT,"Smart-contracts, Platform Tokens"
+Cosmos Hub,ATOM,"Smart-contracts, Platform Tokens"
+Immutable,IMX,Gaming & Collectibles Tokens (NFTs)
+Celestia,TIA,Infrastructure and Scalability Solutions
+Sei,SEI,"Smart-contracts, Platform Tokens"
+Optimism,OP,"Smart-contracts, Platform Tokens"
+The Graph,GRT,Infrastructure and Scalability Solutions
+Fantom,FTM,"Smart-contracts, Platform Tokens"
+Bitget Token,BGB,Utility Tokens
+Binance-Peg WETH,WETH,"Smart-contracts, Platform Tokens"
+THORChain,RUNE,"DEXs, DEFI"
+Popcat,POPCAT,Meme Coins
+Algorand,ALGO,"Smart-contracts, Platform Tokens"
+Ethena,ENA,Stablecoins
+Theta Network,THETA,Infrastructure and Scalability Solutions
+Brett,BRETT,Meme Coins
+Peanut the Squirrel,PNUT,Meme Coins
+Raydium,RAY,"DEXs, DEFI"
+Rocket Pool ETH,RETH,"DEFI, Lending, Borrowing, and Savings"
+Jupiter,JUP,DEFI
+Worldcoin,WLD,Utility Tokens
+Solv Protocol SolvBTC,SOLVBTC,DEFI
+Mantle Staked Ether,METH,DEFI
+Pyth Network,PYTH,Infrastructure and Scalability Solutions
+Ondo,ONDO,DEFI
+Renzo Restaked ETH,EZETH,DEFI
+Coinbase Wrapped BTC,CBBTC,"Large Cap Cryptocurrencies, Payment Coins"
+Bitcoin SV,BSV,Payment Coins
+Maker,MKR,"DEFI, Governance Tokens"
+Marinade Staked SOL,MSOL,DEFI
+Quant,QNT,Utility Tokens
+KuCoin,KCS,Utility Tokens
+Beam,BEAM,Privacy Coins
+Gate,GT,Utility Tokens
+Arweave,AR,Utility Tokens
+GALA,GALA,Gaming & Collectibles Tokens (NFTs)
+Flow,FLOW,Gaming & Collectibles Tokens (NFTs)
+Goatseus Maximus,GOAT,Meme Coins
+BitTorrent,BTT,Utility Tokens
+Lido DAO,LDO,DEFI
+Flare,FLR,Infrastructure and Scalability Solutions
+JasmyCoin,JASMY,Industry-Specific Coins
+ether.fi Staked ETH,EETH,DEFI
+cat in a dogs world,MEW,Meme Coins
+Starknet,STRK,Infrastructure and Scalability Solutions
+Tezos,XTZ,"Smart-contracts, Platform Tokens"
+Helium,HNT,Infrastructure and Scalability Solutions
+Polygon,MATIC,"Smart-contracts, Platform Tokens"
+Lombard Staked BTC,LBTC,DEFI
+EOS,EOS,"Smart-contracts, Platform Tokens"
+AIOZ Network,AIOZ,Infrastructure and Scalability Solutions
+Jupiter Staked SOL,JUPSOL,DEFI
+Tokenize Xchange,TKX,Utility Tokens
+Core,CORE,"Smart-contracts, Platform Tokens"
+Akash Network,AKT,Infrastructure and Scalability Solutions
+Mog Coin,MOG,Meme Coins
+dYdX,DYDX,"DEXs, DEFI"
+Solv Protocol SolvBTC.BBN,SOLVBTC.BBN,DEFI
+Aerodrome Finance,AERO,DEFI
+eCash,XEC,Payment Coins
+NEO,NEO,"Smart-contracts, Platform Tokens"
+Arbitrum Bridged WBTC (Arbitrum One),WBTC,"DEXs, DEFI"
+Neiro,NEIRO,Industry-Specific Coins
+Axie Infinity,AXS,Gaming & Collectibles Tokens (NFTs)
+Pendle,PENDLE,DEFI
+The Sandbox,SAND,Gaming & Collectibles Tokens (NFTs)
+MultiversX,EGLD,"Smart-contracts, Platform Tokens"
+ApeCoin,APE,Gaming & Collectibles Tokens (NFTs)
+ORDI,ORDI,Meme Coins
+Mina Protocol,MINA,"Smart-contracts, Platform Tokens"
+NEXO,NEXO,"Lending, Borrowing, and Savings"
+Kaia,KAIA,Industry-Specific Coins
+Notcoin,NOT,Meme Coins
+Decentraland,MANA,Gaming & Collectibles Tokens (NFTs)
+Binance-Peg Dogecoin,DOGE,Meme Coins
+USDD,USDD,Stablecoins
+BOOK OF MEME,BOME,Meme Coins
+DOG•GO•TO•THE•MOON (Runes),DOG,Meme Coins
+Conflux,CFX,"Smart-contracts, Platform Tokens"
+Binance Staked SOL,BNSOL,DEFI
+L2 Standard Bridged WETH (Base),WETH,"Smart-contracts, Platform Tokens"
+Kelp DAO Restaked ETH,RSETH,DEFI
+Wormhole,W,Infrastructure and Scalability Solutions
+Zcash,ZEC,Privacy Coins
+Chiliz,CHZ,Gaming & Collectibles Tokens (NFTs)
+Axelar,AXL,Infrastructure and Scalability Solutions
+Arkham,ARKM,Industry-Specific Coins
+Gnosis,GNO,DEFI
+IOTA,IOTA,Infrastructure and Scalability Solutions
+XDC Network,XDC,"Smart-contracts, Platform Tokens"
+Arbitrum Bridged WETH (Arbitrum One),WETH,"DEXs, DEFI"
+Frax,FRAX,Stablecoins
+Tether Gold,XAUT,Stablecoins
+Fwog,FWOG,Meme Coins
+Turbo,TURBO,Meme Coins
+Terra Luna Classic,LUNC,"Smart-contracts, Platform Tokens"
+Nervos Network,CKB,Infrastructure and Scalability Solutions
+Ethereum Name Service,ENS,Utility Tokens
+SuperVerse,SUPER,Industry-Specific Coins
+dYdX,ETHDYDX,"DEXs, DEFI"
+Synthetix Network,SNX,DEFI
+Act I The AI Prophecy,ACT,Gaming & Collectibles Tokens (NFTs)
+Oasis,ROSE,"Smart-contracts, Platform Tokens"
+Grass,GRASS,Meme Coins
+Bitcoin Gold,BTG,Payment Coins
+Coinbase Wrapped Staked ETH,CBETH,DEFI
+Moo Deng,MOODENG,Meme Coins
+ZKsync,ZK,Infrastructure and Scalability Solutions
+PancakeSwap,CAKE,"DEXs, DEFI"
+Safe,SAFE,Governance Tokens
+Beldex,BDX,Privacy Coins
+SATS (Ordinals),SATS,Utility Tokens
+DeXe,DEXE,DEFI
+CorgiAI,CORGIAI,Meme Coins
+PayPal USD,PYUSD,Stablecoins
+Avalanche Bridged BTC (Avalanche),BTC.B,Payment Coins
+Blur,BLUR,Gaming & Collectibles Tokens (NFTs)
+Super OETH,SUPEROETHB,DEFI
+PAX Gold,PAXG,Stablecoins
+Ronin,RON,Gaming & Collectibles Tokens (NFTs)
+Kava,KAVA,"Smart-contracts, Platform Tokens"
+SPX6900,SPX,Meme Coins
+GMT,GMT,Utility Tokens
+Astar,ASTR,"Smart-contracts, Platform Tokens"
+TrueUSD,TUSD,Stablecoins
+APENFT,NFT,Gaming & Collectibles Tokens (NFTs)
+Frax Ether,FRXETH,DEFI
+Theta Fuel,TFUEL,Infrastructure and Scalability Solutions
+Non-Playable Coin,NPC,Meme Coins
+Ether.fi Staked BTC,EBTC,DEFI
+Curve DAO,CRV,"DEXs, DEFI"
+Compound,COMP,DEFI
+Virtuals Protocol,VIRTUAL,Industry-Specific Coins
+tBTC,TBTC,DEFI
+Polygon PoS Bridged WETH (Polygon POS),WETH,"Smart-contracts, Platform Tokens"
+PepeCoin,PEPECOIN,Meme Coins
+WOO,WOO,DEFI
+Memecoin,MEME,Meme Coins
+Eigenlayer,EIGEN,Infrastructure and Scalability Solutions
+Ondo US Dollar Yield,USDY,DEFI
+Reserve Rights,RSR,Stablecoins
+Echelon Prime,PRIME,Industry-Specific Coins
+Gigachad,GIGA,Meme Coins
+Apu Apustaja,APU,Meme Coins
+Bridged USDC (Polygon PoS Bridge),USDC.E,Stablecoins
+LayerZero,ZRO,Infrastructure and Scalability Solutions
+IoTeX,IOTX,Infrastructure and Scalability Solutions
+0x Protocol,ZRX,Infrastructure and Scalability Solutions
+1inch,1INCH,"DEXs, DEFI"
+QuantixAI,QAI,"AI, Utility Tokens"
+ai16z,AI16Z,"AI, Utility Tokens"
+Degen (Base),DEGEN,Meme Coins
+Zilliqa,ZIL,"Smart-contracts, Platform Tokens"
+L2 Standard Bridged WETH (Blast),WETH,"Smart-contracts, Platform Tokens"
+Swell Ethereum,SWETH,DEFI
+Bazaars,BZR,Industry-Specific Coins
+WEMIX,WEMIX,Gaming & Collectibles Tokens (NFTs)
+USDB,USDB,Stablecoins
+Trust Wallet,TWT,Utility Tokens
+PONKE,PONKE,Meme Coins
+Hashnote USYC,USYC,Stablecoins
+Livepeer,LPT,Infrastructure and Scalability Solutions
+Drift Protocol,DRIFT,"DEXs, DEFI"
+Jito,JTO,DEFI
+Stader ETHx,ETHX,DEFI
+Amp,AMP,Utility Tokens
+Baby Doge Coin,BABYDOGE,Meme Coins
+ZetaChain,ZETA,"Smart-contracts, Platform Tokens"
+Holo,HOT,Infrastructure and Scalability Solutions
+Osmosis,OSMO,"DEXs, DEFI"
+Celo,CELO,"Smart-contracts, Platform Tokens"
+OriginTrail,TRAC,Infrastructure and Scalability Solutions
+EthereumPoW,ETHW,"Smart-contracts, Platform Tokens"
+Polymesh,POLYX,Security Tokens
+Usual USD,USD0,Stablecoins
+cWBTC,CWBTC,DEFI
+Golem,GLM,Utility Tokens
+Binance-Peg BUSD,BUSD,Stablecoins
+Enjin Coin,ENJ,Gaming & Collectibles Tokens (NFTs)
+Staked Frax Ether,SFRXETH,DEFI
+Simon's Cat,CAT,Meme Coins
+PUPS•WORLD•PEACE,PUPS,Meme Coins
+Dogs,DOGS,Meme Coins
+Dash,DASH,Payment Coins
+BENQI Liquid Staked AVAX,SAVAX,DEFI
+Dymension,DYM,"Smart-contracts, Platform Tokens"
+Polygon Bridged WBTC (Polygon POS),WBTC,Payment Coins
+Liquid Staked ETH,LSETH,DEFI
+Ether.fi,ETHFI,DEFI
+Kusama,KSM,"Smart-contracts, Platform Tokens"
+Ankr Network,ANKR,DEFI
+Aevo,AEVO,"Smart-contracts, Platform Tokens"
+JUST,JST,DEFI
+Qtum,QTUM,"Smart-contracts, Platform Tokens"
+pumpBTC,PUMPBTC,Meme Coins
+Siacoin,SC,Utility Tokens
+SafePal,SFP,Utility Tokens
+Gas,GAS,Utility Tokens
+Basic Attention,BAT,Utility Tokens
+Fartcoin,FARTCOIN,Meme Coins
+ConstitutionDAO,PEOPLE,Governance Tokens
+Department Of Government Efficiency,DOGE,Meme Coins
+Verus,VRSC,Privacy Coins
+Ravencoin,RVN,Utility Tokens
+ALEO,ALEO,Privacy Coins
+Manta Network,MANTA,Privacy Coins
+Olympus,OHM,DEFI
+MimbleWimbleCoin,MWC,Privacy Coins
+Metaplex,MPLX,Gaming & Collectibles Tokens (NFTs)
+Terra,LUNA,"Smart-contracts, Platform Tokens"
+Solayer Staked SOL,SSOL,DEFI
+CHEX Token,CHEX,Utility Tokens
+Illuvium,ILV,Gaming & Collectibles Tokens (NFTs)
+Amnis Aptos,AMAPT,"Smart-contracts, Platform Tokens"
+Mask Network,MASK,Privacy Coins
+io.net,IO,Industry-Specific Coins
+aelf,ELF,"Smart-contracts, Platform Tokens"
+Zerebro,ZEREBRO,Industry-Specific Coins
+Comedian,BAN,Meme Coins
+Tribe,TRIBE,Governance Tokens
+Metis,METIS,"Smart-contracts, Platform Tokens"
+GMX,GMX,"DEXs, DEFI"
+MX,MX,Utility Tokens
+Biconomy,BICO,Infrastructure and Scalability Solutions
+Creditcoin,CTC,Utility Tokens
+Mantle Restaked ETH,CMETH,DEFI
+CoinEx,CET,Utility Tokens
+Aethir,ATH,Utility Tokens
+Nosana,NOS,Industry-Specific Coins
+AltLayer,ALT,Infrastructure and Scalability Solutions
+Threshold Network,T,DEFI
+Bridged Ether (StarkGate),ETH,"Smart-contracts, Platform Tokens"
+Hamster Kombat,HMSTR,Meme Coins
+ANDY ETH,ANDY,Meme Coins
+michi,$MICHI,Meme Coins
+Nexus Mutual,NXM,"Insurance, DEFI"
+SKALE,SKL,"Smart-contracts, Platform Tokens"
+HarryPotterObamaSonic10Inu (ETH),BITCOIN,Meme Coins
+Snek,SNEK,Meme Coins
+Galxe,GAL,Gaming & Collectibles Tokens (NFTs)
+Loopring,LRC,"DEXs, DEFI"
+Wrapped Beacon ETH,WBETH,DEFI
+Mantle Bridged USDT (Mantle),USDT,Stablecoins
+sudeng,HIPPO,Meme Coins
+sudeng,HIPPO,Meme Coins
+Luce,LUCE,Meme Coins
+Quorium,QGOLD,Industry-Specific Coins
+Solar,SXP,Utility Tokens
+Delysium,AGI,Gaming & Collectibles Tokens (NFTs)
+Bitkub Coin,KUB,Utility Tokens
+Gravity,G,Industry-Specific Coins
+VVS Finance,VVS,DEFI
+Casper Network,CSPR,"Smart-contracts, Platform Tokens"
+Flux,FLUX,Infrastructure and Scalability Solutions
+Sundog,SUNDOG,Meme Coins
+Decred,DCR,Governance Tokens
+Sun Token,SUN,Stablecoins
+Chia,XCH,Utility Tokens
+Avail,AVAIL,Infrastructure and Scalability Solutions
+We Love Tits,TITS,Meme Coins
+Osaka Protocol,OSAK,Infrastructure and Scalability Solutions
+Wrapped Ether (Mantle Bridge),WETH,"Smart-contracts, Platform Tokens"
+yearn.finance,YFI,DEFI
+API3,API3,Infrastructure and Scalability Solutions
+UMA,UMA,DEFI
+Saga,SAGA,Utility Tokens
+Yield Guild Games,YGG,Gaming & Collectibles Tokens (NFTs)
+Rocket Pool,RPL,"DEFI, Governance Tokens"
+Banana Gun,BANANA,Meme Coins
+SingularityNET,AGIX,"AI, Utility Tokens"
+Ontology,ONT,"Smart-contracts, Platform Tokens"
+Cetus Protocol,CETUS,DEFI
+Hivemapper,HONEY,Industry-Specific Coins
+Blast,BLAST,Meme Coins
+Kadena,KDA,"Smart-contracts, Platform Tokens"
+SwissBorg,BORG,DEFI
+Clearpool,CPOOL,DEFI
+Moonbeam,GLMR,"Smart-contracts, Platform Tokens"
+Frax Share,FXS,DEFI
+OUSG,OUSG,Stablecoins
+NEM,XEM,"Smart-contracts, Platform Tokens"
+Lorenzo stBTC,STBTC,DEFI
+SPACE ID,ID,Infrastructure and Scalability Solutions
+Band Protocol,BAND,Infrastructure and Scalability Solutions
+Treehouse ETH,TETH,DEFI
+Qubic,QUBIC,"Smart-contracts, Platform Tokens"
+Big Time,BIGTIME,Gaming & Collectibles Tokens (NFTs)
+aBTC,ABTC,DEFI
+Kamino,KMNO,DEFI
+Harmony,ONE,"Smart-contracts, Platform Tokens"
+COTI,COTI,Payment Coins
+Zignaly,ZIG,DEFI
+Audius,AUDIO,Utility Tokens
+Moonwell,WELL,DEFI
+Orca,ORCA,"DEXs, DEFI"
+Tellor Tributes,TRB,DEFI
+Telcoin,TEL,Payment Coins
+Rollbit Coin,RLB,Meme Coins
+Across Protocol,ACX,DEFI
+cETH,CETH,DEFI
+GHO,GHO,Stablecoins
+usdx.money USDX,USDX,Stablecoins
+Xai,XAI,"AI, Utility Tokens"
+Chromia,CHR,"Smart-contracts, Platform Tokens"
+Convex Finance,CVX,DEFI
+Metars Genesis,MRS,Gaming & Collectibles Tokens (NFTs)
+Maple,MPL,DEFI
+Radix,XRD,"Smart-contracts, Platform Tokens"
+Arbitrum Bridged USDC (Arbitrum),USDC.E,Stablecoins
+MUMU THE BULL,MUMU,Meme Coins
+DeepBook,DEEP,Infrastructure and Scalability Solutions
+ICON,ICX,"Smart-contracts, Platform Tokens"
+Slerf,SLERF,Meme Coins
+Bitcoin Wizards,WZRD,Meme Coins
+VeThor,VTHO,Utility Tokens
+Centrifuge,CFG,DEFI
+Renzo Restaked LST,PZETH,DEFI
+Lisk,LSK,"Smart-contracts, Platform Tokens"
+Gomining Token,GOMINING,Utility Tokens
+Alchemix USD,ALUSD,DEFI
+RETARDIO,RETARDIO,Meme Coins
+ETHPlus,ETH+,"Smart-contracts, Platform Tokens"
+Pixels,PIXEL,Gaming & Collectibles Tokens (NFTs)
+OKT Chain,OKT,"Smart-contracts, Platform Tokens"
+DigiByte,DGB,Payment Coins
+Spectral,SPEC,DEFI
+Sushi,SUSHI,"DEXs, DEFI"
+Marlin,POND,DEFI
+Elixir deUSD,DEUSD,Stablecoins
+Ocean Protocol,OCEAN,Utility Tokens
+Merlin Chain,MERL,Infrastructure and Scalability Solutions
+H2O Dao,H2O,DEFI
+WAX,WAXP,Gaming & Collectibles Tokens (NFTs)
+Horizen,ZEN,Privacy Coins
+Mister Miggles,MIGGLES,Meme Coins
+Kelp Gain,AGETH,DEFI
+Bybit Staked SOL,BBSOL,DEFI
+IQ,IQ,Utility Tokens
+Mythos,MYTH,Utility Tokens
+BILLION•DOLLAR•CAT (Runes),BDC,Meme Coins
+PAAL AI,PAAL,"AI, Utility Tokens"
+Myro,$MYRO,Utility Tokens
+PAAL AI,PAAL,"AI, Utility Tokens"
+Constellation,DAG,Infrastructure and Scalability Solutions
+RabBitcoin,RBTC,Payment Coins
+Instadapp,INST,DEFI
+StakeWise Staked ETH,OSETH,DEFI
+Vanar Chain,VANRY,"Smart-contracts, Platform Tokens"
+Status,SNT,Utility Tokens
+Blox,CDT,DEFI
+Balancer,BAL,"DEXs, DEFI"
+BILLION•DOLLAR•CAT (Runes),BDC,Meme Coins
+SSV Network,SSV,DEFI
+Coq Inu,COQ,Meme Coins
+Open Campus,EDU,Industry-Specific Coins
+Ontology Gas,ONG,Utility Tokens
+CARV,CARV,DEFI
+Powerledger,POWR,Utility Tokens
+Venom,VENOM,"Smart-contracts, Platform Tokens"
+Arcblock,ABT,Infrastructure and Scalability Solutions
+Wen,WEN,Meme Coins
+IOST,IOST,"Smart-contracts, Platform Tokens"
+Purr,PURR,Meme Coins
+Origin Ether,OETH,DEFI
+Songbird,SGB,"Smart-contracts, Platform Tokens"
+VitaDAO,VITA,"AI, Governance Tokens"
+LandWolf,WOLF,Meme Coins
+iExec RLC,RLC,DEFI
+Cartesi,CTSI,"Smart-contracts, Platform Tokens"
+STASIS EURO,EURS,Stablecoins
+Keyboard Cat (Base),KEYCAT,Meme Coins
+Goldfinch,GFI,DEFI
+BounceBit,BB,Utility Tokens
+TerraClassicUSD,USTC,Stablecoins
+Ampleforth,AMPL,DEFI
+L2 Standard Bridged WETH (Optimism),WETH,"Smart-contracts, Platform Tokens"
+Shentu,CTK,Privacy Coins
+Orbs,ORBS,Infrastructure and Scalability Solutions
+Venus,XVS,DEFI
+Coin98,C98,DEFI
+First Convicted RACCON,FRED,Meme Coins
+Cronos Bridged USDC (Cronos),USDC,Stablecoins
+Catizen,CATI,Meme Coins
+Nano,XNO,Payment Coins
+Neutron,NTRN,"Smart-contracts, Platform Tokens"
+Zentry,ZENT,Privacy Coins
+Taiko,TAIKO,Infrastructure and Scalability Solutions
+BasedAI,BASEDAI,"AI, Utility Tokens"
+Sologenic,SOLO,DEFI
+Scroll,SCR,Infrastructure and Scalability Solutions
+BORA,BORA,Gaming & Collectibles Tokens (NFTs)
+NikolAI,NIKO,"AI, Utility Tokens"
+Pundi X,PUNDIX,Payment Coins
+My Neighbor Alice,ALICE,Gaming & Collectibles Tokens (NFTs)
+Smooth Love Potion,SLP,Gaming & Collectibles Tokens (NFTs)
+Dasha,VVAIFU,Meme Coins
+Bridged Wrapped stETH (Gnosis),WSTETH,DEFI
+Spell,SPELL,DEFI
+BOBO Coin,BOBO,Meme Coins
+Ozone Chain,OZO,Infrastructure and Scalability Solutions
+Shrub,SHRUB,Meme Coins
+Synapse,SYN,"DEXs, DEFI"
+Numeraire,NMR,DEFI
+MVL,MVL,Utility Tokens
+Kinesis Gold,KAU,Stablecoins
+TruFin Staked APT,TRUAPT,DEFI
+MANEKI,MANEKI,Meme Coins
+DAO Maker,DAO,Governance Tokens
+Dogelon Mars,ELON,Meme Coins
+Happy Cat,HAPPY,Meme Coins
+RSK Infrastructure Framework,RIF,Infrastructure and Scalability Solutions
+Magic,MAGIC,Gaming & Collectibles Tokens (NFTs)
+Toshi,TOSHI,Utility Tokens
+Kinesis Silver,KAG,Stablecoins
+Tokenlon,LON,"DEXs, DEFI"
+Autonolas,OLAS,Infrastructure and Scalability Solutions
+TokenFi,TOKEN,DEFI
+MMX,MMX,Utility Tokens
+Verge,XVG,Privacy Coins
+CYBER,CYBER,"AI, Utility Tokens"
+Adventure Gold,AGLD,Gaming & Collectibles Tokens (NFTs)
+TrueFi,TRU,DEFI
+Alchemy Pay,ACH,Payment Coins
+Humans.ai,HEART,"AI, Utility Tokens"
+Solana Name Service,FIDA,Utility Tokens
+Moonriver,MOVR,"Smart-contracts, Platform Tokens"
+SmarDex,SDEX,"DEXs, DEFI"
+Hive,HIVE,Infrastructure and Scalability Solutions
+ARK,ARK,"Smart-contracts, Platform Tokens"
+Dent,DENT,Payment Coins
+Liquity,LQTY,DEFI
+Universal ETH,UNIETH,DEFI
+Civic,CVC,Utility Tokens
+Velo,VELO,DEFI
+Oraichain,ORAI,"AI, Utility Tokens"
+Wojak,WOJAK,Meme Coins
+Bone ShibaSwap,BONE,Governance Tokens
+Pax Dollar,USDP,Stablecoins
+0x0.ai: AI Smart Contract,0X0,"AI, Utility Tokens"
