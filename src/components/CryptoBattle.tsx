@@ -445,20 +445,22 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               console.log(`Model ${modelId} - Pool ${pool.id} has a single crypto. Auto-winning.`);
               
               // Force a re-render after updating pool
-              setBattlesByModel(prev => ({
-                ...prev,
-                [modelId]: modelBattles
-              }));
+              setBattlesByModel(prev => {
+                const updated = { ...prev };
+                updated[modelId] = modelBattles;
+                return updated;
+              });
               return;
             }
 
             // Set loading state
             pool.isLoading = true;
             // Force a re-render to show loading state
-            setBattlesByModel(prev => ({
-              ...prev,
-              [modelId]: modelBattles
-            }));
+            setBattlesByModel(prev => {
+              const updated = { ...prev };
+              updated[modelId] = modelBattles;
+              return updated;
+            });
             
             console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
@@ -476,19 +478,21 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             console.log(`Model ${modelId} - Pool ${pool.id} winners:`, data.winners);
             
             // Force a re-render after updating winners/losers
-            setBattlesByModel(prev => ({
-              ...prev,
-              [modelId]: modelBattles
-            }));
+            setBattlesByModel(prev => {
+              const updated = { ...prev };
+              updated[modelId] = modelBattles;
+              return updated;
+            });
           } catch (error) {
             console.error(`Error processing pool ${pool.id} for model ${modelId}:`, error);
           } finally {
             pool.isLoading = false;
             // Force a re-render after loading completes
-            setBattlesByModel(prev => ({
-              ...prev,
-              [modelId]: modelBattles
-            }));
+            setBattlesByModel(prev => {
+              const updated = { ...prev };
+              updated[modelId] = modelBattles;
+              return updated;
+            });
             console.log(`Model ${modelId} - Pool ${pool.id} loading complete`);
           }
         });
@@ -520,21 +524,19 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
             console.log(`Model ${modelId} - Next round created: Round ${modelBattles.length}`);
 
-            // Update states with force re-render
+            // Update states with force re-render for all models
             setBattlesByModel(prev => {
-              const updated = {
-                ...prev,
-                [modelId]: modelBattles
-              };
-              battlesByModelRef.current = updated;
+              const updated = { ...prev };
+              updated[modelId] = modelBattles;
               return updated;
             });
             
+            // Set the active model to the one that just progressed
+            setActiveModelId(modelId);
+            
             setCurrentRoundByModel(prev => {
-              const updated = {
-                ...prev,
-                [modelId]: currentRoundIndex + 1
-              };
+              const updated = { ...prev };
+              updated[modelId] = currentRoundIndex + 1;
               currentRoundByModelRef.current = updated;
               return updated;
             });
@@ -559,19 +561,14 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
             // Update states
             setBattlesByModel(prev => {
-              const updated = {
-                ...prev,
-                [modelId]: modelBattles
-              };
-              battlesByModelRef.current = updated;
+              const updated = { ...prev };
+              updated[modelId] = modelBattles;
               return updated;
             });
             
             setCurrentRoundByModel(prev => {
-              const updated = {
-                ...prev,
-                [modelId]: currentRoundIndex + 1
-              };
+              const updated = { ...prev };
+              updated[modelId] = currentRoundIndex + 1;
               currentRoundByModelRef.current = updated;
               return updated;
             });
