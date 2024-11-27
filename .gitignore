@@ -2,6 +2,7 @@
 #config.yaml
 # Byte-compiled / optimized / DLL files
 assets/
+scripts/
 *.dat
 dashboard/img/
 assets_additional/
