@@ -1,0 +1,185 @@
+.settings-container {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    color: white;
+  }
+  
+  .settings-title {
+    color: #f53e98;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  .settings-card {
+    background: #1e1e1e;
+    border-radius: 1rem;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border: 1px solid #2a2a2a;
+  }
+  
+  .settings-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #374151;
+  }
+  
+  .settings-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  
+  .settings-section h2 {
+    color: #f53e98;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .settings-description {
+    color: #9ca3af;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  
+  .settings-link {
+    color: #f53e98;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  .settings-link:hover {
+    color: #f52e88;
+  }
+  
+  .api-key-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .api-key-input {
+    background: #272727;
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    color: white;
+    font-size: 1rem;
+    width: 100%;
+    transition: all 0.2s ease;
+  }
+  
+  .api-key-input:focus {
+    outline: none;
+    border-color: #f53e98;
+    box-shadow: 0 0 0 2px rgba(245, 62, 152, 0.1);
+  }
+  
+  .button-group {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .save-button,
+  .clear-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex: 1;
+  }
+  
+  .save-button {
+    background: #f53e98;
+    color: white;
+    border: none;
+  }
+  
+  .save-button:hover:not(:disabled) {
+    background: #f52e88;
+    transform: translateY(-2px);
+  }
+  
+  .clear-button {
+    background: transparent;
+    color: #f53e98;
+    border: 1px solid #f53e98;
+  }
+  
+  .clear-button:hover:not(:disabled) {
+    background: #2a1f2d;
+    transform: translateY(-2px);
+  }
+  
+  .save-button:disabled,
+  .clear-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .message {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .message.success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+  }
+  
+  .message.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    color: #F44336;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f53e98;
+    border-top: 4px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .clear-button.danger {
+    background: #ef4444;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .clear-button.danger:hover:not(:disabled) {
+    background: #dc2626;
+    transform: translateY(-2px);
+  }
+  
+  .clear-button.danger:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  } 

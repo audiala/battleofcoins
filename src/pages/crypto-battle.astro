@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CryptoBattle from '../components/CryptoBattle';
+
+const cryptos = [];
+---
+
+<Layout title="Crypto Battle">
+  <CryptoBattle client:load cryptos={cryptos} />
+</Layout>
