@@ -10,135 +10,162 @@ export const POST: APIRoute = async ({ request }) => {
         error: 'No API key provided',
         details: 'Please set your NanoGPT API key in Settings'
       }), 
-      {
-        status: 401,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
+      { status: 401 }
     );
   }
 
-  const nanogpt = nanogptjs({
-    apiKey: apiKey,
-  });
-  
-  // Calculate the number of winners needed (half of the pool)
+  const nanogpt = nanogptjs({ apiKey });
   const numWinners = Math.ceil(cryptos.length / 2);
 
   try {
-    const basePrompt = `Analyze this pool of cryptocurrencies and select exactly ${numWinners} winners and mark the rest as losers.
-For each coin, provide an explanation for your decision relative to the other coins in the pool.
+    // Make the prompt more structured and explicit
+    const basePrompt = `You are a cryptocurrency analyst. Your task is to analyze a pool of cryptocurrencies and select winners based on the given criteria.
 
-Respond in this exact format (no extra text) as this example with this format (coin symbol in uppercase: reason for winning/losing):
+Pool of cryptocurrencies:
+${cryptos.map((crypto: any) => `- ${crypto.ticker}: ${crypto.name}`).join('\n')}
+
+Selection criteria:
+${prompt}
+
+Instructions:
+1. Select exactly ${numWinners} winners from the pool
+2. Provide a brief explanation for each selection
+3. Explain why the remaining coins were not selected
+
+Format your response exactly as follows:
 $Winners$
-${Array(numWinners).fill('COIN: reason for winning').join('\n')}
+${Array(numWinners).fill('TICKER: clear and concise reason for selection').join('\n')}
 
 $Losers$
-${Array(cryptos.length - numWinners).fill('COIN: reason for losing').join('\n')}
-            
-Pool:
-${cryptos.map((crypto: any) => `${crypto.ticker}: ${crypto.name}`).join('\n')}`
+${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for non-selection').join('\n')}`;
 
-    // Use NanoGPT chat with the specified model
-    const { reply } = await nanogpt.chat({
-      prompt: prompt + '\n\n' + basePrompt,
-      model: model,
-      context: []
-    });
+    // Add retry logic
+    let attempts = 0;
+    const maxAttempts = 3;
+    let lastError: any;
 
-    if (!reply) {
-      throw new Error('Empty response from NanoGPT');
-    }
+    while (attempts < maxAttempts) {
+      try {
+        const { reply } = await nanogpt.chat({
+          prompt: basePrompt,
+          model: model,
+          context: [],
+          temperature: 0.7, // Add temperature to control randomness
+          max_tokens: 2000,
+          timeout: 30000 // 30 second timeout
+        });
 
-    console.log('--------------------------------');
-    console.log('--------------------------------');
-    console.log(prompt);
-    console.log('--------------------------------');
-    console.log(reply);
-    console.log('--------------------------------');
-    console.log('--------------------------------');
-
-    // Split the response into winners and losers sections
-    const [winnersSection, losersSection] = reply.split('$Losers$');
-    
-    if (!winnersSection || !losersSection) {
-      throw new Error('Invalid response format from NanoGPT');
-    }
-
-    // Parse winners
-    const winnersLines = winnersSection.replace('$Winners$', '').trim().split('\n');
-    const winners = winnersLines
-      .filter(line => line.trim())
-      .map(line => {
-        const [tickerPart, ...reasonParts] = line.split(':');
-        const ticker = tickerPart.trim();
-        const reason = reasonParts.join(':').trim();
-        const coin = cryptos.find((c: any) => c.ticker === ticker);
-        
-        if (!coin) {
-          console.error(`Could not find coin with ticker: ${ticker}`);
-          console.log(cryptos);
-          return null;
+        if (!reply) {
+          throw new Error('Empty response from NanoGPT');
         }
 
-        return {
+        // Validate response format
+        const [winnersSection, losersSection] = reply.split('$Losers$');
+        if (!winnersSection?.includes('$Winners$') || !losersSection) {
+          throw new Error('Invalid response format');
+        }
+
+        // Parse winners with validation
+        const winnersLines = winnersSection.replace('$Winners$', '').trim().split('\n');
+        const winners = winnersLines
+          .filter(line => line.trim())
+          .map(line => {
+            const [tickerPart, ...reasonParts] = line.split(':');
+            const ticker = tickerPart.trim();
+            const reason = reasonParts.join(':').trim();
+
+            const coin = cryptos.find((c: any) => c.ticker === ticker);
+            if (!coin) {
+              throw new Error(`Invalid coin ticker: ${ticker}`);
+            }
+
+            if (!reason) {
+              throw new Error(`Missing reason for winner: ${ticker}`);
+            }
+
+            return { coin, reason };
+          });
+
+        // Validate winner count
+        if (winners.length !== numWinners) {
+          throw new Error(`Expected ${numWinners} winners, got ${winners.length}`);
+        }
+
+        // Parse losers with validation
+        const losersLines = losersSection.trim().split('\n');
+        const losersMap = new Map(
+          losersLines
+            .filter(line => line.trim())
+            .map(line => {
+              const [tickerPart, ...reasonParts] = line.split(':');
+              const ticker = tickerPart.trim();
+              const reason = reasonParts.join(':').trim();
+
+              if (!reason) {
+                throw new Error(`Missing reason for loser: ${ticker}`);
+              }
+
+              return [ticker, reason];
+            })
+        );
+
+        const loserCoins = cryptos.filter(
+          crypto => !winners.some(winner => winner.coin.ticker === crypto.ticker)
+        );
+
+        const losers = loserCoins.map(coin => ({
           coin,
-          reason
-        };
-      })
-      .filter((winner): winner is { coin: any; reason: string } => winner !== null);
+          reason: losersMap.get(coin.ticker) || 'Did not meet selection criteria'
+        }));
 
-    // Parse losers - all cryptos that aren't winners
-    const loserCoins = cryptos.filter(
-      crypto => !winners.some(winner => winner.coin.ticker === crypto.ticker)
-    );
+        return new Response(
+          JSON.stringify({ winners, losers }), 
+          { status: 200 }
+        );
 
-    const losersLines = losersSection.trim().split('\n');
-    const losersMap = new Map(
-      losersLines
-        .filter(line => line.trim())
-        .map(line => {
-          const [tickerPart, ...reasonParts] = line.split(':');
-          return [tickerPart.trim(), reasonParts.join(':').trim()];
-        })
-    );
-
-    const losers = loserCoins.map(coin => ({
-      coin,
-      reason: losersMap.get(coin.ticker) || 'Did not meet selection criteria'
-    }));
-
-    // Validate the response
-    if (winners.length !== numWinners) {
-      throw new Error(`Expected ${numWinners} winners, got ${winners.length}`);
+      } catch (error) {
+        lastError = error;
+        attempts++;
+        
+        // Wait before retrying (exponential backoff)
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000));
+          console.log(`Retrying attempt ${attempts + 1}/${maxAttempts}...`);
+          continue;
+        }
+        
+        throw error;
+      }
     }
 
-    const mappedResponse = {
-      winners,
-      losers
-    };
-
-    return new Response(JSON.stringify(mappedResponse), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
+    throw lastError;
 
   } catch (error) {
     console.error('Error in selectWinners:', error);
+    
+    // Provide more detailed error messages
+    let errorMessage = 'Failed to process request';
+    let statusCode = 500;
+
+    if (error instanceof Error) {
+      if (error.message.includes('Invalid response format')) {
+        errorMessage = 'AI model returned an invalid response format';
+        statusCode = 422;
+      } else if (error.message.includes('Invalid coin ticker')) {
+        errorMessage = 'AI model returned an invalid coin ticker';
+        statusCode = 422;
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Request timed out';
+        statusCode = 504;
+      }
+    }
+
     return new Response(
       JSON.stringify({ 
-        error: 'Failed to process request',
+        error: errorMessage,
         details: error instanceof Error ? error.message : 'Unknown error'
       }), 
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
+      { status: statusCode }
     );
   }
 }; 
