@@ -6,14 +6,14 @@ import { CryptoCard } from './CryptoCard';
 import { ModelTooltip } from './ModelTooltip';
 import { 
   saveBattleHistory as saveHistory,
-  getBattleById as getPublicBattleById 
+  getBattleById as getPublicBattleById,
+  getAllBattleHistories as getAllBattleHistoriesPublic
 } from '../services/BattleDatabase';
 
 import {
   saveBattleHistory as saveBattleHistoryLocal,
   getAllBattleHistories as getAllBattleHistoriesLocal,
   getBattleById as getBattleByIdLocal,
-  getAllBattleHistories
 } from '../services/BattleDatabaseLocal';
 
 interface Winner {
@@ -433,6 +433,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         // Load battle histories from IndexedDB instead of Supabase
         const histories = await getAllBattleHistoriesLocal();
         setBattleHistories(histories);
+        const publicHistories = await getAllBattleHistoriesPublic(1, 100);
+        setPublicBattleHistories(publicHistories.battles);
         
         // Check URL for battle ID
         const params = new URLSearchParams(window.location.search);
@@ -577,13 +579,37 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     battleSavedRef.current = false;
   };
 
-  // Update the select onChange handler
-  const handleBattleSelect = (value: string) => {
-    if (value) {
-      loadBattle(value);
-    } else {
-      startNewBattle(initialCryptosRef.current);
+  // Update the handleBattleSelect function
+  const handleBattleSelect = async (battleId: string) => {
+    if (!battleId) {
+      // Clear all state for new battle
+      setCurrentBattle(null);
+      setBattlesByModel({});
+      setCurrentRoundByModel({});
+      setSelectedBattleId(null);
+      setPrompt('');
+      setBattleSummary({
+        text: '',
+        isLoading: false
+      });
+      battleSavedRef.current = false;
+      
+      // Reset URL
+      const newUrl = window.location.pathname;
+      window.history.pushState({}, '', newUrl);
+      
+      // Initialize with default model if none selected
+      if (selectedModels.length === 0 && Object.keys(models).length > 0) {
+        const defaultModel = Object.keys(models)[0];
+        setSelectedModels([{ modelId: defaultModel, active: true }]);
+        setActiveModelId(defaultModel);
+      }
+      
+      return;
     }
+
+    // Load existing battle...
+    await loadBattle(battleId);
   };
 
   // Modify processNextRound to ensure Refs are updated correctly
@@ -1511,7 +1537,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             onChange={(e) => handleBattleSelect(e.target.value)}
             className="battle-select"
           >
-            <option key="new-battle" value="">Start New Battle</option>
             <optgroup label="Local Battles">
               {battleHistories.map((battle, index) => (
                 <option key={`local-${battle.id}-${index}`} value={battle.id}>
@@ -1522,7 +1547,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             <optgroup label="Public Battles">
               {publicBattleHistories.map((battle, index) => (
                 <option key={`public-${battle.id}-${index}`} value={battle.id}>
-                  {new Date(battle.date).toLocaleString()} - Public
+                  {new Date(battle.date).toLocaleString()} - {battle.results.globalWinner.coin.ticker}: {battle.results.globalWinner.score }
                 </option>
               ))}
             </optgroup>
@@ -1834,7 +1859,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 </div>
                 
                 {/* Show global winner with scores */}
-                {console.log(battleHistories)}
+                {/* {console.log(battleHistories)} */}
                 {selectedBattleId && currentBattle?.results?.globalWinner && (
                   <div className="global-winner">
                     <h3>Tournament Winners</h3>
