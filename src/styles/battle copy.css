@@ -1,6 +1,6 @@
 .crypto-battle {
   padding: 2rem;
-  background: #121212;
+  background: #020514;
   min-height: 100vh;
 }
 
@@ -420,7 +420,7 @@
 /* Add these new styles */
 .battle-dashboard {
   padding: 2rem;
-  background: #121212;
+  background: #020514;
   min-height: 100vh;
   color: white;
 }
