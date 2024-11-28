@@ -105,6 +105,13 @@ interface WalletInfo {
   error?: string;
 }
 
+// Add this interface for the battle summary
+interface BattleSummary {
+  text: string;
+  isLoading: boolean;
+  error?: string;
+}
+
 const createInitialPools = (cryptos: CryptoData[]): Pool[] => {
   const pools: Pool[] = [];
   for (let i = 0; i < cryptos.length; i += 8) {
@@ -929,6 +936,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         // Save to either public or private storage based on savePublicly flag
         await handleSaveBattle(newBattle);
         
+        // Generate summary after saving
+        await generateBattleSummary(newBattle);
+        
         // Update URL with battle ID
         const newUrl = `${window.location.pathname}?battle=${battleHash}`;
         window.history.pushState({}, '', newUrl);
@@ -1004,6 +1014,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         // Set the first model as active
         setActiveModelId(modelIds[0]);
       }
+      
+      // Generate summary for the loaded battle
+      await generateBattleSummary(battle);
       
       setSelectedBattleId(battleId);
       setPrompt(battle.prompt);
@@ -1222,6 +1235,70 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   // Function to start a new battle
   const handleStartNewBattle = () => {
     startNewBattle(initialCryptosRef.current);
+  };
+
+  // Add to component state
+  const [battleSummary, setBattleSummary] = useState<BattleSummary>({
+    text: '',
+    isLoading: false
+  });
+
+  // Update the generateBattleSummary function
+  const generateBattleSummary = async (battle: BattleHistory) => {
+    console.log('Generating battle summary...');
+    setBattleSummary(prev => {
+      console.log('Setting loading state:', { ...prev, text: '', isLoading: true });
+      return { text: '', isLoading: true };
+    });
+    
+    try {
+      const response = await fetch('/api/generate-battle-summary-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          battle,
+          models,
+          apiKey: localStorage.getItem('nanoGptApiKey')
+        })
+      });
+
+      console.log('Summary response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to generate summary');
+      }
+
+      const data = await response.json();
+      console.log('Summary data:', data);
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      console.log('Setting summary text:', data.summary);
+      setBattleSummary(prev => {
+        console.log('Setting success state:', { ...prev, text: data.summary, isLoading: false });
+        return { text: data.summary, isLoading: false };
+      });
+    } catch (error) {
+      console.error('Error generating battle summary:', error);
+      setBattleSummary(prev => {
+        console.log('Setting error state:', { 
+          ...prev, 
+          text: '', 
+          isLoading: false, 
+          error: error instanceof Error ? error.message : 'Failed to generate summary' 
+        });
+        return {
+          text: '',
+          isLoading: false,
+          error: error instanceof Error ? error.message : 'Failed to generate summary'
+        };
+      });
+    }
   };
 
   return (
@@ -1452,8 +1529,12 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 <div className="prompt-display">
                   <h4>Selection Criteria:</h4>
                   <p>{prompt}</p>
+                  
+                  
                 </div>
               </div>
+              
+              
             )}
           </>
         ) : (
@@ -1465,6 +1546,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 <p>{prompt}</p>
               </div>
             )}
+            
             
             {isValidModelId(activeModelId) && isTournamentComplete(activeModelId) && (
               <div className="winner-announcement">
@@ -1597,6 +1679,22 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             <div className="prompt-display">
                 <h4>Selection Criteria:</h4>
                 <p>{prompt}</p>
+                      {/* Add battle summary */}
+            {battleSummary.isLoading ? (
+                    <div className="battle-summary loading">
+                      <div className="loading-spinner"></div>
+                      <p>Generating battle summary...</p>
+                    </div>
+                  ) : true ? (
+                    <div className="battle-summary">
+                      <h4>Battle Summary:</h4>
+                      <p>{battleSummary.text}</p>
+                    </div>
+                  ) : battleSummary.error ? (
+                    <div className="battle-summary error">
+                      <p>Failed to generate summary: {battleSummary.error}</p>
+                    </div>
+                  ) : null}
               </div>
           </div>
         )}
