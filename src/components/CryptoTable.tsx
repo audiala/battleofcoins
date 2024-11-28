@@ -6,9 +6,11 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
+  Row,
 } from '@tanstack/react-table';
 import type { SortingState } from '@tanstack/react-table';
-import { useBinanceWebSocket } from '../hooks/useBinanceWebSocket';
+// import { useBinanceWebSocket } from '../hooks/useBinanceWebSocket';
+import coinsByTags from '../../data/coins_by_tags.json'; // Import the JSON file
 
 export type CryptoData = {
   id: number;
@@ -112,39 +114,69 @@ const LogoCell = React.memo(({ logoPath }: { logoPath: string }) => {
   );
 });
 
-const PriceCell = React.memo(({ symbol, marketData }: { 
-  symbol: string, 
-  marketData: Record<string, { price: string, lastUpdate: number }> 
-}) => {
-  const data = marketData[symbol];
-  const price = data?.price;
+// const PriceCell = React.memo(({ symbol, marketData }: { 
+//   symbol: string, 
+//   marketData: Record<string, { price: string, lastUpdate: number }> 
+// }) => {
+//   const data = marketData[symbol];
+//   const price = data?.price;
 
-  if (!price) {
-    return <span className="text-gray-400">NaN</span>;
-  }
+//   if (!price) {
+//     return <span className="text-gray-400">NaN</span>;
+//   }
+
+//   return (
+//     <div className="text-right">
+//       {formatCurrency(price)}
+//     </div>
+//   );
+// }, (prevProps, nextProps) => {
+//   const prevData = prevProps.marketData[prevProps.symbol];
+//   const nextData = nextProps.marketData[nextProps.symbol];
+//   return prevData?.price === nextData?.price;
+// });
+
+// Add this type definition at the top of the file after the imports
+type TableRowSelection = {
+  [key: string]: boolean;
+};
+
+// Update the TableRow component
+const TableRow = React.memo(({ row, isSelected }: { row: Row<CryptoData>, isSelected: boolean }) => {
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="text-right">
-      {formatCurrency(price)}
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  const prevData = prevProps.marketData[prevProps.symbol];
-  const nextData = nextProps.marketData[nextProps.symbol];
-  return prevData?.price === nextData?.price;
-});
-
-const TableRow = React.memo(({ row }: { row: any }) => {
-  return (
-    <tr key={row.id}>
+    <tr 
+      key={row.id}
+      onClick={(e) => {
+        e.preventDefault();
+        row.toggleSelected();
+      }}
+      className={`
+        cursor-pointer
+        transition-all duration-200
+        ${isSelected 
+          ? '!bg-[rgba(245,62,152,0.15)] hover:!bg-[rgba(245,62,152,0.25)]' 
+          : 'hover:bg-white/5'
+        }
+      `}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {row.getVisibleCells().map(cell => (
-        <td key={cell.id}>
+        <td 
+          key={cell.id}
+          className={`
+            px-4 py-3
+            ${isSelected ? 'border-l-4 border-l-[#f53e98]' : 'border-l-4 border-l-transparent'}
+          `}
+        >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       ))}
     </tr>
   );
-});
+}, (prevProps, nextProps) => prevProps.isSelected === nextProps.isSelected);
 
 const getUniqueTagsFromData = (taggedCoins: TaggedCoinData): string[] => {
   const tagsSet = new Set<string>();
@@ -165,28 +197,10 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
   const [selectedTag, setSelectedTag] = useState<string>('');
 
   const symbols = data.map(crypto => `${crypto.ticker}USDT`);
-  const marketData = useBinanceWebSocket(symbols);
+  // const marketData = useBinanceWebSocket(symbols);
 
   // Move columns definition inside component to access marketData
   const columns = React.useMemo(() => [
-    columnHelper.accessor('selected', {
-      header: ({ table }) => (
-        <input
-          type="checkbox"
-          checked={table.getIsAllRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-          className="checkbox"
-        />
-      ),
-      cell: ({ row }) => (
-        <input
-          type="checkbox"
-          checked={row.getIsSelected()}
-          onChange={row.getToggleSelectedHandler()}
-          className="checkbox"
-        />
-      ),
-    }),
     columnHelper.accessor('logo_local', {
       header: '',
       cell: info => <LogoCell logoPath={info.getValue()} />,
@@ -287,30 +301,32 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
         return a - b;
       },
     }),
-  ], [marketData]); // Add marketData as dependency
+  ], []); // Add marketData as dependency
 
   const table = useReactTable({
     data,
     columns,
     state: { 
       sorting,
-      rowSelection: rowSelection as TableRowSelection,
+      rowSelection,
     },
     enableRowSelection: true,
-    onRowSelectionChange: (updaterOrValue) => {
-      if (typeof updaterOrValue === 'function') {
-        setRowSelection(old => updaterOrValue(old) as TableRowSelection);
-      } else {
-        setRowSelection(updaterOrValue as TableRowSelection);
-      }
-    },
+    enableMultiRowSelection: true, // Make sure multiple selection is enabled
+    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
 
   const handlePresetSelect = (preset: string) => {
+    // If clicking the same preset again, clear the selection
+    if (selectedPreset === preset) {
+      clearSelection();
+      return;
+    }
+
     setSelectedPreset(preset);
+    setSelectedTag(''); // Clear any selected tag
     let selectedRows: TableRowSelection = {};
 
     switch (preset) {
@@ -329,6 +345,7 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
     }
 
     setRowSelection(selectedRows);
+    table.setRowSelection(selectedRows);
     
     if (onSelectionChange) {
       const selectedCryptos = data.filter((_, index) => selectedRows[index.toString()]);
@@ -337,23 +354,36 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
   };
 
   const handleTagSelect = (tag: string) => {
+    // If clicking the same tag again, clear the selection
+    if (selectedTag === tag) {
+      clearSelection();
+      return;
+    }
+
     setSelectedTag(tag);
+    setSelectedPreset(''); // Clear any selected preset
     let selectedRows: TableRowSelection = {};
 
-    // Find all coins that have the selected tag
+    // Use the imported JSON data to find all coins that have the selected tag
+    const tickers = coinsByTags[tag] || [];
     data.forEach((crypto, index) => {
-      const coinData = taggedCoins[crypto.ticker];
-      if (coinData && coinData.tags.some(t => t.trim().includes(tag))) {
+      if (tickers.includes(crypto.ticker)) {
         selectedRows[index.toString()] = true;
       }
     });
 
+    // Update both the row selection state and the table selection
     setRowSelection(selectedRows);
+    table.setRowSelection(selectedRows);
     
     if (onSelectionChange) {
       const selectedCryptos = data.filter((_, index) => selectedRows[index.toString()]);
       onSelectionChange(selectedCryptos);
     }
+
+    // Debug logging
+    console.log('Selected tag:', tag);
+    console.log('Found matches:', Object.keys(selectedRows).length);
   };
 
   const startBattle = () => {
@@ -371,6 +401,14 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
       console.error('Error storing selected cryptos:', error);
       alert('Failed to store selected cryptos. Please try again.');
     }
+  };
+
+  // Add a clear selection function
+  const clearSelection = () => {
+    setSelectedTag('');
+    setSelectedPreset('');
+    setRowSelection({});
+    table.setRowSelection({});
   };
 
   return (
@@ -400,7 +438,7 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
               </span>
             </button>
             <button 
-              onClick={() => handlePresetSelect('')}
+              onClick={clearSelection}
               className="preset-button clear"
             >
               <span className="preset-icon">🔄</span>
@@ -413,14 +451,14 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
           
           <h2 className="presets-title mt-4">Select by Category</h2>
           <div className="tag-buttons flex flex-wrap gap-2 mt-2">
-            {getUniqueTagsFromData(taggedCoins).map(tag => (
+            {Object.keys(coinsByTags).map(tag => (
               <button
                 key={tag}
                 onClick={() => handleTagSelect(tag)}
-                className={`tag-button px-3 py-1 rounded-full text-sm 
+                className={`tag-button px-3 py-1 rounded-full text-sm transition-all duration-200
                   ${selectedTag === tag 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-700 text-gray-200 hover:bg-gray-600'}`}
+                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 transform scale-105' 
+                    : 'bg-gray-700 text-gray-200 hover:bg-gray-600 hover:transform hover:scale-105'}`}
               >
                 {tag}
               </button>
@@ -443,31 +481,37 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
         </div>
       </div>
 
-      <table className="crypto-table">
-        <thead>
-          {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map(header => (
-                <th key={header.id} onClick={header.column.getToggleSortingHandler()}>
-                  <div className="flex items-center gap-2">
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    {header.column.getIsSorted() && (
-                      <span className="sort-indicator">
-                        {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map(row => (
-            <TableRow key={row.id} row={row} />
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            {table.getHeaderGroups().map(headerGroup => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map(header => (
+                  <th 
+                    key={header.id} 
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="px-4 py-3 text-left bg-gray-800/50 cursor-pointer hover:bg-gray-700/50 text-[#f53e98]"
+                  >
+                    <div className="flex items-center gap-2">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.column.getIsSorted() && (
+                        <span className="sort-indicator">
+                          {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map(row => (
+              <TableRow key={row.id} row={row} isSelected={rowSelection[row.id]} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 } 

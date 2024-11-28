@@ -1,3 +1,55 @@
+/* Add these styles at the beginning of your file, before any existing styles */
+
+/* Base table styles */
+.crypto-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 1rem;
+}
+
+/* Table header styles */
+.crypto-table thead th {
+  background-color: #1a1a1a;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 500;
+  color: #f53e98;
+  border-bottom: 2px solid #2a2a2a;
+}
+
+/* Table row styles */
+.crypto-table tbody tr {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Selected row styles */
+.crypto-table tbody tr.selected-row {
+  background-color: rgba(245, 62, 152, 0.1) !important;
+}
+
+/* Hover styles */
+.crypto-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.crypto-table tbody tr.selected-row:hover {
+  background-color: rgba(245, 62, 152, 0.15) !important;
+}
+
+/* Cell styles */
+.crypto-table td {
+  padding: 1rem;
+  position: relative;
+}
+
+/* First cell padding adjustment for selected rows */
+.crypto-table tbody tr.selected-row td:first-child {
+  padding-left: calc(1rem + 4px);
+}
+
+/* Keep your existing styles below this line */
+
 .crypto-table-container {
     padding: 1rem;
   }
@@ -195,4 +247,23 @@
       width: 100%;
       justify-content: center;
     }
-  } 
+  }
+
+/* Add these at the top of your file */
+.table-row {
+  cursor: pointer;
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.table-row-selected {
+  background-color: rgba(245, 62, 152, 0.15) !important;
+}
+
+.table-row-selected:hover {
+  background-color: rgba(245, 62, 152, 0.2) !important;
+}

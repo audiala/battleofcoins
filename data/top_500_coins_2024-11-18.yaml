@@ -5390,30 +5390,6 @@
     max_supply: 10,000,000,000
     total_supply: 10,000,000,000
     trading_volume_24h: $207,590,871
-  marketcap: 6.5%
-  name: Starknet
-  source_code: ''
-  ticker: STRK
-  websites: []
-- community: {}
-  description: StarkNet is a permissionless decentralized Layer 2 (L2) validity rollup,
-    built to allow Ethereum to scale via cryptographic protocols called STARKs, without
-    compromising Ethereum’s core principles of decentralization, transparency, inclusivity
-    and security. The StarkNet Token is needed to operate the ecosystem, maintain
-    and secure it, decide on its values and strategic goals, and direct its evolution.
-    This token will be required for (i) governance, (ii) payment of transaction fees
-    on StarkNet, and (iii) participation in StarkNet’s consensus mechanism.
-  logo: https://assets.coingecko.com/coins/images/26433/standard/starknet.png?1696525507
-  logo_local: logos/strk.png
-  market_stats:
-    circulating_supply: 2,099,455,075https://strk-circulating-supply.starknet.io/supplyEst.
-      Circulating Supply2,099,455,075
-    fully_diluted_valuation: $4,908,312,160
-    market_cap: $1,030,478,087
-    market_cap_fdv_ratio: '0.21'
-    max_supply: 10,000,000,000
-    total_supply: 10,000,000,000
-    trading_volume_24h: $207,590,871
   marketcap: 5.5%
   name: Starknet
   source_code: ''
