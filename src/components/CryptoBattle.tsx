@@ -962,12 +962,15 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
             // Update battle histories
             setBattleHistories(prev => [...prev, battleWithSummary]);
+            setCurrentBattle(battleWithSummary);
+
           } else {
             // Save locally to IndexedDB
             console.log('Saving battle to IndexedDB...');
             await saveBattleHistoryLocal(newBattle);
             // Update battle histories
             setBattleHistories(prev => [...prev, newBattle]);
+            setCurrentBattle(newBattle);
           }
 
           // Update URL and selected battle ID
