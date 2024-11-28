@@ -9,11 +9,11 @@ body {
 .crypto-table {
   width: 100%;
   border-collapse: collapse;
-  background: #1e1e1e;
+  background: #151629;
 }
 
 .crypto-table thead {
-  background: #272727;
+  background: #2a2938;
 }
 
 .crypto-table th {
@@ -28,7 +28,7 @@ body {
   color: #d1d5db;
   cursor: pointer;
   transition: background-color 0.2s;
-  background: #272727;
+  background: #2a2938;
 }
 
 .crypto-table th:hover {
@@ -40,7 +40,7 @@ body {
 }
 
 .crypto-table tbody tr:hover {
-  background: #272727;
+  background: #2a2938;
 }
 
 .crypto-table td {
@@ -156,7 +156,7 @@ body {
 
 .page-subtitle {
   padding: 1rem;
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 0.5rem;
   border: 1px solid #374151;
   text-align: center;

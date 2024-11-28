@@ -10,7 +10,7 @@
 
 /* Table header styles */
 .crypto-table thead th {
-  background-color: #1a1a1a;
+  background-color: #302642;
   padding: 1rem;
   text-align: left;
   font-weight: 500;
@@ -89,7 +89,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    background: #272727;
+    background: #2a2938;
     color: #f53e98;
     border: 2px solid #2a2a2a;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -173,7 +173,7 @@
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    background: #1a1a1a;
+    background: #302642;
     padding: 1.5rem;
     border-radius: 0.75rem;
     border: 1px solid #2a2a2a;
@@ -184,7 +184,7 @@
   .selection-info {
     color: #f53e98;
     font-size: 0.9rem;
-    background: #272727;
+    /* background: #2a2938; */
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     border: 1px solid #2a2a2a;

@@ -42,7 +42,7 @@
 }
 
 .pool {
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   padding: 1rem;
   border: 1px solid #374151;
@@ -65,7 +65,7 @@
   align-items: center;
   gap: 1rem;
   padding: 0.75rem;
-  background: #272727;
+  background: #2a2938;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -125,7 +125,7 @@
 }
 
 .rounds-container::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 4px;
 }
 
@@ -172,7 +172,7 @@
 .winner-announcement {
   margin-top: 2rem;
   padding: 2rem;
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   border: 2px solid #f53e98;
 }
@@ -342,7 +342,7 @@
 }
 
 .battle-select {
-  background: #1e1e1e;
+  background: #151629;
   color: white;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
@@ -359,7 +359,7 @@
 }
 
 .battle-select option {
-  background: #1e1e1e;
+  background: #151629;
   color: white;
   padding: 0.5rem;
 }
@@ -375,7 +375,7 @@
   width: 100%;
   min-height: 100px;
   padding: 1rem;
-  background: #1e1e1e;
+  background: #151629;
   border: 1px solid #374151;
   border-radius: 0.5rem;
   color: white;
@@ -399,7 +399,7 @@
 .prompt-display {
   margin-top: 1rem;
   padding: 1rem;
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 0.5rem;
   border: 1px solid #374151;
 }
@@ -437,7 +437,7 @@
 .dashboard-table-container {
   width: 100%;
   overflow-x: auto;
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   padding: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -464,7 +464,7 @@
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: #1a1a1a;
+  background: #302642;
 }
 
 .dashboard-table tr {
@@ -491,7 +491,7 @@
   white-space: pre-wrap;
   color: #b4b4b4;
   padding: 0.5rem;
-  background: #1a1a1a;
+  background: #302642;
   border-radius: 0.5rem;
   border: 1px solid #2a2a2a;
   font-size: 0.9rem;
@@ -503,7 +503,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem;
-  background: #1a1a1a;
+  background: #302642;
   border-radius: 0.5rem;
   border: 1px solid #2a2a2a;
 }
@@ -520,7 +520,7 @@
   overflow-y: auto;
   min-width: 200px;
   padding: 0.5rem;
-  background: #1a1a1a;
+  background: #302642;
   border-radius: 0.5rem;
   border: 1px solid #2a2a2a;
 }
@@ -570,7 +570,7 @@
 }
 
 .dashboard-table-container::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #302642;
   border-radius: 4px;
 }
 
@@ -587,7 +587,7 @@
 
 .prompt-content::-webkit-scrollbar-track,
 .rounds-cell::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #302642;
   border-radius: 2px;
 }
 
@@ -622,7 +622,7 @@
 }
 
 .menu-button {
-  background: #1e1e1e;
+  background: #151629;
   color: #f53e98;
   border: 2px solid #f53e98;
   border-radius: 0.5rem;
@@ -647,7 +647,7 @@
   top: 100%;
   right: 0;
   margin-top: 0.5rem;
-  background: #1e1e1e;
+  background: #151629;
   border: 1px solid #2a2a2a;
   border-radius: 0.5rem;
   overflow: hidden;
