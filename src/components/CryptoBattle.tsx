@@ -49,6 +49,7 @@ interface BattleHistory {
   results: BattleResults;
   prompt: string;
   public?: boolean;
+  summary?: string;
 }
 
 interface CryptoBattleProps {
@@ -686,7 +687,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           
           console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
-          const response = await axios.post('/api/selectWinnersRandom', {
+          const response = await axios.post('/api/selectWinners', {
             cryptos: pool.cryptos,
             prompt,
             model: modelId,
@@ -819,7 +820,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
-  // Update handleAutoPlay to initialize battles first
+  // Update handleAutoPlay to save the summary with the battle
   const handleAutoPlay = async () => {
     console.log('Auto Play started');
     setIsAutoPlaying(true);
@@ -924,7 +925,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       // Create battle hash from all results
       const battleHash = createBattleHash(Object.values(modelResults).flatMap(r => r.rounds));
 
-      // Save battle history if not already saved
+      // After all battles complete and results are calculated
       if (!battleSavedRef.current) {
         const newBattle: BattleHistory = {
           id: battleHash,
@@ -933,17 +934,40 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           prompt
         };
 
-        // Save to either public or private storage based on savePublicly flag
+        // Generate summary before saving
+        try {
+          const response = await fetch('/api/generate-battle-summary', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              battle: newBattle,
+              models,
+              apiKey: localStorage.getItem('nanoGptApiKey')
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.summary) {
+              newBattle.summary = data.summary;
+              setBattleSummary({
+                text: data.summary,
+                isLoading: false
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error generating summary:', error);
+        }
+
+        // Save battle with summary
         await handleSaveBattle(newBattle);
         
-        // Generate summary after saving
-        await generateBattleSummary(newBattle);
-        
-        // Update URL with battle ID
+        // Update URL and selected battle ID
         const newUrl = `${window.location.pathname}?battle=${battleHash}`;
         window.history.pushState({}, '', newUrl);
-        
-        // Set selected battle ID
         setSelectedBattleId(battleHash);
       }
 
@@ -957,15 +981,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
-  // Modify loadBattle to ensure Refs are updated
-  useEffect(() => {
-    battlesByModelRef.current = battlesByModel;
-  }, [battlesByModel]);
-
-  useEffect(() => {
-    currentRoundByModelRef.current = currentRoundByModel;
-  }, [currentRoundByModel]);
-
+  // Update loadBattle function
   const loadBattle = async (battleId: string) => {
     console.log(`Loading battle with ID: ${battleId}`);
     
@@ -1015,8 +1031,19 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         setActiveModelId(modelIds[0]);
       }
       
-      // Generate summary for the loaded battle
-      await generateBattleSummary(battle);
+      // Set the saved summary if available
+      if (battle.summary) {
+        setBattleSummary({
+          text: battle.summary,
+          isLoading: false
+        });
+      } else {
+        // Clear any existing summary if none is saved
+        setBattleSummary({
+          text: '',
+          isLoading: false
+        });
+      }
       
       setSelectedBattleId(battleId);
       setPrompt(battle.prompt);
@@ -1529,6 +1556,11 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 <div className="prompt-display">
                   <h4>Selection Criteria:</h4>
                   <p>{prompt}</p>
+                  <div className="battle-summary loading">
+                      <h4>Battle Summary:</h4>
+                      <div className="loading-spinner"></div>
+                      <p>Generating battle summary...</p>
+                    </div>
                   
                   
                 </div>
@@ -1544,6 +1576,11 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               <div className="prompt-display">
                 <h4>Selection Criteria:</h4>
                 <p>{prompt}</p>
+                <div className="battle-summary loading">
+                      <h4>Battle Summary:</h4>
+                      <div className="loading-spinner"></div>
+                      <p>Generating battle summary...</p>
+                    </div>
               </div>
             )}
             
@@ -1680,8 +1717,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 <h4>Selection Criteria:</h4>
                 <p>{prompt}</p>
                       {/* Add battle summary */}
-            {battleSummary.isLoading ? (
+                  {battleSummary.isLoading ? (
                     <div className="battle-summary loading">
+                      <h4>Battle Summary:</h4>
                       <div className="loading-spinner"></div>
                       <p>Generating battle summary...</p>
                     </div>
