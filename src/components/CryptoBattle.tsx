@@ -152,7 +152,11 @@ const calculateGlobalScores = (modelResults: { [modelId: string]: { rounds: Roun
 
 // Add function to determine global winner
 const determineGlobalWinner = (scores: GlobalScore) => {
-  return Object.values(scores).reduce((highest, current) => 
+  const scoreValues = Object.values(scores);
+  if (scoreValues.length === 0) {
+    return null; // Handle empty scores
+  }
+  return scoreValues.reduce((highest, current) => 
     current.score > highest.score ? current : highest
   );
 };
@@ -212,7 +216,7 @@ const calculateTotalCost = (cryptoCount: number, modelCost: number) => {
 };
 
 export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
-  console.log('CryptoBattle received cryptos:', cryptos?.length);
+  // console.log('CryptoBattle received cryptos:', cryptos?.length);
 
   // Store initial cryptos in a ref to avoid re-renders
   const initialCryptosRef = useRef<CryptoData[]>(cryptos);
@@ -373,7 +377,10 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       Object.keys(models).length > 0 ? [{ modelId: Object.keys(models)[0], active: true }] : [];
 
     // Create initial pools once and share them across all models
-    const initialPools = createInitialPools(battleCryptos);
+    const initialPools = createInitialPools(battleCryptos).map(pool => ({
+      ...pool,
+      isLoading: true
+    }));
     const initialBattles: { [key: string]: Round[] } = {};
     const initialRounds: { [key: string]: number } = {};
 
@@ -407,198 +414,207 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   };
 
   // Modify processNextRound to ensure Refs are updated correctly
-  function processNextRound(modelId: string): Promise<number | null> {
+  const processNextRound = async (modelId: string): Promise<number | null> => {
     console.log(`Processing next round for model: ${modelId}`);
-    return new Promise(async (resolve) => {
-      try {
-        // Ensure the model has battles initialized
-        if (!battlesByModelRef.current[modelId]) {
-          console.error(`No battles found for model ${modelId}`);
-          resolve(null);
-          return;
-        }
-
-        // Get current state for this model from Refs
-        const modelBattles = [...(battlesByModelRef.current[modelId] || [])];
-        const currentRoundIndex = currentRoundByModelRef.current[modelId] || 0;
-        const currentRoundPools = modelBattles[currentRoundIndex]?.pools;
-
-        if (!currentRoundPools) {
-          console.error(`No pools found for model ${modelId} round ${currentRoundIndex}`);
-          resolve(null);
-          return;
-        }
-
-        console.log(`Model ${modelId} - Current Round Index: ${currentRoundIndex}`);
-        console.log(`Model ${modelId} - Current Round Pools:`, currentRoundPools);
-
-        // Process all pools in parallel
-        const poolPromises = currentRoundPools.map(async pool => {
-          try {
-            // If pool has only one contestant, it's automatically the winner
-            if (pool.cryptos.length === 1) {
-              pool.winners = [{
-                coin: pool.cryptos[0],
-                reason: "Last contestant standing"
-              }];
-              pool.losers = [];
-              console.log(`Model ${modelId} - Pool ${pool.id} has a single crypto. Auto-winning.`);
-              
-              // Force a re-render after updating pool
-              setBattlesByModel(prev => {
-                const updated = { ...prev };
-                updated[modelId] = modelBattles;
-                return updated;
-              });
-              return;
-            }
-
-            // Set loading state
-            pool.isLoading = true;
-            // Force a re-render to show loading state
-            setBattlesByModel(prev => {
-              const updated = { ...prev };
-              updated[modelId] = modelBattles;
-              return updated;
-            });
-            
-            console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
-
-            const response = await axios.post('/api/selectWinners', {
-              cryptos: pool.cryptos,
-              prompt,
-              model: modelId,
-              winnersCount: Math.floor(pool.cryptos.length / 2),
-              apiKey: localStorage.getItem('nanoGptApiKey')
-            });
-
-            const data: RoundWinners = response.data;
-            pool.winners = data.winners;
-            pool.losers = data.losers;
-            console.log(`Model ${modelId} - Pool ${pool.id} winners:`, data.winners);
-            
-            // Force a re-render after updating winners/losers
-            setBattlesByModel(prev => {
-              const updated = { ...prev };
-              updated[modelId] = modelBattles;
-              return updated;
-            });
-          } catch (error) {
-            console.error(`Error processing pool ${pool.id} for model ${modelId}:`, error);
-          } finally {
-            pool.isLoading = false;
-            // Force a re-render after loading completes
-            setBattlesByModel(prev => {
-              const updated = { ...prev };
-              updated[modelId] = modelBattles;
-              return updated;
-            });
-            console.log(`Model ${modelId} - Pool ${pool.id} loading complete`);
-          }
-        });
-
-        // Wait for all pools to complete
-        await Promise.all(poolPromises);
-        console.log(`Model ${modelId} - All pools processed for round ${currentRoundIndex}`);
-
-        // Check if all pools have winners before creating the next round
-        if (currentRoundPools.every(pool => pool.winners)) {
-          const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
-          console.log(`Model ${modelId} - All winners for round ${currentRoundIndex}:`, allWinners);
-          
-          if (allWinners.length > 1) {
-            // Create next round pools
-            const nextRoundPools: Pool[] = [];
-            for (let i = 0; i < allWinners.length; i += 8) {
-              nextRoundPools.push({
-                id: i / 8,
-                cryptos: allWinners.slice(i, i + Math.min(8, allWinners.length - i)).map(w => w.coin)
-              });
-            }
-
-            // Add the new round
-            modelBattles.push({
-              name: `Round ${modelBattles.length + 1}`,
-              pools: nextRoundPools,
-            });
-
-            console.log(`Model ${modelId} - Next round created: Round ${modelBattles.length}`);
-
-            // Update states with force re-render for all models
-            setBattlesByModel(prev => {
-              const updated = { ...prev };
-              updated[modelId] = modelBattles;
-              return updated;
-            });
-            
-            // Set the active model to the one that just progressed
-            setActiveModelId(modelId);
-            
-            setCurrentRoundByModel(prev => {
-              const updated = { ...prev };
-              updated[modelId] = currentRoundIndex + 1;
-              currentRoundByModelRef.current = updated;
-              return updated;
-            });
-
-            // Return the new round index
-            resolve(currentRoundIndex + 1);
-          } else if (allWinners.length === 1) {
-            // Create a final round with only the winner
-            const finalWinner = allWinners[0].coin;
-            modelBattles.push({
-              name: `Final Round`,
-              pools: [{
-                id: 0,
-                cryptos: [finalWinner],
-                winners: [{
-                  coin: finalWinner,
-                  reason: "Final Winner"
-                }],
-                losers: []
-              }],
-            });
-
-            // Update states
-            setBattlesByModel(prev => {
-              const updated = { ...prev };
-              updated[modelId] = modelBattles;
-              return updated;
-            });
-            
-            setCurrentRoundByModel(prev => {
-              const updated = { ...prev };
-              updated[modelId] = currentRoundIndex + 1;
-              currentRoundByModelRef.current = updated;
-              return updated;
-            });
-
-            // Indicate completion
-            resolve(null);
-          } else {
-            console.log(`Model ${modelId} - Unexpected number of winners: ${allWinners.length}`);
-            resolve(null);
-          }
-        } else {
-          console.log(`Model ${modelId} - Not all pools have winners yet`);
-          resolve(null);
-        }
-      } catch (error) {
-        console.error(`Error processing next round for model ${modelId}:`, error);
-        resolve(null);
+    try {
+      // Ensure the model has battles initialized
+      if (!battlesByModelRef.current[modelId]) {
+        console.error(`No battles found for model ${modelId}`);
+        return null;
       }
-    });
-  }
+
+      // Get current state for this model from Refs
+      const modelBattles = [...(battlesByModelRef.current[modelId] || [])];
+      const currentRoundIndex = currentRoundByModelRef.current[modelId] || 0;
+      const currentRoundPools = modelBattles[currentRoundIndex]?.pools;
+
+      if (!currentRoundPools) {
+        console.error(`No pools found for model ${modelId} round ${currentRoundIndex}`);
+        return null;
+      }
+
+      console.log(`Model ${modelId} - Current Round Index: ${currentRoundIndex}`);
+      console.log(`Model ${modelId} - Current Round Pools:`, currentRoundPools);
+
+      // Process all pools in parallel
+      const poolPromises = currentRoundPools.map(async pool => {
+        try {
+          // If pool has only one contestant, it's automatically the winner
+          if (pool.cryptos.length === 1) {
+            pool.winners = [{
+              coin: pool.cryptos[0],
+              reason: "Last contestant standing"
+            }];
+            pool.losers = [];
+            console.log(`Model ${modelId} - Pool ${pool.id} has a single crypto. Auto-winning.`);
+            
+            // Force a re-render after updating pool
+            setBattlesByModel(prev => {
+              const updated = { ...prev };
+              updated[modelId] = modelBattles;
+              return updated;
+            });
+            return;
+          }
+
+          // Set loading state
+          pool.isLoading = true;
+          // Force a re-render to show loading state
+          setBattlesByModel(prev => {
+            const updated = { ...prev };
+            updated[modelId] = modelBattles;
+            return updated;
+          });
+          
+          console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
+
+          const response = await axios.post('/api/selectWinnersRandom', {
+            cryptos: pool.cryptos,
+            prompt,
+            model: modelId,
+            winnersCount: Math.floor(pool.cryptos.length / 2),
+            apiKey: localStorage.getItem('nanoGptApiKey')
+          });
+
+          const data: RoundWinners = response.data;
+          pool.winners = data.winners;
+          pool.losers = data.losers;
+          console.log(`Model ${modelId} - Pool ${pool.id} winners:`, data.winners);
+          
+          // Force a re-render after updating winners/losers
+          setBattlesByModel(prev => {
+            const updated = { ...prev };
+            updated[modelId] = modelBattles;
+            return updated;
+          });
+        } catch (error) {
+          console.error(`Error processing pool ${pool.id} for model ${modelId}:`, error);
+          setModelErrors(prev => ({
+            ...prev,
+            [modelId]: `Error processing pool ${pool.id}: ${error.message || 'Unknown error'}`
+          }));
+        } finally {
+          pool.isLoading = false;
+          // Force a re-render after loading completes
+          setBattlesByModel(prev => {
+            const updated = { ...prev };
+            updated[modelId] = modelBattles;
+            return updated;
+          });
+          console.log(`Model ${modelId} - Pool ${pool.id} loading complete`);
+        }
+      });
+
+      // Wait for all pools to complete
+      await Promise.all(poolPromises);
+      console.log(`Model ${modelId} - All pools processed for round ${currentRoundIndex}`);
+
+      // Check if all pools have winners before creating the next round
+      if (currentRoundPools.every(pool => pool.winners)) {
+        const allWinners = currentRoundPools.flatMap(pool => pool.winners || []);
+        console.log(`Model ${modelId} - All winners for round ${currentRoundIndex}:`, allWinners);
+        
+        if (allWinners.length > 1) {
+          // Create next round pools
+          const nextRoundPools: Pool[] = [];
+          for (let i = 0; i < allWinners.length; i += 8) {
+            nextRoundPools.push({
+              id: i / 8,
+              cryptos: allWinners.slice(i, i + Math.min(8, allWinners.length - i)).map(w => w.coin)
+            });
+          }
+
+          // Add the new round
+          modelBattles.push({
+            name: `Round ${modelBattles.length + 1}`,
+            pools: nextRoundPools,
+          });
+
+          console.log(`Model ${modelId} - Next round created: Round ${modelBattles.length}`);
+
+          // Update states with force re-render for all models
+          setBattlesByModel(prev => {
+            const updated = { ...prev };
+            updated[modelId] = modelBattles;
+            return updated;
+          });
+          
+          // Set the active model to the one that just progressed
+          setActiveModelId(modelId);
+          
+          setCurrentRoundByModel(prev => {
+            const updated = { ...prev };
+            updated[modelId] = currentRoundIndex + 1;
+            currentRoundByModelRef.current = updated;
+            return updated;
+          });
+
+          // Return the new round index
+          return currentRoundIndex + 1;
+        } else if (allWinners.length === 1) {
+          // Create a final round with only the winner
+          const finalWinner = allWinners[0].coin;
+          modelBattles.push({
+            name: `Final Round`,
+            pools: [{
+              id: 0,
+              cryptos: [finalWinner],
+              winners: [{
+                coin: finalWinner,
+                reason: "Final Winner"
+              }],
+              losers: []
+            }],
+          });
+
+          // Update states
+          setBattlesByModel(prev => {
+            const updated = { ...prev };
+            updated[modelId] = modelBattles;
+            return updated;
+          });
+          
+          setCurrentRoundByModel(prev => {
+            const updated = { ...prev };
+            updated[modelId] = currentRoundIndex + 1;
+            currentRoundByModelRef.current = updated;
+            return updated;
+          });
+
+          // Indicate completion
+          return null;
+        } else {
+          console.log(`Model ${modelId} - Unexpected number of winners: ${allWinners.length}`);
+          return null;
+        }
+      } else {
+        console.log(`Model ${modelId} - Not all pools have winners yet`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error processing next round for model ${modelId}:`, error);
+      setModelErrors(prev => ({
+        ...prev,
+        [modelId]: `Error processing next round: ${error.message || 'Unknown error'}`
+      }));
+      return null;
+    }
+  };
 
   // Update handleAutoPlay to initialize battles first
   const handleAutoPlay = async () => {
     console.log('Auto Play started');
     setIsAutoPlaying(true);
-    
+
     try {
+      // Remove the description field from selected cryptos
+      const cryptosToSave = initialCryptosRef.current.map(({ description, ...rest }) => rest);
+      localStorage.setItem('selectedCryptos', JSON.stringify(cryptosToSave));
+      localStorage.setItem('lastPrompt', prompt);
+
       // First, initialize battles for all selected models if not already initialized
       const initialPools = createInitialPools(initialCryptosRef.current);
-      
+
       // Initialize battles for all selected models
       setBattlesByModel(prev => {
         const newBattles = { ...prev };
@@ -610,7 +626,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               cryptos: [...pool.cryptos],
               id: pool.id
             }));
-            
+
             newBattles[modelId] = [{ name: 'Round 1', pools: modelPools }];
           }
         });
@@ -635,15 +651,15 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
       // Initialize results object for tracking winners
       const modelResults: { [modelId: string]: { rounds: Round[]; winner: CryptoData; } } = {};
-      
+
       // Run all model battles in parallel
       const battlePromises = selectedModels.map(async ({ modelId }) => {
         console.log(`Starting battle for model: ${modelId}`);
         let completed = false;
-        
+
         while (!completed) {
           const newRoundIndex = await processNextRound(modelId);
-          
+
           if (newRoundIndex === null) {
             // Tournament is complete for this model
             const finalRound = battlesByModelRef.current[modelId]?.slice(-1)[0];
@@ -652,7 +668,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               completed = true;
               continue;
             }
-            
+
             // Get the winner from the winners array instead of just the first crypto
             const winner = finalRound.pools[0].winners?.[0]?.coin;
             if (!winner) {
@@ -667,7 +683,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             };
             completed = true;
           }
-          
+
           // Small delay between rounds
           await new Promise(resolve => setTimeout(resolve, 500));
         }
@@ -675,21 +691,21 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
       // Wait for all battles to complete
       await Promise.all(battlePromises);
-      
+
       // Calculate global scores and winner
       const scores = calculateGlobalScores(modelResults);
       const globalWinner = determineGlobalWinner(scores);
-      
+
       // Create battle results
       const battleResults: BattleResults = {
         modelResults,
         globalWinner,
         scores
       };
-      
+
       // Create battle hash from all results
       const battleHash = createBattleHash(Object.values(modelResults).flatMap(r => r.rounds));
-      
+
       // Save battle history
       if (!battleSavedRef.current) {
         const newBattle: BattleHistory = {
@@ -698,13 +714,13 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           results: battleResults,
           prompt
         };
-        
+
         await handleSaveBattle(newBattle);
       }
-      
+
       // Refresh the wallet balance
       await fetchWalletBalance();
-      
+
     } catch (error) {
       console.error('Error during auto play:', error);
     } finally {
@@ -848,7 +864,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   };
 
   // Add new state for save preference
-  const [savePublicly, setSavePublicly] = useState(true);
+  const [savePublicly, setSavePublicly] = useState(false);
 
   // Modify the save function to use the appropriate database
   const handleSaveBattle = async (newBattle: BattleHistory) => {
@@ -908,6 +924,87 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     fetchWalletBalance();
   }, []);
 
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [modelErrors, setModelErrors] = useState<{ [modelId: string]: string }>({});
+
+  const handleSelectWinners = async () => {
+    setLoading(true);
+    setError(null); // Reset error before making the request
+
+    try {
+      const response = await axios.post('http://localhost:4321/api/selectWinners', {
+        cryptos, // Ensure cryptos are passed correctly
+        prompt,
+        model: activeModelId,
+        apiKey: localStorage.getItem('nanoGptApiKey')
+      });
+
+      // Handle successful response
+      console.log('Winners selected:', response.data);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        // Set error message from the response
+        setError(err.response.data.error || 'An unexpected error occurred');
+      } else {
+        setError('An unexpected error occurred');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to save selected cryptos to localStorage
+  const saveSelectedCryptos = (selectedCryptos: CryptoData[]) => {
+    localStorage.setItem('selectedCryptos', JSON.stringify(selectedCryptos));
+  };
+
+  // Function to load selected cryptos from localStorage
+  const loadPreviousSelection = () => {
+    const storedCryptos = localStorage.getItem('selectedCryptos');
+    const storedPrompt = localStorage.getItem('lastPrompt');
+    if (storedCryptos) {
+      try {
+        const parsedCryptos = JSON.parse(storedCryptos);
+        startNewBattle(parsedCryptos);
+        if (storedPrompt) {
+          setPrompt(storedPrompt);
+        }
+
+        // Set isLoading to false for all pools after loading
+        setBattlesByModel(prev => {
+          const updated = { ...prev };
+          Object.keys(updated).forEach(modelId => {
+            updated[modelId] = updated[modelId].map(round => ({
+              ...round,
+              pools: round.pools.map(pool => ({
+                ...pool,
+                isLoading: false
+              }))
+            }));
+          });
+          return updated;
+        });
+
+      } catch (error) {
+        console.error('Failed to parse stored cryptos:', error);
+      }
+    } else {
+      console.warn('No previous selection found.');
+    }
+  };
+
+  // Example function to handle coin selection
+  const handleCoinSelection = (selectedCryptos: CryptoData[]) => {
+    saveSelectedCryptos(selectedCryptos);
+    startNewBattle(selectedCryptos);
+  };
+
+  // Function to start a new battle
+  const handleStartNewBattle = () => {
+    startNewBattle(initialCryptosRef.current);
+  };
+
   return (
     <div className="crypto-battle" data-component="CryptoBattle" {...props}>
       <div className="battle-header">
@@ -922,11 +1019,19 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         </a>
       </div>
       <div className="selection-container">
-      <a href="/crypto-table" className="select-coins-button">
-        Select Coins
-        <span className="arrow">→</span>
-      </a>
-    </div>
+        <a href="/crypto-table" className="select-coins-button">
+          Select Coins
+          <span className="arrow">→</span>
+        </a>
+        <button onClick={loadPreviousSelection} className="reuse-selection-button">
+          Reuse Previous Selection
+        </button>
+        {isTournamentComplete(activeModelId) && (
+          <button onClick={handleStartNewBattle} className="start-new-battle-button">
+            Start New Battle
+          </button>
+        )}
+      </div>
 
       <div className="battle-controls">
         <div className="battle-history">
@@ -1366,6 +1471,18 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           </div>
         )}
       </div>
+
+      {Object.entries(modelErrors).map(([modelId, errorMessage]) => (
+        <div key={modelId} className="error-message">
+          <p>Error for model {modelId}: {errorMessage}</p>
+        </div>
+      ))}
+
+      {error && (
+        <div className="error-message">
+          <p>Error: {error}</p>
+        </div>
+      )}
     </div>
   );
 } 

@@ -68,8 +68,8 @@ ${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for 
         // Parse winners with validation
         const winnersLines = winnersSection.replace('$Winners$', '').trim().split('\n');
         const winners = winnersLines
-          .filter(line => line.trim())
-          .map(line => {
+          .filter((line: string) => line.trim())
+          .map((line: string) => {
             const [tickerPart, ...reasonParts] = line.split(':');
             const ticker = tickerPart.trim();
             const reason = reasonParts.join(':').trim();
@@ -95,8 +95,8 @@ ${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for 
         const losersLines = losersSection.trim().split('\n');
         const losersMap = new Map(
           losersLines
-            .filter(line => line.trim())
-            .map(line => {
+            .filter((line: string) => line.trim())
+            .map((line: string) => {
               const [tickerPart, ...reasonParts] = line.split(':');
               const ticker = tickerPart.trim();
               const reason = reasonParts.join(':').trim();
@@ -110,10 +110,10 @@ ${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for 
         );
 
         const loserCoins = cryptos.filter(
-          crypto => !winners.some(winner => winner.coin.ticker === crypto.ticker)
+          (crypto: any) => !winners.some((winner: any) => winner.coin.ticker === crypto.ticker)
         );
 
-        const losers = loserCoins.map(coin => ({
+        const losers = loserCoins.map((coin: any) => ({
           coin,
           reason: losersMap.get(coin.ticker) || 'Did not meet selection criteria'
         }));
@@ -134,7 +134,15 @@ ${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for 
           continue;
         }
         
-        throw error;
+        // Provide feedback to the user if all attempts fail
+        console.error('Error in selectWinners:', error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to select winners',
+            details: error instanceof Error ? error.message : 'Unknown error'
+          }), 
+          { status: 500 }
+        );
       }
     }
 

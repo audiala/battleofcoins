@@ -113,7 +113,7 @@ body {
 
 /* Sort indicators */
 .sort-indicator {
-  color: #f53e98;
+  color: var(--primary-color);
 }
 
 /* Page layout */
@@ -161,4 +161,8 @@ body {
   border: 1px solid #374151;
   text-align: center;
   color: #9ca3af;
+}
+
+:root {
+  --primary-color: #f53e98; /* Gold color */
 } 

@@ -33,7 +33,7 @@
 }
 
 .round-title {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
@@ -95,7 +95,7 @@
 
 .crypto-card.winner {
   background: #2a1f2d;
-  border: 2px solid #f53e98 !important;
+  border: 2px solid var(--primary-color) !important;
 }
 
 .crypto-card.loser {
@@ -135,7 +135,7 @@
 }
 
 .rounds-container::-webkit-scrollbar-thumb {
-  background: #f53e98;
+  background: var(--primary-color);
   border-radius: 4px;
 }
 
@@ -153,7 +153,7 @@
 }
 
 .auto-play-button {
-  background: #f53e98;
+  background: var(--primary-color);
   color: white;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
@@ -179,14 +179,14 @@
   padding: 1rem;
   background: #1e1e1e;
   border-radius: 0.5rem;
-  border: 2px solid #f53e98;
+  border: 2px solid var(--primary-color);
   max-width: 400px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .winner-announcement h2 {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 1rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
@@ -203,7 +203,7 @@
   width: 3rem;
   height: 3rem;
   border-radius: 50%;
-  border: 2px solid #f53e98;
+  border: 2px solid var(--primary-color);
 }
 
 .winner-name {
@@ -230,7 +230,7 @@
   justify-content: center;
   z-index: 10;
   border-radius: 1rem;
-  color: #f53e98;
+  color: var(--primary-color);
   gap: 1rem;
 }
 
@@ -242,7 +242,7 @@
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f53e98;
+  border: 4px solid var(--primary-color);
   border-top: 4px solid transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -275,7 +275,7 @@
 }
 
 .tooltip-portal.winner {
-  border: 2px solid #f53e98;
+  border: 2px solid var(--primary-color);
   box-shadow: 0 8px 32px rgba(245, 62, 152, 0.2);
 }
 
@@ -298,7 +298,7 @@
 }
 
 .tooltip-portal.winner[style*="left: "]::before {
-  border-right-color: #f53e98;
+  border-right-color: var(--primary-color);
 }
 
 /* Right arrow */
@@ -312,12 +312,12 @@
 }
 
 .tooltip-portal.winner[style*="right: "]::before {
-  border-left-color: #f53e98;
+  border-left-color: var(--primary-color);
 }
 
 /* Style winner and loser cards */
 .crypto-card.winner .crypto-tooltip {
-  border: 1px solid #f53e98;
+  border: 1px solid var(--primary-color);
 }
 
 .crypto-card.loser .crypto-tooltip {
@@ -337,7 +337,7 @@
 }
 
 .crypto-card.winner::after {
-  color: #f53e98;
+  color: var(--primary-color);
   opacity: 0.9;
 }
 
@@ -363,7 +363,7 @@
 }
 
 .battle-select:hover {
-  border-color: #f53e98;
+  border-color: var(--primary-color);
 }
 
 .battle-select option {
@@ -395,7 +395,7 @@
 
 .prompt-textarea:focus {
   outline: none;
-  border-color: #f53e98;
+  border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(245, 62, 152, 0.1);
 }
 
@@ -413,7 +413,7 @@
 }
 
 .prompt-display h4 {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -434,7 +434,7 @@
 }
 
 .dashboard-title {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 3rem;
@@ -467,7 +467,7 @@
 }
 
 .dashboard-table th {
-  color: #f53e98;
+  color: var(--primary-color);
   font-weight: 600;
   font-size: 1rem;
   text-transform: uppercase;
@@ -520,7 +520,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid #f53e98;
+  border: 2px solid var(--primary-color);
 }
 
 .rounds-cell {
@@ -544,7 +544,7 @@
 }
 
 .round-winners strong {
-  color: #f53e98;
+  color: var(--primary-color);
   font-weight: 600;
   margin-right: 0.5rem;
 }
@@ -552,7 +552,7 @@
 .view-battle-link {
   display: inline-block;
   padding: 0.75rem 1.25rem;
-  background: #f53e98;
+  background: var(--primary-color);
   color: white;
   text-decoration: none;
   border-radius: 0.5rem;
@@ -583,7 +583,7 @@
 }
 
 .dashboard-table-container::-webkit-scrollbar-thumb {
-  background: #f53e98;
+  background: var(--primary-color);
   border-radius: 4px;
 }
 
@@ -601,7 +601,7 @@
 
 .prompt-content::-webkit-scrollbar-thumb,
 .rounds-cell::-webkit-scrollbar-thumb {
-  background: #f53e98;
+  background: var(--primary-color);
   border-radius: 2px;
 }
 
@@ -631,8 +631,8 @@
 
 .menu-button {
   background: #1e1e1e;
-  color: #f53e98;
-  border: 2px solid #f53e98;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
   border-radius: 0.5rem;
   width: 3rem;
   height: 3rem;
@@ -678,7 +678,7 @@
 
 .menu-item:hover {
   background: #2a1f2d;
-  color: #f53e98;
+  color: var(--primary-color);
 }
 
 .model-selection {
@@ -689,7 +689,7 @@
 }
 
 .model-selection h4 {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -708,7 +708,7 @@
 }
 
 .model-select:hover:not(:disabled) {
-  border-color: #f53e98;
+  border-color: var(--primary-color);
 }
 
 .model-select:disabled {
@@ -737,14 +737,14 @@
   border-radius: 0.25rem;
   font-size: 0.75rem;
   font-weight: 500;
-  background: #f53e98;
+  background: var(--primary-color);
   color: white;
 }
 
 .model-label.outline {
   background: transparent;
-  border: 1px solid #f53e98;
-  color: #f53e98;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
 }
 
 .model-checkboxes {
@@ -767,12 +767,12 @@
 }
 
 .model-checkbox:hover {
-  border-color: #f53e98;
+  border-color: var(--primary-color);
   background: #2a1f2d;
 }
 
 .model-checkbox input {
-  accent-color: #f53e98;
+  accent-color: var(--primary-color);
 }
 
 .model-name {
@@ -804,14 +804,14 @@
 }
 
 .model-tab:hover {
-  border-color: #f53e98;
+  border-color: var(--primary-color);
   background: #2a1f2d;
 }
 
 .model-tab.active {
   background: #2a1f2d;
-  border-color: #f53e98;
-  color: #f53e98;
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .model-controls {
@@ -839,15 +839,15 @@
 }
 
 .model-sort-select:hover {
-  border-color: #f53e98;
+  border-color: var(--primary-color);
 }
 
 .select-all-button {
   padding: 0.5rem 1rem;
   background: #1e1e1e;
-  border: 1px solid #f53e98;
+  border: 1px solid var(--primary-color);
   border-radius: 0.5rem;
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -913,14 +913,14 @@
 }
 
 .model-checkbox.selected {
-  border-color: #f53e98;
+  border-color: var(--primary-color);
   background: #2a1f2d;
   box-shadow: 0 2px 8px rgba(245, 62, 152, 0.15);
 }
 
 .model-checkbox:hover {
   transform: translateY(-2px);
-  border-color: #f53e98;
+  border-color: var(--primary-color);
   background: #2a1f2d;
   box-shadow: 0 4px 12px rgba(245, 62, 152, 0.2);
 }
@@ -952,7 +952,7 @@
 /* Add counter for selected models */
 .model-counter {
   background: #2a1f2d;
-  color: #f53e98;
+  color: var(--primary-color);
   padding: 0.2rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.8rem;
@@ -980,9 +980,9 @@
   gap: 0.5rem;
   padding: 0.4rem 0.8rem;
   background: transparent;
-  border: 1px solid #f53e98;
+  border: 1px solid var(--primary-color);
   border-radius: 0.5rem;
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1069,7 +1069,7 @@
 }
 
 .model-tooltip h4 {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 1rem;
   margin-bottom: 8px;
   font-weight: 600;
@@ -1140,9 +1140,9 @@
   gap: 0.5rem;
   padding: 0.4rem 0.8rem;
   background: transparent;
-  border: 1px solid #f53e98;
+  border: 1px solid var(--primary-color);
   border-radius: 0.5rem;
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.8rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -1237,7 +1237,7 @@
 }
 
 .model-winner h3 {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.8rem;
   margin-bottom: 0.25rem;
 }
@@ -1255,7 +1255,7 @@
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
-  border: 1px solid #f53e98;
+  border: 1px solid var(--primary-color);
 }
 
 .winner-name {
@@ -1270,7 +1270,7 @@
   margin-top: 0.5rem;
   padding: 0.5rem;
   background: #2a1f2d;
-  border: 1px solid #f53e98;
+  border: 1px solid var(--primary-color);
   border-radius: 0.25rem;
   color: white;
 }
@@ -1282,7 +1282,7 @@
 }
 
 .winner-score {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.75rem;
   font-weight: 500;
 }
@@ -1308,7 +1308,7 @@
 }
 
 .prompt-display h4 {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
 }
@@ -1326,7 +1326,7 @@
   padding: 1rem;
   background: #1e1e1e;
   border-radius: 0.5rem;
-  border: 2px solid #f53e98;
+  border: 2px solid var(--primary-color);
   width: 100%; /* Take full width of its grid column */
 }
 
@@ -1355,8 +1355,8 @@
 
 .download-button {
   background: transparent;
-  border: 1px solid #f53e98;
-  color: #f53e98;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
   padding: 0.4rem 0.8rem;
   border-radius: 0.5rem;
   font-size: 0.8rem;
@@ -1412,7 +1412,7 @@
 }
 
 .model-entry .model-name {
-  color: #f53e98;
+  color: var(--primary-color);
   font-size: 0.8rem;
   white-space: nowrap;
   overflow: hidden;
@@ -1433,7 +1433,7 @@
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
-  border: 1px solid #f53e98;
+  border: 1px solid var(--primary-color);
 }
 
 .winner-entry .winner-name {
@@ -1461,7 +1461,7 @@
   padding: 0.7rem 1rem;
   background: #2a1f2d;
   border-radius: 0.5rem;
-  border: 2px solid #f53e98;
+  border: 2px solid var(--primary-color);
   position: absolute;
   right: 5rem;
   cursor: pointer;
@@ -1481,13 +1481,13 @@
 }
 
 .balance-amount {
-  color: #f53e98;
+  color: var(--primary-color);
   font-weight: 500;
   font-size: 0.9rem;
 }
 
 .balance-error {
-  color: #f53e98;
+  color: var(--primary-color);
   cursor: help;
 }
 
@@ -1512,11 +1512,11 @@
   margin: 2rem 0;
 }
 
-.select-coins-button {
+.select-coins-button, .reuse-selection-button, .start-new-battle-button {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: #f53e98;
+  background: var(--primary-color);
   color: white;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
@@ -1525,7 +1525,13 @@
   transition: all 0.2s ease;
 }
 
-.select-coins-button:hover {
+.reuse-selection-button, .start-new-battle-button {
+  background: #2a1f2d;
+  border: 1px solid var(--primary-color);
+  margin-left: 15px;
+}
+
+.select-coins-button:hover, .reuse-selection-button:hover {
   background: #f52e88;
   transform: translateY(-2px);
 }
@@ -1598,12 +1604,12 @@
 
 input:checked + .slider {
   background-color: #2a1f2d;
-  border-color: #f53e98;
+  border-color: var(--primary-color);
 }
 
 input:checked + .slider:before {
   transform: translateX(24px);
-  background-color: #f53e98;
+  background-color: var(--primary-color);
 }
 
 .switch input:disabled + .slider {
@@ -1635,8 +1641,8 @@ input:checked + .slider:before {
 
 .pagination-button {
   background: #2a1f2d;
-  color: #f53e98;
-  border: 1px solid #f53e98;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
