@@ -12,7 +12,8 @@ import {
 import {
   saveBattleHistory as saveBattleHistoryLocal,
   getAllBattleHistories as getAllBattleHistoriesLocal,
-  getBattleById as getBattleByIdLocal
+  getBattleById as getBattleByIdLocal,
+  getAllBattleHistories
 } from '../services/BattleDatabaseLocal';
 
 interface Winner {
@@ -382,6 +383,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [battleHistories, setBattleHistories] = useState<BattleHistory[]>([]);
+  const [publicBattleHistories, setPublicBattleHistories] = useState<BattleHistory[]>([]);
   const [selectedBattleId, setSelectedBattleId] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string>('');
   const [models, setModels] = useState<TextModels>({});
@@ -445,6 +447,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           }
 
           // console.log('Battle found:', battle);
+          setCurrentBattle(battle);
           
 
           if (battle && battle.results?.modelResults) {
@@ -963,7 +966,10 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
-  // Update loadBattle function
+  // Add new state for current battle
+  const [currentBattle, setCurrentBattle] = useState<BattleHistory | null>(null);
+
+  // Update loadBattle function to use the setter
   const loadBattle = async (battleId: string) => {
     console.log(`Loading battle with ID: ${battleId}`);
     
@@ -976,6 +982,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
 
     if (battle) {
+      setCurrentBattle(battle); // Set the current battle      
       // Update URL without reloading the page
       const newUrl = battleId ? 
         `${window.location.pathname}?battle=${battleId}` : 
@@ -983,10 +990,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       window.history.pushState({}, '', newUrl);
 
       if (battle.results?.modelResults) {
-        // Get all model IDs from the battle
+        // Set up the battles and rounds for each model
         const modelIds = Object.keys(battle.results.modelResults);
         
-        // Set up the battles and rounds for each model
         setBattlesByModel(
           modelIds.reduce((acc, modelId) => ({
             ...acc,
@@ -1001,7 +1007,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           }), {})
         );
         
-        // Set up selected models
         setSelectedModels(
           modelIds.map(modelId => ({
             modelId,
@@ -1009,24 +1014,14 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           }))
         );
         
-        // Set the first model as active
         setActiveModelId(modelIds[0]);
       }
       
       // Set the saved summary if available
-      if (battle.summary) {
-        setBattleSummary({
-          text: battle.summary,
-          isLoading: false
-        });
-      } else {
-        // Clear any existing summary if none is saved
-        setBattleSummary({
-          text: '',
-          isLoading: false
-        });
-      }
-      
+      setBattleSummary({
+        text: battle.summary || '',
+        isLoading: false
+      });
       setSelectedBattleId(battleId);
       setPrompt(battle.prompt);
       battleSavedRef.current = true;
@@ -1517,20 +1512,20 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             className="battle-select"
           >
             <option key="new-battle" value="">Start New Battle</option>
-            {Array.isArray(battleHistories) && battleHistories.map((battle, index) => {
-              const winner = battle.results?.globalWinner?.coin || 
-                            (battle.results?.modelResults && 
-                             Object.values(battle.results.modelResults)[0]?.winner);
-              
-              return (
-                <option 
-                  key={`battle-${battle.id}-${index}`} 
-                  value={battle.id}
-                >
-                  {new Date(battle.date).toLocaleString()} - Winner: {winner?.name}
+            <optgroup label="Local Battles">
+              {battleHistories.map((battle, index) => (
+                <option key={`local-${battle.id}-${index}`} value={battle.id}>
+                  {new Date(battle.date).toLocaleString()} - {battle.results.globalWinner.coin.ticker}: {battle.results.globalWinner.score }
                 </option>
-              );
-            })}
+              ))}
+            </optgroup>
+            <optgroup label="Public Battles">
+              {publicBattleHistories.map((battle, index) => (
+                <option key={`public-${battle.id}-${index}`} value={battle.id}>
+                  {new Date(battle.date).toLocaleString()} - Public
+                </option>
+              ))}
+            </optgroup>
           </select>
         </div>
 
@@ -1840,15 +1835,14 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 
                 {/* Show global winner with scores */}
                 {console.log(battleHistories)}
-                {selectedBattleId && battleHistories.find(h => h.id === selectedBattleId)?.results?.globalWinner && (
+                {selectedBattleId && currentBattle?.results?.globalWinner && (
                   <div className="global-winner">
                     <h3>Tournament Winners</h3>
                     <div className="winners-podium">
                       {(() => {
-                        const battle = battleHistories.find(h => h.id === selectedBattleId);
-                        if (!battle?.results?.scores) return null;
+                        if (!currentBattle?.results?.scores) return null;
 
-                        const topThree = getTopThreeWinners(battle.results.scores);
+                        const topThree = getTopThreeWinners(currentBattle.results.scores);
                         
                         return topThree.map((winner, index) => (
                           <div key={winner.coin.ticker} className={`winner-card place-${index + 1}`}>
