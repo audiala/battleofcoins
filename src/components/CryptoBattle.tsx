@@ -133,32 +133,71 @@ function createBattleHash(rounds: Round[]): string {
   return hash.toString(36); // Convert to base36 for shorter string
 }
 
-// Add function to calculate global scores
+// Update the calculateGlobalScores function
 const calculateGlobalScores = (modelResults: { [modelId: string]: { rounds: Round[]; winner: CryptoData; } }): GlobalScore => {
   const scores: GlobalScore = {};
   
-  Object.values(modelResults).forEach(({ winner }) => {
-    if (!scores[winner.ticker]) {
-      scores[winner.ticker] = {
-        coin: winner,
-        score: 0
-      };
+  // Process each model's results
+  Object.values(modelResults).forEach(({ rounds, winner }) => {
+    // Process each round
+    rounds.forEach(round => {
+      round.pools.forEach(pool => {
+        // Add points for winners that advanced to next round
+        pool.winners?.forEach(winner => {
+          const ticker = winner.coin.ticker;
+          if (!scores[ticker]) {
+            scores[ticker] = {
+              coin: winner.coin,
+              score: 0
+            };
+          }
+          // Add 1 point for advancing to next round
+          scores[ticker].score += 1;
+        });
+      });
+    });
+
+    // Add extra 2 points for the overall winner of each model battle
+    if (winner) {
+      const ticker = winner.ticker;
+      if (!scores[ticker]) {
+        scores[ticker] = {
+          coin: winner,
+          score: 0
+        };
+      }
+      scores[ticker].score += 2;
     }
-    scores[winner.ticker].score += 1;
   });
 
   return scores;
 };
 
-// Add function to determine global winner
+// Update the determineGlobalWinner function to return top 3
 const determineGlobalWinner = (scores: GlobalScore) => {
   const scoreValues = Object.values(scores);
   if (scoreValues.length === 0) {
-    return null; // Handle empty scores
+    return null;
   }
-  return scoreValues.reduce((highest, current) => 
-    current.score > highest.score ? current : highest
-  );
+  
+  // Sort all scores in descending order
+  const sortedScores = scoreValues.sort((a, b) => b.score - a.score);
+  
+  // Return the top scorer
+  return sortedScores[0];
+};
+
+// Add new function to get top 3 winners
+const getTopThreeWinners = (scores: GlobalScore) => {
+  const scoreValues = Object.values(scores);
+  if (scoreValues.length === 0) {
+    return [];
+  }
+  
+  // Sort all scores in descending order
+  return scoreValues
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
 };
 
 // Add a type guard function to check if activeModelId is valid
@@ -706,7 +745,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       // Create battle hash from all results
       const battleHash = createBattleHash(Object.values(modelResults).flatMap(r => r.rounds));
 
-      // Save battle history
+      // Save battle history if not already saved
       if (!battleSavedRef.current) {
         const newBattle: BattleHistory = {
           id: battleHash,
@@ -715,7 +754,15 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           prompt
         };
 
+        // Save to either public or private storage based on savePublicly flag
         await handleSaveBattle(newBattle);
+        
+        // Update URL with battle ID
+        const newUrl = `${window.location.pathname}?battle=${battleHash}`;
+        window.history.pushState({}, '', newUrl);
+        
+        // Set selected battle ID
+        setSelectedBattleId(battleHash);
       }
 
       // Refresh the wallet balance
@@ -1026,11 +1073,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         <button onClick={loadPreviousSelection} className="reuse-selection-button">
           Reuse Previous Selection
         </button>
-        {isTournamentComplete(activeModelId) && (
-          <button onClick={handleStartNewBattle} className="start-new-battle-button">
-            Start New Battle
-          </button>
-        )}
+       
       </div>
 
       <div className="battle-controls">
@@ -1317,30 +1360,34 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 {/* Show global winner with scores */}
                 {selectedBattleId && battleHistories.find(h => h.id === selectedBattleId)?.results?.globalWinner && (
                   <div className="global-winner">
-                    <h3>Tournament Winner</h3>
-                    <div className="winner-card">
+                    <h3>Tournament Winners</h3>
+                    <div className="winners-podium">
                       {(() => {
                         const battle = battleHistories.find(h => h.id === selectedBattleId);
-                        const globalWinner = battle?.results?.globalWinner;
-                        if (!globalWinner) return null;
+                        if (!battle?.results?.scores) return null;
 
-                        return (
-                          <>
+                        const topThree = getTopThreeWinners(battle.results.scores);
+                        
+                        return topThree.map((winner, index) => (
+                          <div key={winner.coin.ticker} className={`winner-card place-${index + 1}`}>
+                            <div className="place-indicator">
+                              {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                            </div>
                             <img 
-                              src={`/${globalWinner.coin.logo_local}`}
-                              alt={globalWinner.coin.name}
+                              src={`/${winner.coin.logo_local}`}
+                              alt={winner.coin.name}
                               className="winner-logo"
                             />
                             <div className="winner-info">
                               <span className="winner-name">
-                                {globalWinner.coin.name}
+                                {winner.coin.name}
                               </span>
                               <span className="winner-score">
-                                Score: {globalWinner.score}
+                                Score: {winner.score}
                               </span>
                             </div>
-                          </>
-                        );
+                          </div>
+                        ));
                       })()}
                     </div>
                   </div>

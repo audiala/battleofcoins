@@ -60,4 +60,37 @@
 
 .start-new-battle-button:hover {
   background-color: #218838;
+}
+
+.winners-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.place-indicator {
+  position: absolute;
+  left: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.5rem;
+}
+
+.winner-card {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.winner-card.place-1 {
+  transform: scale(1.1);
+  background: linear-gradient(to right, rgba(255,215,0,0.1), transparent);
+}
+
+.winner-card.place-2 {
+  background: linear-gradient(to right, rgba(192,192,192,0.1), transparent);
+}
+
+.winner-card.place-3 {
+  background: linear-gradient(to right, rgba(205,127,50,0.1), transparent);
 } 
