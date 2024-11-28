@@ -24,5 +24,26 @@ console.log('Loaded crypto data:', cryptoData.length);
 ---
 
 <Layout title="Crypto Table">
-  <CryptoTableComponent client:load data={cryptoData} taggedCoins={taggedCoinsData} />
-</Layout> 
+  <div class="w-full">
+    <CryptoTableComponent 
+      client:load 
+      data={cryptoData} 
+      taggedCoins={taggedCoinsData} 
+    />
+  </div>
+</Layout>
+
+<style is:global>
+  /* Add these styles directly in the Astro component */
+  tr[style*="background-color"] {
+    background-color: rgba(245, 62, 152, 0.15) !important;
+  }
+
+  tr[style*="background-color"]:hover {
+    background-color: rgba(245, 62, 152, 0.25) !important;
+  }
+
+  tr {
+    transition: background-color 0.2s ease !important;
+  }
+</style> 

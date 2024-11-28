@@ -14,7 +14,7 @@
 }
 
 .wallet-card2 {
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   padding: 2rem;
   margin-bottom: 2rem;
@@ -52,7 +52,7 @@
 }
 
 .address {
-  background: #272727;
+  background: #2a2938;
   padding: 0.75rem;
   border-radius: 0.5rem;
   font-size: 0.9rem;
@@ -76,7 +76,7 @@
 }
 
 .transactions-section {
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -90,7 +90,7 @@
 }
 
 .transaction-card {
-  background: #272727;
+  background: #2a2938;
   border-radius: 0.5rem;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -135,7 +135,7 @@
 }
 
 .account-address {
-  background: #1a1a1a;
+  background: #302642;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.8rem;
@@ -209,7 +209,7 @@
 }
 
 .withdraw-section {
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   padding: 2rem;
   border: 1px solid #2a2a2a;
@@ -239,7 +239,7 @@
 }
 
 .withdraw-input {
-  background: #272727;
+  background: #2a2938;
   border: 1px solid #374151;
   border-radius: 0.5rem;
   padding: 0.75rem;
@@ -339,7 +339,7 @@
 
 /* Add API key section styles */
 .api-key-section {
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   padding: 2rem;
   max-width: 600px;
@@ -361,7 +361,7 @@
 
 .api-key-input {
   flex: 1;
-  background: #272727;
+  background: #2a2938;
   border: 1px solid #374151;
   border-radius: 0.5rem;
   padding: 0.75rem;
@@ -413,7 +413,7 @@
 
 /* Add withdraw info styles */
 .withdraw-info {
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 1rem;
   padding: 2rem;
   border: 1px solid #2a2a2a;

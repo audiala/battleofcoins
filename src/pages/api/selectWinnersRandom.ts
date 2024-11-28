@@ -64,6 +64,9 @@ export const POST: APIRoute = async ({ request }) => {
       losers
     };
 
+    // add a delay
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     return new Response(JSON.stringify(mappedResponse), {
       status: 200,
       headers: {

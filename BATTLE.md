@@ -10,7 +10,7 @@
 - The battle history is saved to local storage every time it gets updated.
 
 ## Global winner
-- A score is given to each coin based on the performance of the coin in each model battle. Every time a coins go to the next round, it gets 1 point. If it wins, it gets 3 points. 
+- A score is given to each coin based on the performance of the coin in each model battle. Every time a coin goes to the next round, it gets 1 point. If it wins the battle, it gets an extra 2 points. 
 
 ## View the results
 - The results are displayed in a table

@@ -1,7 +1,7 @@
 /* Base styles */
 body {
   font-family: "Darker Grotesque", "Inter", sans-serif;
-  background: #121212;
+  background: #020514;
   color: #e0e0e0;
 }
 
@@ -9,11 +9,11 @@ body {
 .crypto-table {
   width: 100%;
   border-collapse: collapse;
-  background: #1e1e1e;
+  background: #151629;
 }
 
 .crypto-table thead {
-  background: #272727;
+  background: #2a2938;
 }
 
 .crypto-table th {
@@ -28,7 +28,7 @@ body {
   color: #d1d5db;
   cursor: pointer;
   transition: background-color 0.2s;
-  background: #272727;
+  background: #2a2938;
 }
 
 .crypto-table th:hover {
@@ -40,7 +40,7 @@ body {
 }
 
 .crypto-table tbody tr:hover {
-  background: #272727;
+  background: #2a2938;
 }
 
 .crypto-table td {
@@ -113,13 +113,13 @@ body {
 
 /* Sort indicators */
 .sort-indicator {
-  color: #f53e98;
+  color: var(--primary-color);
 }
 
 /* Page layout */
 .page-container {
   min-height: 100vh;
-  background: #121212;
+  background: #020514;
   color: #d1d5db;
 }
 
@@ -156,9 +156,13 @@ body {
 
 .page-subtitle {
   padding: 1rem;
-  background: #1e1e1e;
+  background: #151629;
   border-radius: 0.5rem;
   border: 1px solid #374151;
   text-align: center;
   color: #9ca3af;
+}
+
+:root {
+  --primary-color: #f53e98; /* Gold color */
 } 

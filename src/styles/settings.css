@@ -14,7 +14,7 @@
   }
   
   .settings-card {
-    background: #1e1e1e;
+    background: #151629;
     border-radius: 1rem;
     padding: 2rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -63,7 +63,7 @@
   }
   
   .api-key-input {
-    background: #272727;
+    background: #2a2938;
     border: 1px solid #374151;
     border-radius: 0.5rem;
     padding: 0.75rem;
