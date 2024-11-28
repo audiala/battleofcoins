@@ -93,4 +93,38 @@
 
 .winner-card.place-3 {
   background: linear-gradient(to right, rgba(205,127,50,0.1), transparent);
+}
+
+.result-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.share-button {
+  padding: 8px 16px;
+  background-color: #1DA1F2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.3s;
+}
+
+.share-button:hover {
+  background-color: #1991db;
+}
+
+.share-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.winner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 } 

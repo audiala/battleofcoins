@@ -48,6 +48,7 @@ interface BattleHistory {
   date: string;
   results: BattleResults;
   prompt: string;
+  public?: boolean;
 }
 
 interface CryptoBattleProps {
@@ -252,6 +253,177 @@ const calculateBattleStats = (cryptoCount: number) => {
 const calculateTotalCost = (cryptoCount: number, modelCost: number) => {
   const { totalPools } = calculateBattleStats(cryptoCount);
   return (totalPools * modelCost).toFixed(4);
+};
+
+// Add these helper functions for image generation
+const generateBattleImage = async (battle: BattleHistory, models: TextModels) => {
+  // Create a canvas element
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Could not get canvas context');
+
+  // Set canvas size
+  canvas.width = 1200;
+  canvas.height = 800;
+
+  // Set background
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Load all images first (returns array of [path, loaded_image])
+  const loadImage = (src: string): Promise<HTMLImageElement> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = src;
+    });
+  };
+
+  try {
+    // Set styles
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 24px Arial';
+    
+    // Draw title
+    ctx.fillText('🏆 Crypto Battle Results 🏆', 50, 50);
+
+    // Draw prompt
+    ctx.font = '18px Arial';
+    ctx.fillText('Selection Criteria:', 50, 100);
+    
+    // Word wrap the prompt
+    const words = battle.prompt.split(' ');
+    let line = '';
+    let y = 130;
+    for (const word of words) {
+      const testLine = line + word + ' ';
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > canvas.width - 100) {
+        ctx.fillText(line, 50, y);
+        line = word + ' ';
+        y += 25;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, 50, y);
+
+    // Draw models used
+    y += 50;
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('Models Used:', 50, y);
+    y += 30;
+    ctx.font = '18px Arial';
+    Object.entries(battle.results.modelResults).forEach(([modelId]) => {
+      ctx.fillText(`• ${models[modelId]?.name || modelId}`, 50, y);
+      y += 25;
+    });
+
+    // Draw winners
+    y += 30;
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('Top 3 Winners:', 50, y);
+    y += 30;
+
+    // Load and draw winner logos
+    const topThree = getTopThreeWinners(battle.results.scores);
+    const medals = ['🥇', '🥈', '🥉'];
+    
+    for (let i = 0; i < topThree.length; i++) {
+      const winner = topThree[i];
+      try {
+        const logo = await loadImage(winner.coin.logo_local);
+        // Draw medal emoji
+        ctx.font = '24px Arial';
+        ctx.fillText(medals[i], 50, y);
+        // Draw logo
+        ctx.drawImage(logo, 90, y - 30, 30, 30);
+        // Draw name and score
+        ctx.font = '18px Arial';
+        ctx.fillText(`${winner.coin.name} - Score: ${winner.score}`, 130, y);
+        y += 40;
+      } catch (error) {
+        console.error(`Failed to load logo for ${winner.coin.name}`, error);
+        // Skip logo and just draw text
+        ctx.fillText(`${medals[i]} ${winner.coin.name} - Score: ${winner.score}`, 50, y);
+        y += 40;
+      }
+    }
+
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Error generating battle image:', error);
+    throw error;
+  }
+};
+
+// Add function to handle Twitter sharing
+const handleTwitterShare = async (battle: BattleHistory) => {
+  if (!battle.id) return;
+
+  let battleToShare = battle;
+
+  // If battle is not public, ask for permission
+  if (!battleToShare.public) {
+    const shouldMakePublic = window.confirm(
+      'This battle needs to be public to share it. Would you like to make it public?'
+    );
+    
+    if (shouldMakePublic) {
+      try {
+        // Save battle publicly
+        await saveHistory(battleToShare);
+        // Update the battle object to reflect it's now public
+        battleToShare = { ...battleToShare, public: true };
+      } catch (error) {
+        console.error('Failed to make battle public:', error);
+        alert('Failed to make battle public. Cannot share.');
+        return;
+      }
+    } else {
+      return; // User declined to make public
+    }
+  }
+
+  try {
+    // Generate the image
+    const imageData = await generateBattleImage(battleToShare, models);
+    
+    // Create a blob from the image data
+    const imageBlob = await (await fetch(imageData)).blob();
+    
+    // Create form data for the image upload
+    const formData = new FormData();
+    formData.append('image', imageBlob, 'battle-results.png');
+    
+    // Upload image and get URL
+    const response = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) throw new Error('Failed to upload image');
+    
+    const { imageUrl } = await response.json();
+    
+    // Create tweet text
+    const tweetText = encodeURIComponent(
+      `Check out my Crypto Battle results!\n` +
+      `🏆 Winners selected using AI\n` +
+      `🔗 View full results: ${window.location.origin}/battle?id=${battleToShare.id}\n` +
+      `#CryptoBattle #AI #Crypto`
+    );
+
+    // Open Twitter share dialog
+    window.open(
+      `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(imageUrl)}`,
+      '_blank'
+    );
+  } catch (error) {
+    console.error('Error sharing to Twitter:', error);
+    alert('Failed to share to Twitter. Please try again.');
+  }
 };
 
 export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
@@ -917,9 +1089,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   const handleSaveBattle = async (newBattle: BattleHistory) => {
     try {
       if (savePublicly) {
-        await saveHistory(newBattle); // Supabase
+        await saveHistory({ ...newBattle, public: true }); // Save to Supabase
       } else {
-        await saveBattleHistoryLocal(newBattle); // IndexedDB
+        await saveBattleHistoryLocal(newBattle); // Save to IndexedDB
       }
       setBattleHistories(prev => [...prev, newBattle]);
       battleSavedRef.current = true;
@@ -1191,50 +1363,64 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 <div className="winner-announcement">
                   <div className="winner-header">
                     <h2>🏆 Results 🏆</h2>
-                    <button 
-                      onClick={() => {
-                        const battle = selectedBattleId 
-                          ? battleHistories.find(h => h.id === selectedBattleId)
-                          : {
-                              id: createBattleHash(Object.values(battlesByModel).flatMap(r => r)),
-                              date: new Date().toISOString(),
-                              results: {
-                                modelResults: Object.fromEntries(
-                                  selectedModels.map(({ modelId }) => [
-                                    modelId,
-                                    {
-                                      rounds: battlesByModel[modelId].map(round => ({
-                                        name: round.name,
-                                        pools: round.pools.map(pool => ({
-                                          id: pool.id,
-                                          cryptos: pool.cryptos.map(stripCryptoData),
-                                          winners: pool.winners?.map(w => ({
-                                            coin: stripCryptoData(w.coin),
-                                            reason: w.reason
-                                          })),
-                                          losers: pool.losers?.map(l => ({
-                                            coin: stripCryptoData(l.coin),
-                                            reason: l.reason
+                    <div className="result-actions">
+                      <button 
+                        onClick={() => {
+                          const battle = selectedBattleId 
+                            ? battleHistories.find(h => h.id === selectedBattleId)
+                            : {
+                                id: createBattleHash(Object.values(battlesByModel).flatMap(r => r)),
+                                date: new Date().toISOString(),
+                                results: {
+                                  modelResults: Object.fromEntries(
+                                    selectedModels.map(({ modelId }) => [
+                                      modelId,
+                                      {
+                                        rounds: battlesByModel[modelId].map(round => ({
+                                          name: round.name,
+                                          pools: round.pools.map(pool => ({
+                                            id: pool.id,
+                                            cryptos: pool.cryptos.map(stripCryptoData),
+                                            winners: pool.winners?.map(w => ({
+                                              coin: stripCryptoData(w.coin),
+                                              reason: w.reason
+                                            })),
+                                            losers: pool.losers?.map(l => ({
+                                              coin: stripCryptoData(l.coin),
+                                              reason: l.reason
+                                            }))
                                           }))
-                                        }))
-                                      })),
-                                      winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin 
-                                        ? stripCryptoData(battlesByModel[modelId].slice(-1)[0].pools[0].winners[0].coin)
-                                        : null
-                                    }
-                                  ])
-                                ),
-                                globalWinner: null,
-                                scores: {}
-                              },
-                              prompt
-                            };
-                        downloadBattleAsJson(battle);
-                      }}
-                      className="download-button"
-                    >
-                      📥 Download Results
-                    </button>
+                                        })),
+                                        winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin 
+                                          ? stripCryptoData(battlesByModel[modelId].slice(-1)[0].pools[0].winners[0].coin)
+                                          : null
+                                      }
+                                    ])
+                                  ),
+                                  globalWinner: null,
+                                  scores: {}
+                                },
+                                prompt
+                              };
+                          downloadBattleAsJson(battle);
+                        }}
+                        className="download-button"
+                      >
+                        📥 Download Results
+                      </button>
+                      <button 
+                        onClick={() => {
+                          const battle = battleHistories.find(h => h.id === selectedBattleId);
+                          if (battle) {
+                            handleTwitterShare(battle);
+                          }
+                        }}
+                        className="share-button"
+                        disabled={!selectedBattleId}
+                      >
+                        🐦 Share on Twitter
+                      </button>
+                    </div>
                   </div>
                   <div className="model-winners">
                     {selectedModels.map(({ modelId }) => {
@@ -1284,50 +1470,64 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               <div className="winner-announcement">
                 <div className="winner-header">
                   <h2>🏆 Results 🏆</h2>
-                  <button 
-                    onClick={() => {
-                      const battle = selectedBattleId 
-                        ? battleHistories.find(h => h.id === selectedBattleId)
-                        : {
-                            id: createBattleHash(Object.values(battlesByModel).flatMap(r => r)),
-                            date: new Date().toISOString(),
-                            results: {
-                              modelResults: Object.fromEntries(
-                                selectedModels.map(({ modelId }) => [
-                                  modelId,
-                                  {
-                                    rounds: battlesByModel[modelId].map(round => ({
-                                      name: round.name,
-                                      pools: round.pools.map(pool => ({
-                                        id: pool.id,
-                                        cryptos: pool.cryptos.map(stripCryptoData),
-                                        winners: pool.winners?.map(w => ({
-                                          coin: stripCryptoData(w.coin),
-                                          reason: w.reason
-                                        })),
-                                        losers: pool.losers?.map(l => ({
-                                          coin: stripCryptoData(l.coin),
-                                          reason: l.reason
+                  <div className="result-actions">
+                    <button 
+                      onClick={() => {
+                        const battle = selectedBattleId 
+                          ? battleHistories.find(h => h.id === selectedBattleId)
+                          : {
+                              id: createBattleHash(Object.values(battlesByModel).flatMap(r => r)),
+                              date: new Date().toISOString(),
+                              results: {
+                                modelResults: Object.fromEntries(
+                                  selectedModels.map(({ modelId }) => [
+                                    modelId,
+                                    {
+                                      rounds: battlesByModel[modelId].map(round => ({
+                                        name: round.name,
+                                        pools: round.pools.map(pool => ({
+                                          id: pool.id,
+                                          cryptos: pool.cryptos.map(stripCryptoData),
+                                          winners: pool.winners?.map(w => ({
+                                            coin: stripCryptoData(w.coin),
+                                            reason: w.reason
+                                          })),
+                                          losers: pool.losers?.map(l => ({
+                                            coin: stripCryptoData(l.coin),
+                                            reason: l.reason
+                                          }))
                                         }))
-                                      }))
-                                    })),
-                                    winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin 
-                                      ? stripCryptoData(battlesByModel[modelId].slice(-1)[0].pools[0].winners[0].coin)
-                                      : null
-                                  }
-                                ])
-                              ),
-                              globalWinner: null,
-                              scores: {}
-                            },
-                            prompt
-                          };
-                      downloadBattleAsJson(battle);
-                    }}
-                    className="download-button"
-                  >
-                    📥 Download Results
-                  </button>
+                                      })),
+                                      winner: battlesByModel[modelId]?.slice(-1)[0]?.pools[0]?.winners?.[0]?.coin 
+                                        ? stripCryptoData(battlesByModel[modelId].slice(-1)[0].pools[0].winners[0].coin)
+                                        : null
+                                    }
+                                  ])
+                                ),
+                                globalWinner: null,
+                                scores: {}
+                              },
+                              prompt
+                            };
+                        downloadBattleAsJson(battle);
+                      }}
+                      className="download-button"
+                    >
+                      📥 Download Results
+                    </button>
+                    <button 
+                      onClick={() => {
+                        const battle = battleHistories.find(h => h.id === selectedBattleId);
+                        if (battle) {
+                          handleTwitterShare(battle);
+                        }
+                      }}
+                      className="share-button"
+                      disabled={!selectedBattleId}
+                    >
+                      🐦 Share on Twitter
+                    </button>
+                  </div>
                 </div>
                 <div className="model-winners">
                   {selectedModels.map(({ modelId }) => {
