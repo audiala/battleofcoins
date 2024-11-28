@@ -1233,30 +1233,70 @@
 
 .model-winners {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.5rem;
-  margin: 0.5rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0;
+  justify-items: start;
 }
 
 .model-winner {
-  background: #1e1e1e;
-  border-radius: 0.25rem;
-  padding: 0.5rem;
+  background: #2a1f2d;
+  border: 1px solid var(--primary-color);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  width: 100%;
+  display: inline-flex;
+  /* display: flex; */
+    justify-content: left;
 }
 
 .model-winner h3 {
-  color: var(--primary-color);
-  font-size: 0.8rem;
-  margin-bottom: 0.25rem;
+  color: white;
+  text-align: left;
+  font-size: 0.9rem;
+
+  margin-right: 0.75rem;
+  margin-bottom: 0;
+  padding-top: 0.55rem;
+  text-align: left;
+}
+
+.model-winner .winner-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  vertical-align: middle;
+  margin: 0;
+  justify-content: flex-start;
+  min-width: 50p;
+}
+
+.model-winner .winner-logo {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px solid var(--primary-color);
+}
+
+.model-winner .winner-name {
+  color: white;
+  font-size: 0.9rem;
+  text-align: left;
 }
 
 .winner-card {
   display: flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 0.5rem;
   padding: 0.25rem;
-  background: #272727;
   border-radius: 0.25rem;
+  margin: 0 auto;
+  width: fit-content;
 }
 
 .winner-logo {
@@ -1283,6 +1323,38 @@
   color: white;
 }
 
+.global-winner h3 {
+  text-align: left;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  width: 100%;
+  display: block;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(245, 62, 152, 0.2);
+}
+
+.winners-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.5rem;
+}
+
+.winners-podium .winner-card {
+  margin: 0;
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+}
+
+.winners-podium .winner-info {
+  align-items: flex-start;
+}
+
 .winner-info {
   display: flex;
   flex-direction: column;
@@ -1298,7 +1370,7 @@
 /* Update battle view layout */
 .battle-view {
   display: grid;
-  grid-template-columns: 2fr 1fr; /* 2/3 for results, 1/3 for criteria/summary */
+  grid-template-columns: 1fr 3fr; /* 2/3 for results, 1/3 for criteria/summary */
   gap: 2rem;
   align-items: start;
   width: 100%;
@@ -1328,10 +1400,8 @@
 
 .battle-summary {
   margin-top: 1rem;
-  padding: 1.5rem;
+  padding-top: 1.5rem;
   background: #1e1e1e;
-  border-radius: 0.5rem;
-  border: 1px solid #374151;
   width: 100%;
 }
 
@@ -1731,4 +1801,56 @@ input:checked + .slider:before {
 .tournament-complete .save-switch,
 .tournament-complete .cost-estimate {
   display: none;
+}
+
+/* Keep model winners centered */
+.model-winners {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+  justify-items: center;
+  align-items: center;
+}
+
+/* Update global winner styles to align left */
+.global-winner {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #2a1f2d;
+  border: 1px solid var(--primary-color);
+  border-radius: 0.25rem;
+  color: white;
+}
+
+.global-winner h3 {
+  text-align: left;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: var(--primary-color);
+  width: 100%;
+  display: block;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(245, 62, 152, 0.2);
+}
+
+.winners-podium {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.5rem;
+}
+
+.winners-podium .winner-card {
+  margin: 0;
+  width: 100%;
+  justify-content: flex-start;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+}
+
+.winners-podium .winner-info {
+  align-items: flex-start;
 }

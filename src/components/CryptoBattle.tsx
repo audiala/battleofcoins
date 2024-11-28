@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { CryptoData } from './CryptoTable';
 import axios from 'axios';
 import { Tooltip } from './Tooltip';
@@ -297,9 +297,10 @@ const generateBattleImage = async (battle: BattleHistory, models: TextModels) =>
     ctx.fillText('🏆 Crypto Battle Results 🏆', 50, 50);
 
     // Draw prompt
-    ctx.font = '18px Arial';
+    ctx.font = 'bold 20px Arial';
     ctx.fillText('Selection Criteria:', 50, 100);
-    
+    ctx.font = '18px Arial';
+
     // Word wrap the prompt
     const words = battle.prompt.split(' ');
     let line = '';
@@ -332,7 +333,7 @@ const generateBattleImage = async (battle: BattleHistory, models: TextModels) =>
     y += 30;
     ctx.font = 'bold 20px Arial';
     ctx.fillText('Top 3 Winners:', 50, y);
-    y += 30;
+    y += 50;
 
     // Load and draw winner logos
     const topThree = getTopThreeWinners(battle.results.scores);
@@ -358,79 +359,17 @@ const generateBattleImage = async (battle: BattleHistory, models: TextModels) =>
         y += 40;
       }
     }
+    y += 50;
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('Summary:', 50, y);
+    y += 30;
+    ctx.font = '18px Arial';
+    ctx.fillText(battle.results.summary?.text || 'No summary available', 50, y);
 
     return canvas.toDataURL('image/png');
   } catch (error) {
     console.error('Error generating battle image:', error);
     throw error;
-  }
-};
-
-// Add function to handle Twitter sharing
-const handleTwitterShare = async (battle: BattleHistory) => {
-  if (!battle.id) return;
-
-  let battleToShare = battle;
-
-  // If battle is not public, ask for permission
-  if (!battleToShare.public) {
-    const shouldMakePublic = window.confirm(
-      'This battle needs to be public to share it. Would you like to make it public?'
-    );
-    
-    if (shouldMakePublic) {
-      try {
-        // Save battle publicly
-        await saveHistory(battleToShare);
-        // Update the battle object to reflect it's now public
-        battleToShare = { ...battleToShare, public: true };
-      } catch (error) {
-        console.error('Failed to make battle public:', error);
-        alert('Failed to make battle public. Cannot share.');
-        return;
-      }
-    } else {
-      return; // User declined to make public
-    }
-  }
-
-  try {
-    // Generate the image
-    const imageData = await generateBattleImage(battleToShare, models);
-    
-    // Create a blob from the image data
-    const imageBlob = await (await fetch(imageData)).blob();
-    
-    // Create form data for the image upload
-    const formData = new FormData();
-    formData.append('image', imageBlob, 'battle-results.png');
-    
-    // Upload image and get URL
-    const response = await fetch('/api/upload-image', {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (!response.ok) throw new Error('Failed to upload image');
-    
-    const { imageUrl } = await response.json();
-    
-    // Create tweet text
-    const tweetText = encodeURIComponent(
-      `Check out my Crypto Battle results!\n` +
-      `🏆 Winners selected using AI\n` +
-      `🔗 View full results: ${window.location.origin}/battle?id=${battleToShare.id}\n` +
-      `#CryptoBattle #AI #Crypto`
-    );
-
-    // Open Twitter share dialog
-    window.open(
-      `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(imageUrl)}`,
-      '_blank'
-    );
-  } catch (error) {
-    console.error('Error sharing to Twitter:', error);
-    alert('Failed to share to Twitter. Please try again.');
   }
 };
 
@@ -1328,6 +1267,86 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
+  // Move handleTwitterShare inside the component
+  const handleTwitterShare = useCallback(async (battle: BattleHistory) => {
+    if (!battle.id) return;
+
+    let battleToShare = battle;
+
+    // If battle is not public, ask for permission
+    if (!battleToShare.public) {
+      const shouldMakePublic = window.confirm(
+        'This battle needs to be public to share it. Would you like to make it public?'
+      );
+      
+      if (shouldMakePublic) {
+        try {
+          // Create a copy without the summary field before saving
+          // const { summary, ...battleWithoutSummary } = battleToShare;
+          
+          // Save battle publicly
+          await saveHistory(battleToShare);
+          
+          // Update the battle object to reflect it's now public
+          battleToShare = { ...battleToShare, public: true };
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.error('Failed to make battle public:', error);
+          alert(`Failed to make battle public: ${errorMessage}`);
+          return;
+        }
+      } else {
+        return; // User declined to make public
+      }
+    }
+
+    try {
+      if (Object.keys(models).length === 0) {
+        throw new Error('Models not loaded yet');
+      }
+
+      // Generate the image using models from component state
+      const imageData = await generateBattleImage(battleToShare, models);
+      
+      // Create a blob from the image data
+      const imageBlob = await (await fetch(imageData)).blob();
+      
+      // Create form data for the image upload
+      const formData = new FormData();
+      formData.append('image', imageBlob, 'battle-results.png');
+      
+      // Upload image and get URL
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
+      
+      const { imageUrl } = await response.json();
+      
+      // Create tweet text
+      const tweetText = encodeURIComponent(
+        `Check out my Crypto Battle results!\n` +
+        `🏆 Winners selected using AI\n` +
+        `🔗 View full results: ${window.location.origin}/battle?id=${battleToShare.id}\n` +
+        `#CryptoBattle #AI #Crypto`
+      );
+
+      // Open Twitter share dialog
+      window.open(
+        `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodeURIComponent(imageUrl)}`,
+        '_blank'
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error sharing to Twitter:', error);
+      alert(`Failed to share to Twitter: ${errorMessage}`);
+    }
+  }, [models]); // Add models as a dependency
+
   return (
     <div className="crypto-battle" data-component="CryptoBattle" {...props}>
       <div className="battle-header">
@@ -1512,18 +1531,20 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                       >
                         📥 Download Results
                       </button>
-                      <button 
+                      {/* <button 
                         onClick={() => {
                           const battle = battleHistories.find(h => h.id === selectedBattleId);
-                          if (battle) {
+                          if (battle && Object.keys(models).length > 0) {
                             handleTwitterShare(battle);
+                          } else if (!Object.keys(models).length) {
+                            alert('Please wait for models to load before sharing');
                           }
                         }}
                         className="share-button"
-                        disabled={!selectedBattleId}
+                        disabled={!selectedBattleId || Object.keys(models).length === 0}
                       >
                         🐦 Share on Twitter
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                   <div className="model-winners">
@@ -1634,18 +1655,20 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                     >
                       📥 Download Results
                     </button>
-                    <button 
+                    {/* <button 
                       onClick={() => {
                         const battle = battleHistories.find(h => h.id === selectedBattleId);
-                        if (battle) {
+                        if (battle && Object.keys(models).length > 0) {
                           handleTwitterShare(battle);
+                        } else if (!Object.keys(models).length) {
+                          alert('Please wait for models to load before sharing');
                         }
                       }}
                       className="share-button"
-                      disabled={!selectedBattleId}
+                      disabled={!selectedBattleId || Object.keys(models).length === 0}
                     >
                       🐦 Share on Twitter
-                    </button>
+                    </button> */}
                   </div>
                 </div>
                 <div className="model-winners">
@@ -1660,7 +1683,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
 
                     return (
                       <div key={modelId} className="model-winner">
-                        <h3>{models[modelId]?.name} Winner:</h3>
+                        <h3>{models[modelId]?.name}:</h3>
                         <div className="winner-card">
                           <img 
                             src={`/${winner.logo_local}`} 
