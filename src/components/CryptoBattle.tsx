@@ -48,7 +48,6 @@ interface BattleHistory {
   date: string;
   results: BattleResults;
   prompt: string;
-  public?: boolean;
   summary?: string;
 }
 
@@ -112,6 +111,8 @@ interface BattleSummary {
   isLoading: boolean;
   error?: string;
 }
+
+
 
 const createInitialPools = (cryptos: CryptoData[]): Pool[] => {
   const pools: Pool[] = [];
@@ -391,6 +392,10 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   const [modelSortOption, setModelSortOption] = useState<ModelSortOption>('default');
   const [allModelsSelected, setAllModelsSelected] = useState(false);
   const [isModelSelectionExpanded, setIsModelSelectionExpanded] = useState(false);
+  const [battleSummary, setBattleSummary] = useState<BattleSummary>({
+    text: '',
+    isLoading: false
+  });
 
   const battleSavedRef = useRef(false);
 
@@ -439,6 +444,9 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             battle = await getPublicBattleById(battleId);
           }
 
+          // console.log('Battle found:', battle);
+          
+
           if (battle && battle.results?.modelResults) {
             // Get all model IDs from the battle that have completed rounds
             const modelIds = Object.entries(battle.results.modelResults)
@@ -478,9 +486,13 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               // Set the first valid model as active
               setActiveModelId(modelIds[0]);
             }
-            
+            setBattleHistories(prev => [...prev, battle]);
             setSelectedBattleId(battleId);
             setPrompt(battle.prompt);
+            setBattleSummary({
+              text: battle.summary,
+              isLoading: false
+            });
             battleSavedRef.current = true;
             return;
           }
@@ -626,7 +638,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           
           console.log(`Model ${modelId} - Pool ${pool.id} is loading`);
 
-          const response = await axios.post('/api/selectWinners', {
+          const response = await axios.post('/api/selectWinnersRandom', {
             cryptos: pool.cryptos,
             prompt,
             model: modelId,
@@ -759,7 +771,10 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     }
   };
 
-  // Update handleAutoPlay to save the summary with the battle
+  // Add state for save target
+  const [savePublicly, setSavePublicly] = useState(false);
+
+  // Modify handleAutoPlay to use the correct save target
   const handleAutoPlay = async () => {
     console.log('Auto Play started');
     setIsAutoPlaying(true);
@@ -857,7 +872,10 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       // Create battle results
       const battleResults: BattleResults = {
         modelResults,
-        globalWinner,
+        globalWinner: globalWinner || {  // Ensure we always have a globalWinner object
+          coin: Object.values(modelResults)[0].winner, // Default to first model's winner
+          score: 1
+        },
         scores
       };
 
@@ -873,41 +891,66 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
           prompt
         };
 
-        // Generate summary before saving
-        try {
-          const response = await fetch('/api/generate-battle-summary', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              battle: newBattle,
-              models,
-              apiKey: localStorage.getItem('nanoGptApiKey')
-            })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.summary) {
-              newBattle.summary = data.summary;
-              setBattleSummary({
-                text: data.summary,
-                isLoading: false
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error generating summary:', error);
-        }
-
-        // Save battle with summary
-        await handleSaveBattle(newBattle);
+        console.log(`Saving battle to ${savePublicly ? 'Supabase' : 'IndexedDB'}...`);
         
-        // Update URL and selected battle ID
-        const newUrl = `${window.location.pathname}?battle=${battleHash}`;
-        window.history.pushState({}, '', newUrl);
-        setSelectedBattleId(battleHash);
+        try {
+          if (savePublicly) {
+            // First save without summary
+            console.log('Saving initial battle without summary to Supabase...');
+            await saveHistory(newBattle);
+            
+            // Generate summary
+            console.log('Generating battle summary...');
+            const response = await fetch('/api/generate-battle-summary', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                battle: newBattle,
+                models,
+                apiKey: localStorage.getItem('nanoGptApiKey')
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to generate summary');
+            }
+
+            const { summary } = await response.json();
+            console.log('Summary generated:', summary);
+            
+            // Save again with summary
+            const battleWithSummary = { ...newBattle, summary };
+            console.log('Saving battle with summary to Supabase...');
+            await saveHistory(battleWithSummary);
+            
+            // Update local state
+            setBattleSummary({
+              text: summary,
+              isLoading: false
+            });
+
+            // Update battle histories
+            setBattleHistories(prev => [...prev, battleWithSummary]);
+          } else {
+            // Save locally to IndexedDB
+            console.log('Saving battle to IndexedDB...');
+            await saveBattleHistoryLocal(newBattle);
+            // Update battle histories
+            setBattleHistories(prev => [...prev, newBattle]);
+          }
+
+          // Update URL and selected battle ID
+          const newUrl = `${window.location.pathname}?battle=${battleHash}`;
+          window.history.pushState({}, '', newUrl);
+          setSelectedBattleId(battleHash);
+          battleSavedRef.current = true;
+          console.log('Battle saved successfully');
+        } catch (error) {
+          console.error('Error saving battle:', error);
+          throw error;
+        }
       }
 
       // Refresh the wallet balance
@@ -987,7 +1030,6 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       setSelectedBattleId(battleId);
       setPrompt(battle.prompt);
       battleSavedRef.current = true;
-      console.log('Battle loaded and saved flag set to true');
     } else {
       console.warn(`No battle found with ID: ${battleId}`);
     }
@@ -1061,8 +1103,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
     setAllModelsSelected(!allModelsSelected);
   };
 
-  // Add new state for save preference
-  const [savePublicly, setSavePublicly] = useState(false);
+
 
   // Modify the save function to use the appropriate database
   const handleSaveBattle = async (newBattle: BattleHistory) => {
@@ -1204,21 +1245,17 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
   };
 
   // Add to component state
-  const [battleSummary, setBattleSummary] = useState<BattleSummary>({
-    text: '',
-    isLoading: false
-  });
+
 
   // Update the generateBattleSummary function
   const generateBattleSummary = async (battle: BattleHistory) => {
-    console.log('Generating battle summary...');
     setBattleSummary(prev => {
       console.log('Setting loading state:', { ...prev, text: '', isLoading: true });
       return { text: '', isLoading: true };
     });
     
     try {
-      const response = await fetch('/api/generate-battle-summary-test', {
+      const response = await fetch('/api/generate-battle-summary', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1230,21 +1267,17 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
         })
       });
 
-      console.log('Summary response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to generate summary');
       }
 
       const data = await response.json();
-      console.log('Summary data:', data);
       
       if (data.error) {
         throw new Error(data.error);
       }
 
-      console.log('Setting summary text:', data.summary);
       setBattleSummary(prev => {
         console.log('Setting success state:', { ...prev, text: data.summary, isLoading: false });
         return { text: data.summary, isLoading: false };
@@ -1281,14 +1314,44 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       
       if (shouldMakePublic) {
         try {
-          // Create a copy without the summary field before saving
-          // const { summary, ...battleWithoutSummary } = battleToShare;
+          // First save without summary
+          const { summary, ...battleWithoutSummary } = battleToShare;
+          const publicBattle = { ...battleWithoutSummary, public: true };
           
-          // Save battle publicly
-          await saveHistory(battleToShare);
+          // Save initial version publicly
+          await saveHistory(publicBattle);
           
-          // Update the battle object to reflect it's now public
-          battleToShare = { ...battleToShare, public: true };
+          // Generate summary
+          const response = await fetch('/api/generate-battle-summary', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              battle: publicBattle,
+              models,
+              apiKey: localStorage.getItem('nanoGptApiKey')
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to generate summary');
+          }
+
+          const { summary: generatedSummary } = await response.json();
+          
+          // Update battle with summary and save again
+          const battleWithSummary = {
+            ...publicBattle,
+            summary: generatedSummary
+          };
+          
+          // Save updated version with summary
+          await saveHistory(battleWithSummary);
+          
+          // Update the battle object to use for sharing
+          battleToShare = battleWithSummary;
+          
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           console.error('Failed to make battle public:', error);
@@ -1346,6 +1409,81 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       alert(`Failed to share to Twitter: ${errorMessage}`);
     }
   }, [models]); // Add models as a dependency
+
+  // Add this function to handle public switch changes
+  const handlePublicSwitchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isPublic = e.target.checked;
+    setSavePublicly(isPublic);
+    
+    // Only attempt to save if we have a selected battle
+    if (selectedBattleId) {
+      const battle = battleHistories.find(h => h.id === selectedBattleId);
+      if (!battle) {
+        console.log('No battle found with ID:', selectedBattleId);
+        return;
+      }
+
+      try {
+        console.log('Attempting to save battle as public:', isPublic);
+        console.log('Battle data:', battle);
+
+        if (isPublic) {
+          // First save without summary
+          console.log('Saving initial battle without summary to Supabase...');
+          await saveHistory(battle);
+          
+          // Generate summary
+          console.log('Generating battle summary...');
+          try {
+            const response = await fetch('/api/generate-battle-summary', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                battle,
+                models,
+                apiKey: localStorage.getItem('nanoGptApiKey')
+              })
+            });
+
+            if (!response.ok) {
+              throw new Error('Failed to generate summary');
+            }
+
+            const { summary } = await response.json();
+            console.log('Summary generated:', summary);
+            
+            // Save again with summary
+            const battleWithSummary = { ...battle, summary };
+            console.log('Saving battle with summary to Supabase...');
+            await saveHistory(battleWithSummary);
+            
+            // Update local state
+            console.log('Setting summary local state:', summary);
+            setBattleSummary({
+              text: summary,
+              isLoading: false
+            });
+          } catch (error) {
+            console.error('Error generating/saving summary:', error);
+            // Continue with the battle saved without summary
+          }
+        } else {
+          // Save as private to local storage
+          console.log('Saving battle as private...');
+          await saveBattleHistoryLocal(battle);
+          console.log('Battle saved successfully as private');
+        }
+      } catch (error) {
+        console.error('Error saving battle:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        alert(`Failed to save battle: ${errorMessage}`);
+        // Revert switch state on error
+        setSavePublicly(!isPublic);
+      }
+    }
+  };
 
   return (
     <div className="crypto-battle" data-component="CryptoBattle" {...props}>
@@ -1573,6 +1711,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                       );
                     })}
                   </div>
+                  
                 </div>
                 <div className="prompt-display">
                   <h4>Selection Criteria:</h4>
@@ -1700,6 +1839,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                 </div>
                 
                 {/* Show global winner with scores */}
+                {console.log(battleHistories)}
                 {selectedBattleId && battleHistories.find(h => h.id === selectedBattleId)?.results?.globalWinner && (
                   <div className="global-winner">
                     <h3>Tournament Winners</h3>
@@ -1739,14 +1879,13 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
             <div className="prompt-display">
                 <h4>Selection Criteria:</h4>
                 <p>{prompt}</p>
-                      {/* Add battle summary */}
                   {battleSummary.isLoading ? (
                     <div className="battle-summary loading">
                       <h4>Battle Summary:</h4>
                       <div className="loading-spinner"></div>
                       <p>Generating battle summary...</p>
                     </div>
-                  ) : true ? (
+                  ) : battleSummary.text ? (
                     <div className="battle-summary">
                       <h4>Battle Summary:</h4>
                       <p>{battleSummary.text}</p>
@@ -1800,8 +1939,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
               <input
                 type="checkbox"
                 checked={savePublicly}
-                onChange={(e) => setSavePublicly(e.target.checked)}
-                disabled={isAutoPlaying}
+                onChange={handlePublicSwitchChange}
+                // disabled={isAutoPlaying || !selectedBattleId}
               />
               <span className="slider"></span>
             </span>

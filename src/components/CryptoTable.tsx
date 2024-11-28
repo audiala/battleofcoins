@@ -190,6 +190,14 @@ const getUniqueTagsFromData = (taggedCoins: TaggedCoinData): string[] => {
   return Array.from(tagsSet).sort();
 };
 
+// Add this helper function at the top level
+const stripCryptoData = (crypto: CryptoData) => ({
+  id: crypto.id,
+  name: crypto.name,
+  ticker: crypto.ticker,
+  logo_local: crypto.logo_local,
+});
+
 export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} }: CryptoTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<TableRowSelection>({});
@@ -387,7 +395,10 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
   };
 
   const startBattle = () => {
-    const selectedCryptos = data.filter((_, index) => rowSelection[index.toString()]);
+    const selectedCryptos = data
+      .filter((_, index) => rowSelection[index.toString()])
+      .map(stripCryptoData); // Strip unnecessary data
+
     if (selectedCryptos.length < 2) {
       alert('Please select at least 2 cryptocurrencies for the battle');
       return;
