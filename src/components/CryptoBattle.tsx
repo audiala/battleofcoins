@@ -1441,8 +1441,8 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                         disabled={isAutoPlaying}
                       />
                       <div className="model-info">
-                        <span className="model-name">{model.name}</span>
-                        <span className="model-cost">{model.cost.replace('Average cost', 'avg')}</span>
+                        <div className="model-name">{model.name}</div>
+                        <div className="model-cost">{model.cost.replace('Average cost', 'avg')}</div>
                       </div>
                     </div>
                   </ModelTooltip>

@@ -196,4 +196,19 @@
 
 .battle-summary {
   margin: 0; /* Remove margins since we're using flex gap */
+}
+
+.model-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.model-name {
+  font-weight: 500;
+}
+
+.model-cost {
+  font-size: 0.85em;
+  color: #666;
 } 
