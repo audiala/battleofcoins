@@ -65,30 +65,48 @@ ${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for 
           throw new Error('Invalid response format');
         }
 
+        // Helper function to clean ticker text
+        const cleanTicker = (ticker: string): string => {
+          return ticker
+            .replace(/\*/g, '') // Remove asterisks
+            .replace(/`/g, '')  // Remove backticks
+            .replace(/\[|\]/g, '') // Remove square brackets
+            .replace(/\(|\)/g, '') // Remove parentheses
+            .replace(/^[^a-zA-Z0-9]*/, '') // Remove leading special chars
+            .replace(/[^a-zA-Z0-9]*$/, '') // Remove trailing special chars
+            .trim();
+        };
+
         // Parse winners with validation
         const winnersLines = winnersSection.replace('$Winners$', '').trim().split('\n');
         const winners = winnersLines
           .filter((line: string) => line.trim())
           .map((line: string) => {
             const [tickerPart, ...reasonParts] = line.split(':');
-            const ticker = tickerPart.trim();
+            const rawTicker = tickerPart.trim();
+            const ticker = cleanTicker(rawTicker);
             const reason = reasonParts.join(':').trim();
 
-            const coin = cryptos.find((c: any) => c.ticker === ticker);
+            const coin = cryptos.find((c: any) => 
+              cleanTicker(c.ticker).toLowerCase() === ticker.toLowerCase()
+            );
+
             if (!coin) {
-              throw new Error(`Invalid coin ticker: ${ticker}`);
+              console.warn(`Warning: Invalid coin ticker "${ticker}" (original: "${rawTicker}"), skipping...`);
+              return null;
             }
 
-            if (!reason) {
-              throw new Error(`Missing reason for winner: ${ticker}`);
-            }
+            return { 
+              coin, 
+              reason: reason || 'No reason provided'
+            };
+          })
+          .filter((winner): winner is NonNullable<typeof winner> => winner !== null);
 
-            return { coin, reason };
-          });
-
-        // Validate winner count
-        if (winners.length !== numWinners) {
-          throw new Error(`Expected ${numWinners} winners, got ${winners.length}`);
+        // Adjust numWinners if we couldn't parse all winners
+        if (winners.length < numWinners) {
+          console.warn(`Warning: Only found ${winners.length} valid winners out of ${numWinners} expected`);
+          numWinners = winners.length;
         }
 
         // Parse losers with validation
@@ -98,14 +116,10 @@ ${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for 
             .filter((line: string) => line.trim())
             .map((line: string) => {
               const [tickerPart, ...reasonParts] = line.split(':');
-              const ticker = tickerPart.trim();
+              const ticker = cleanTicker(tickerPart.trim());
               const reason = reasonParts.join(':').trim();
 
-              if (!reason) {
-                throw new Error(`Missing reason for loser: ${ticker}`);
-              }
-
-              return [ticker, reason];
+              return [ticker.toLowerCase(), reason || 'No reason provided'];
             })
         );
 
@@ -113,10 +127,17 @@ ${Array(cryptos.length - numWinners).fill('TICKER: clear and concise reason for 
           (crypto: any) => !winners.some((winner: any) => winner.coin.ticker === crypto.ticker)
         );
 
+        // Ensure we have a reason for each loser, with a fallback
         const losers = loserCoins.map((coin: any) => ({
           coin,
-          reason: losersMap.get(coin.ticker) || 'Did not meet selection criteria'
+          reason: losersMap.get(cleanTicker(coin.ticker).toLowerCase()) || 'No selection rationale provided'
         }));
+
+        // Add validation for total coins
+        const totalSelected = winners.length + losers.length;
+        if (totalSelected !== cryptos.length) {
+          console.warn(`Warning: Total selected coins (${totalSelected}) doesn't match input coins (${cryptos.length})`);
+        }
 
         return new Response(
           JSON.stringify({ winners, losers }), 
