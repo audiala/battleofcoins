@@ -126,13 +126,16 @@ const createInitialPools = (cryptos: CryptoData[]): Pool[] => {
   return pools;
 };
 
-function createBattleHash(rounds: Round[]): string {
-  // Create a string representation of the battle results
-  const battleString = rounds.map(round => 
-    round.pools.map(pool => 
-      pool.winners?.map(w => w.coin.ticker).join(',')
-    ).join('|')
-  ).join('_');
+// Update the createBattleHash function to handle the model results structure
+const createBattleHash = (modelResults: { [modelId: string]: { rounds: Round[]; winner: CryptoData; } }): string => {
+  // Create a string representation of all rounds from all models
+  const battleString = Object.values(modelResults)
+    .flatMap(result => result.rounds)
+    .map(round => 
+      round.pools.map(pool => 
+        pool.winners?.map(w => w.coin.ticker).join(',')
+      ).join('|')
+    ).join('_');
   
   // Simple hash function
   let hash = 0;
@@ -141,8 +144,8 @@ function createBattleHash(rounds: Round[]): string {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  return hash.toString(36); // Convert to base36 for shorter string
-}
+  return Math.abs(hash).toString(36); // Convert to base36 for shorter string
+};
 
 // Update the calculateGlobalScores function
 const calculateGlobalScores = (modelResults: { [modelId: string]: { rounds: Round[]; winner: CryptoData; } }): GlobalScore => {
@@ -374,6 +377,21 @@ const generateBattleImage = async (battle: BattleHistory, models: TextModels) =>
     throw error;
   }
 };
+
+// Add this helper function at the top level if not already present
+// const createBattleHash = (modelResults: any): string => {
+//   // Create a string representation of the battle results
+//   const battleString = JSON.stringify(modelResults);
+  
+//   // Simple hash function
+//   let hash = 0;
+//   for (let i = 0; i < battleString.length; i++) {
+//     const char = battleString.charCodeAt(i);
+//     hash = ((hash << 5) - hash) + char;
+//     hash = hash & hash; // Convert to 32-bit integer
+//   }
+//   return Math.abs(hash).toString(36); // Convert to base36 for shorter string
+// };
 
 export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & { [key: string]: any }) {
   // console.log('CryptoBattle received cryptos:', cryptos?.length);
@@ -898,91 +916,102 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
       const scores = calculateGlobalScores(modelResults);
       const globalWinner = determineGlobalWinner(scores);
 
-      // Create battle results
-      const battleResults: BattleResults = {
-        modelResults,
-        globalWinner: globalWinner || {  // Ensure we always have a globalWinner object
-          coin: Object.values(modelResults)[0].winner, // Default to first model's winner
-          score: 1
+      // Generate battle hash from model results
+      const battleHash = createBattleHash(modelResults);
+
+      // Create battle object
+      const newBattle: BattleHistory = {
+        id: battleHash,
+        date: new Date().toISOString(),
+        results: {
+          modelResults,
+          globalWinner: globalWinner || {
+            coin: Object.values(modelResults)[0].winner,
+            score: 1
+          },
+          scores
         },
-        scores
+        prompt
       };
 
-      // Create battle hash from all results
-      const battleHash = createBattleHash(Object.values(modelResults).flatMap(r => r.rounds));
+      try {
+        if (savePublicly) {
+          // First save without summary
+          await saveHistory(newBattle);
+          
+          // Generate summary
+          const response = await fetch('/api/generate-battle-summary', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              battle: newBattle,
+              models,
+              apiKey: localStorage.getItem('nanoGptApiKey')
+            })
+          });
 
-      // After all battles complete and results are calculated
-      if (!battleSavedRef.current) {
-        const newBattle: BattleHistory = {
-          id: battleHash,
-          date: new Date().toISOString(),
-          results: battleResults,
-          prompt
-        };
-
-        console.log(`Saving battle to ${savePublicly ? 'Supabase' : 'IndexedDB'}...`);
-        
-        try {
-          if (savePublicly) {
-            // First save without summary
-            console.log('Saving initial battle without summary to Supabase...');
-            await saveHistory(newBattle);
-            
-            // Generate summary
-            console.log('Generating battle summary...');
-            const response = await fetch('/api/generate-battle-summary', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                battle: newBattle,
-                models,
-                apiKey: localStorage.getItem('nanoGptApiKey')
-              })
-            });
-
-            if (!response.ok) {
-              throw new Error('Failed to generate summary');
-            }
-
-            const { summary } = await response.json();
-            console.log('Summary generated:', summary);
-            
-            // Save again with summary
-            const battleWithSummary = { ...newBattle, summary };
-            console.log('Saving battle with summary to Supabase...');
-            await saveHistory(battleWithSummary);
-            
-            // Update local state
-            setBattleSummary({
-              text: summary,
-              isLoading: false
-            });
-
-            // Update battle histories
-            setBattleHistories(prev => [...prev, battleWithSummary]);
-            setCurrentBattle(battleWithSummary);
-
-          } else {
-            // Save locally to IndexedDB
-            console.log('Saving battle to IndexedDB...');
-            await saveBattleHistoryLocal(newBattle);
-            // Update battle histories
-            setBattleHistories(prev => [...prev, newBattle]);
-            setCurrentBattle(newBattle);
+          if (!response.ok) {
+            throw new Error('Failed to generate summary');
           }
 
-          // Update URL and selected battle ID
-          const newUrl = `${window.location.pathname}?battle=${battleHash}`;
-          window.history.pushState({}, '', newUrl);
-          setSelectedBattleId(battleHash);
-          battleSavedRef.current = true;
-          console.log('Battle saved successfully');
-        } catch (error) {
-          console.error('Error saving battle:', error);
-          throw error;
+          const { summary } = await response.json();
+          
+          // Save again with summary
+          const battleWithSummary = { ...newBattle, summary };
+          await saveHistory(battleWithSummary);
+          
+          // Update local state
+          setBattleSummary({
+            text: summary,
+            isLoading: false
+          });
+          setBattleHistories(prev => [...prev, battleWithSummary]);
+          setCurrentBattle(battleWithSummary);
+
+        } else {
+          // Generate summary before saving locally
+          const response = await fetch('/api/generate-battle-summary', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              battle: newBattle,
+              models,
+              apiKey: localStorage.getItem('nanoGptApiKey')
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to generate summary');
+          }
+
+          const { summary } = await response.json();
+          
+          // Save locally with summary
+          const battleWithSummary = { ...newBattle, summary };
+          await saveBattleHistoryLocal(battleWithSummary);
+          
+          // Update local state
+          setBattleSummary({
+            text: summary,
+            isLoading: false
+          });
+          setBattleHistories(prev => [...prev, battleWithSummary]);
+          setCurrentBattle(battleWithSummary);
         }
+
+        // Update URL and selected battle ID
+        const newUrl = `${window.location.pathname}?battle=${battleHash}`;
+        window.history.pushState({}, '', newUrl);
+        setSelectedBattleId(battleHash);
+        battleSavedRef.current = true;
+
+      } catch (error) {
+        console.error('Error saving battle:', error);
+        throw error;
       }
 
       // Refresh the wallet balance

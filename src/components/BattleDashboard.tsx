@@ -151,7 +151,7 @@ export default function BattleDashboard() {
                     {Object.entries(battle.results.modelResults).map(([modelId, result]) => (
                       <div key={modelId} className="winner-entry">
                         <img 
-                          src={`/${result.winner.logo_local}`} 
+                          src={`/logos/${result.winner.ticker.toLowerCase()}.png`} 
                           alt={result.winner.name}
                           className="winner-icon"
                         />

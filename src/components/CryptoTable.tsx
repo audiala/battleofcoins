@@ -223,6 +223,14 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
   const [rowSelection, setRowSelection] = useState<TableRowSelection>({});
   const [selectedPreset, setSelectedPreset] = useState<string>('');
   const [selectedTag, setSelectedTag] = useState<string>('');
+  const [battleSummary, setBattleSummary] = useState<{
+    text: string;
+    isLoading: boolean;
+    error?: string;
+  }>({
+    text: '',
+    isLoading: false
+  });
 
   const symbols = data.map(crypto => `${crypto.ticker}USDT`);
   // const marketData = useBinanceWebSocket(symbols);
