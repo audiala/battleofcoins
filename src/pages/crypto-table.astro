@@ -2,23 +2,36 @@
 import Layout from '../layouts/Layout.astro';
 import CryptoTableComponent from '../components/CryptoTable';
 import '../styles/crypto-table.css';
-import { readFileSync, readdirSync } from 'fs';
-import { join } from 'path';
-import { load } from 'js-yaml';
-import '../styles/main.css';
+import { fetchMarketData } from '../services/CoinGeckoService';
 import type { CryptoData } from '../components/CryptoTable';
 import taggedCoinsData from '../../data/tagged_coins.json';
+import '../styles/main.css';
 
-// Read the YAML file
-const dataDir = join(process.cwd(), 'data');
-const files = readdirSync(dataDir);
-const latestFile = files
-  .filter(f => f.startsWith('top_500_coins_'))
-  .sort()
-  .reverse()[0];
+// Fetch initial data from CoinGecko (or cache)
+const marketData = await fetchMarketData();
 
-const yamlContent = readFileSync(join(dataDir, latestFile), 'utf8');
-const cryptoData = load(yamlContent) as CryptoData[];
+// Transform CoinGecko data to match CryptoData format
+const cryptoData: CryptoData[] = marketData.map((coin, index) => ({
+  id: index,
+  name: coin.name,
+  ticker: coin.symbol.toUpperCase(),
+  logo_local: coin.image, // Keep CoinGecko URL as fallback
+  marketcap: coin.market_cap.toString(),
+  market_stats: {
+    market_cap: coin.market_cap.toString(),
+    market_cap_fdv_ratio: ((coin.market_cap || 0) / (coin.fully_diluted_valuation || 1)).toString(),
+    fully_diluted_valuation: coin.fully_diluted_valuation?.toString() || '0',
+    trading_volume_24h: coin.total_volume.toString(),
+    circulating_supply: coin.circulating_supply.toString(),
+    total_supply: coin.total_supply?.toString() || '0',
+    max_supply: coin.max_supply?.toString() || '0',
+    current_price: coin.current_price.toString(),
+    market_cap_rank: coin.market_cap_rank,
+    price_change_24h: coin.price_change_percentage_24h,
+    price_change_percentage_30d_in_currency: coin.price_change_percentage_30d_in_currency,
+    price_change_percentage_1y_in_currency: coin.price_change_percentage_1y_in_currency
+  }
+}));
 
 console.log('Loaded crypto data:', cryptoData.length);
 ---

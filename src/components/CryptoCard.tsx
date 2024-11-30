@@ -23,7 +23,7 @@ export function CryptoCard({ crypto, isWinner, reason, roundIndex, poolId }: Cry
       onMouseLeave={() => setShowTooltip(false)}
     >
       <img
-        src={`/${crypto.logo_local.toLowerCase()}`}
+        src={`/logos/${crypto.ticker.toLowerCase()}.png`}
         alt={crypto.name}
         className="crypto-logo"
       />
