@@ -37,6 +37,7 @@
     color: #f53e98;
     font-size: 1.25rem;
     margin-bottom: 1rem;
+    text-align: center;
   }
   
   .settings-description {
@@ -182,4 +183,54 @@
   .clear-button.danger:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+  }
+  
+  .api-key-info {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .api-key-uses {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+  
+  .api-key-uses li {
+    margin: 0.5rem 0;
+    color: #555;
+  }
+  
+  .security-notice {
+    background: #f8f9fa;
+    border-left: 4px solid #28a745;
+    padding: 1rem;
+    margin: 1rem 0;
+  }
+  
+  .security-notice h3 {
+    color: #28a745;
+    margin: 0 0 0.5rem 0;
+    text-align: center;
+  }
+  
+  .security-notice ul {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+  
+  .security-notice li {
+    margin: 0.3rem 0;
+    color: #555;
+  }
+  
+  .external-link {
+    color: #f53e98;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .external-link:hover {
+    text-decoration: underline;
   } 
