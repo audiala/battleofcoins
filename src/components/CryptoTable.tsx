@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   createColumnHelper,
   flexRender,
@@ -11,6 +11,7 @@ import {
 import type { SortingState } from '@tanstack/react-table';
 // import { useBinanceWebSocket } from '../hooks/useBinanceWebSocket';
 import coinsByTags from '../../data/coins_by_tags.json'; // Import the JSON file
+import { useCoingeckoData } from '../hooks/useCoingeckoData';
 
 export type CryptoData = {
   id: number;
@@ -26,6 +27,7 @@ export type CryptoData = {
     circulating_supply: string;
     total_supply: string;
     max_supply: string;
+    current_price?: string;
   };
   selected?: boolean;
 };
@@ -107,34 +109,24 @@ function formatNumber(value: string | null): string {
 const LogoCell = React.memo(({ logoPath }: { logoPath: string }) => {
   return (
     <img 
-      src={`/${logoPath}`} 
+      src={logoPath}
       alt="" 
       className="w-8 h-8 rounded-full ring-1 ring-gray-700"
+      onError={(e) => {
+        // Fallback to default image if loading fails
+        (e.target as HTMLImageElement).src = '/logos/default-crypto.png';
+      }}
     />
   );
 });
 
-// const PriceCell = React.memo(({ symbol, marketData }: { 
-//   symbol: string, 
-//   marketData: Record<string, { price: string, lastUpdate: number }> 
-// }) => {
-//   const data = marketData[symbol];
-//   const price = data?.price;
-
-//   if (!price) {
-//     return <span className="text-gray-400">NaN</span>;
-//   }
-
-//   return (
-//     <div className="text-right">
-//       {formatCurrency(price)}
-//     </div>
-//   );
-// }, (prevProps, nextProps) => {
-//   const prevData = prevProps.marketData[prevProps.symbol];
-//   const nextData = nextProps.marketData[nextProps.symbol];
-//   return prevData?.price === nextData?.price;
-// });
+const PriceCell = React.memo(({ price }: { price: string }) => {
+  return (
+    <div className="text-right">
+      {formatCurrency(price)}
+    </div>
+  );
+});
 
 // Add this type definition at the top of the file after the imports
 type TableRowSelection = {
@@ -198,7 +190,9 @@ const stripCryptoData = (crypto: CryptoData) => ({
   logo_local: crypto.logo_local,
 });
 
-export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} }: CryptoTableProps) {
+export default function CryptoTable({ data: initialData, onSelectionChange, taggedCoins = {} }: CryptoTableProps) {
+  const { marketData, error, isLoading } = useCoingeckoData();
+  const [data, setData] = useState(initialData);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<TableRowSelection>({});
   const [selectedPreset, setSelectedPreset] = useState<string>('');
@@ -229,26 +223,16 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
         </div>
       ),
     }),
-    // Add price column after ticker
-    // columnHelper.accessor(row => {
-    //   return `${row.ticker}USDT`.toUpperCase();
-    // }, {
-    //   id: 'price',
-    //   header: 'Price',
-    //   cell: info => (
-    //     <PriceCell 
-    //       symbol={info.getValue()} 
-    //       marketData={marketData}
-    //     />
-    //   ),
-    //   sortingFn: (rowA, rowB) => {
-    //     const symbolA = `${rowA.original.ticker}USDT`.toUpperCase();
-    //     const symbolB = `${rowB.original.ticker}USDT`.toUpperCase();
-    //     const a = Number(marketData[symbolA]?.price || 0);
-    //     const b = Number(marketData[symbolB]?.price || 0);
-    //     return a - b;
-    //   },
-    // }),
+    columnHelper.accessor(row => row.market_stats.current_price, {
+      id: 'current_price',
+      header: 'Price',
+      cell: info => <PriceCell price={info.getValue() || '0'} />,
+      sortingFn: (rowA, rowB) => {
+        const a = parseCurrencyValue(rowA.original.market_stats.current_price);
+        const b = parseCurrencyValue(rowB.original.market_stats.current_price);
+        return a - b;
+      },
+    }),
     columnHelper.accessor(row => row.market_stats.market_cap, {
       id: 'market_cap',
       header: 'Market Cap',
@@ -422,106 +406,154 @@ export default function CryptoTable({ data, onSelectionChange, taggedCoins = {} 
     table.setRowSelection({});
   };
 
-  return (
-    <div className="crypto-table-container">
-      <div className="table-controls">
-        <div className="controls-section">
-          <h2 className="presets-title">Quick Select</h2>
-          <div className="presets">
-            <button 
-              onClick={() => handlePresetSelect('top16')}
-              className={`preset-button ${selectedPreset === 'top16' ? 'active' : ''}`}
-            >
-              <span className="preset-icon">🏆</span>
-              <span className="preset-text">
-                <span className="preset-name">Top 16</span>
-                <span className="preset-description">Highest market cap</span>
-              </span>
-            </button>
-            <button 
-              onClick={() => handlePresetSelect('top100')}
-              className={`preset-button ${selectedPreset === 'top100' ? 'active' : ''}`}
-            >
-              <span className="preset-icon">💯</span>
-              <span className="preset-text">
-                <span className="preset-name">Top 100</span>
-                <span className="preset-description">Most popular coins</span>
-              </span>
-            </button>
-            <button 
-              onClick={clearSelection}
-              className="preset-button clear"
-            >
-              <span className="preset-icon">🔄</span>
-              <span className="preset-text">
-                <span className="preset-name">Clear</span>
-                <span className="preset-description">Reset selection</span>
-              </span>
-            </button>
-          </div>
-          
-          <h2 className="presets-title mt-4">Select by Category</h2>
-          <div className="tag-buttons flex flex-wrap gap-2 mt-2">
-            {Object.keys(coinsByTags).map(tag => (
-              <button
-                key={tag}
-                onClick={() => handleTagSelect(tag)}
-                className={`tag-button px-3 py-1 rounded-full text-sm transition-all duration-200
-                  ${selectedTag === tag 
-                    ? 'bg-blue-600 text-white ring-2 ring-blue-400 transform scale-105' 
-                    : 'bg-gray-700 text-gray-200 hover:bg-gray-600 hover:transform hover:scale-105'}`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+  // Update local data when Coingecko data changes
+  useEffect(() => {
+    if (marketData.length > 0) {
+      const updatedData = data.map(crypto => {
+        const geckoData = marketData.find(
+          item => item.symbol.toLowerCase() === crypto.ticker.toLowerCase()
+        );
 
-        <div className="battle-controls">
-          <div className="selection-info">
-            {Object.keys(rowSelection).length} coins selected
-          </div>
-          <button 
-            onClick={startBattle}
-            disabled={Object.keys(rowSelection).length < 2}
-            className="start-battle-button"
-          >
-            <span className="battle-icon">⚔️</span>
-            Start Battle
-          </button>
-        </div>
+        if (geckoData) {
+          return {
+            ...crypto,
+            market_stats: {
+              ...crypto.market_stats,
+              market_cap: geckoData.market_cap.toString(),
+              fully_diluted_valuation: geckoData.fully_diluted_valuation?.toString() || '0',
+              trading_volume_24h: geckoData.total_volume.toString(),
+              circulating_supply: geckoData.circulating_supply.toString(),
+              total_supply: geckoData.total_supply?.toString() || '0',
+              max_supply: geckoData.max_supply?.toString() || '0',
+              current_price: geckoData.current_price.toString()
+            }
+          };
+        }
+        return crypto;
+      });
+
+      setData(updatedData);
+    }
+  }, [marketData]);
+
+  // Add loading and error states to the UI
+  if (error) {
+    return (
+      <div className="text-red-500 p-4">
+        Error loading market data: {error}
       </div>
+    );
+  }
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th 
-                    key={header.id} 
-                    onClick={header.column.getToggleSortingHandler()}
-                    className="px-4 py-3 text-left bg-gray-800/50 cursor-pointer hover:bg-gray-700/50 text-[#f53e98]"
+  // Add a loading indicator that overlays the table
+  return (
+    <div className="relative">
+      {isLoading && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+          <div className="text-white">Loading latest market data...</div>
+        </div>
+      )}
+      
+      <div className="crypto-table-container">
+        <div className="table-controls">
+          <div className="controls-section">
+            <h2 className="presets-title">Quick Select</h2>
+            <div className="presets">
+              <button 
+                onClick={() => handlePresetSelect('top16')}
+                className={`preset-button ${selectedPreset === 'top16' ? 'active' : ''}`}
+              >
+                <span className="preset-icon">🏆</span>
+                <span className="preset-text">
+                  <span className="preset-name">Top 16</span>
+                  <span className="preset-description">Highest market cap</span>
+                </span>
+              </button>
+              <button 
+                onClick={() => handlePresetSelect('top100')}
+                className={`preset-button ${selectedPreset === 'top100' ? 'active' : ''}`}
+              >
+                <span className="preset-icon">💯</span>
+                <span className="preset-text">
+                  <span className="preset-name">Top 100</span>
+                  <span className="preset-description">Most popular coins</span>
+                </span>
+              </button>
+              <button 
+                onClick={clearSelection}
+                className="preset-button clear"
+              >
+                <span className="preset-icon">🔄</span>
+                <span className="preset-text">
+                  <span className="preset-name">Clear</span>
+                  <span className="preset-description">Reset selection</span>
+                </span>
+              </button>
+            </div>
+            
+            <h2 className="presets-title mt-4">Select by Category</h2>
+            <div className="tag-buttons flex flex-wrap gap-2 mt-2">
+              {Object.keys(coinsByTags).map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => handleTagSelect(tag)}
+                  className={`tag-button px-3 py-1 rounded-full text-sm transition-all duration-200
+                    ${selectedTag === tag 
+                      ? 'bg-blue-600 text-white ring-2 ring-blue-400 transform scale-105' 
+                      : 'bg-gray-700 text-gray-200 hover:bg-gray-600 hover:transform hover:scale-105'}`}
                   >
-                    <div className="flex items-center gap-2">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() && (
-                        <span className="sort-indicator">
-                          {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </div>
-                  </th>
+                    {tag}
+                  </button>
                 ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <TableRow key={row.id} row={row} isSelected={rowSelection[row.id]} />
-            ))}
-          </tbody>
-        </table>
+            </div>
+          </div>
+
+          <div className="battle-controls">
+            <div className="selection-info">
+              {Object.keys(rowSelection).length} coins selected
+            </div>
+            <button 
+              onClick={startBattle}
+              disabled={Object.keys(rowSelection).length < 2}
+              className="start-battle-button"
+            >
+              <span className="battle-icon">⚔️</span>
+              Start Battle
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th 
+                      key={header.id} 
+                      onClick={header.column.getToggleSortingHandler()}
+                      className="px-4 py-3 text-left bg-gray-800/50 cursor-pointer hover:bg-gray-700/50 text-[#f53e98]"
+                    >
+                      <div className="flex items-center gap-2">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() && (
+                          <span className="sort-indicator">
+                            {header.column.getIsSorted() === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <TableRow key={row.id} row={row} isSelected={rowSelection[row.id]} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
