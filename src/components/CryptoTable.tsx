@@ -28,6 +28,10 @@ export type CryptoData = {
     total_supply: string;
     max_supply: string;
     current_price?: string;
+    market_cap_rank?: number;
+    price_change_24h?: number;
+    price_change_percentage_30d_in_currency?: number;
+    price_change_percentage_1y_in_currency?: number;
   };
   selected?: boolean;
 };
@@ -106,15 +110,23 @@ function formatNumber(value: string | null): string {
 }
 
 // Add these memoized components at the top level
-const LogoCell = React.memo(({ logoPath }: { logoPath: string }) => {
+const LogoCell = React.memo(({ logoPath, ticker }: { logoPath: string, ticker: string }) => {
+  const [useLocalLogo, setUseLocalLogo] = useState(true);
+  const localLogoPath = `/logos/${ticker.toLowerCase()}.png`;
+
   return (
     <img 
-      src={logoPath}
+      src={useLocalLogo ? localLogoPath : logoPath}
       alt="" 
       className="w-8 h-8 rounded-full ring-1 ring-gray-700"
       onError={(e) => {
-        // Fallback to default image if loading fails
-        (e.target as HTMLImageElement).src = '/logos/default-crypto.png';
+        if (useLocalLogo) {
+          // If local logo fails, try CoinGecko URL
+          setUseLocalLogo(false);
+        } else {
+          // If both fail, use default
+          (e.target as HTMLImageElement).src = '/logos/default-crypto.png';
+        }
       }}
     />
   );
@@ -190,6 +202,20 @@ const stripCryptoData = (crypto: CryptoData) => ({
   logo_local: crypto.logo_local,
 });
 
+// Add a new component for price change cells
+const PriceChangeCell = React.memo(({ value }: { value: number | undefined }) => {
+  if (value === undefined || value === null) return <div className="text-right">-</div>;
+  
+  const isPositive = value > 0;
+  const color = isPositive ? 'text-green-500' : 'text-red-500';
+  
+  return (
+    <div className={`text-right ${color}`}>
+      {isPositive ? '+' : ''}{value.toFixed(2)}%
+    </div>
+  );
+});
+
 export default function CryptoTable({ data: initialData, onSelectionChange, taggedCoins = {} }: CryptoTableProps) {
   const { marketData, error, isLoading } = useCoingeckoData();
   const [data, setData] = useState(initialData);
@@ -203,9 +229,26 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
 
   // Move columns definition inside component to access marketData
   const columns = React.useMemo(() => [
+    columnHelper.accessor(row => row.market_stats.market_cap_rank, {
+      id: 'market_cap_rank',
+      header: '#',
+      cell: info => (
+        <div className="text-center font-medium text-gray-400">
+          {info.getValue() || '-'}
+        </div>
+      ),
+      sortingFn: (rowA, rowB) => {
+        const a = rowA.original.market_stats.market_cap_rank || Infinity;
+        const b = rowB.original.market_stats.market_cap_rank || Infinity;
+        return a - b;
+      },
+    }),
     columnHelper.accessor('logo_local', {
       header: '',
-      cell: info => <LogoCell logoPath={info.getValue()} />,
+      cell: info => <LogoCell 
+        logoPath={info.getValue()} 
+        ticker={info.row.original.ticker}
+      />,
     }),
     columnHelper.accessor('name', {
       header: 'Name',
@@ -293,6 +336,36 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
         return a - b;
       },
     }),
+    columnHelper.accessor(row => row.market_stats.price_change_24h, {
+      id: 'price_change_24h',
+      header: '24h %',
+      cell: info => <PriceChangeCell value={info.getValue()} />,
+      sortingFn: (rowA, rowB) => {
+        const a = rowA.original.market_stats.price_change_24h || 0;
+        const b = rowB.original.market_stats.price_change_24h || 0;
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.price_change_percentage_30d_in_currency, {
+      id: 'price_change_30d',
+      header: '30d %',
+      cell: info => <PriceChangeCell value={info.getValue()} />,
+      sortingFn: (rowA, rowB) => {
+        const a = rowA.original.market_stats.price_change_percentage_30d_in_currency || 0;
+        const b = rowB.original.market_stats.price_change_percentage_30d_in_currency || 0;
+        return a - b;
+      },
+    }),
+    columnHelper.accessor(row => row.market_stats.price_change_percentage_1y_in_currency, {
+      id: 'price_change_1y',
+      header: '1y %',
+      cell: info => <PriceChangeCell value={info.getValue()} />,
+      sortingFn: (rowA, rowB) => {
+        const a = rowA.original.market_stats.price_change_percentage_1y_in_currency || 0;
+        const b = rowB.original.market_stats.price_change_percentage_1y_in_currency || 0;
+        return a - b;
+      },
+    }),
   ], []); // Add marketData as dependency
 
   const table = useReactTable({
@@ -321,26 +394,22 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
     setSelectedTag(''); // Clear any selected tag
     let selectedRows: TableRowSelection = {};
 
-    switch (preset) {
-      case 'top16':
-        data.slice(0, 16).forEach((_, index) => {
-          selectedRows[index.toString()] = true;
-        });
-        break;
-      case 'top100':
-        data.slice(0, 100).forEach((_, index) => {
-          selectedRows[index.toString()] = true;
-        });
-        break;
-      default:
-        selectedRows = {};
-    }
+    // Get the current sorted rows from the table
+    const sortedRows = table.getRowModel().rows;
+
+    // Select the top N rows based on current sorting
+    const numRows = preset === 'top16' ? 16 : 100;
+    sortedRows.slice(0, numRows).forEach((row) => {
+      selectedRows[row.id] = true;
+    });
 
     setRowSelection(selectedRows);
     table.setRowSelection(selectedRows);
     
     if (onSelectionChange) {
-      const selectedCryptos = data.filter((_, index) => selectedRows[index.toString()]);
+      const selectedCryptos = sortedRows
+        .slice(0, numRows)
+        .map(row => row.original);
       onSelectionChange(selectedCryptos);
     }
   };
@@ -425,7 +494,11 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
               circulating_supply: geckoData.circulating_supply.toString(),
               total_supply: geckoData.total_supply?.toString() || '0',
               max_supply: geckoData.max_supply?.toString() || '0',
-              current_price: geckoData.current_price.toString()
+              current_price: geckoData.current_price.toString(),
+              market_cap_rank: geckoData.market_cap_rank,
+              price_change_24h: geckoData.price_change_percentage_24h,
+              price_change_percentage_30d_in_currency: geckoData.price_change_percentage_30d_in_currency,
+              price_change_percentage_1y_in_currency: geckoData.price_change_percentage_1y_in_currency
             }
           };
         }
@@ -455,6 +528,22 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
       )}
       
       <div className="crypto-table-container">
+        <div className="flex items-center justify-end gap-2 mb-4 mt-4 mr-20 text-sm text-gray-400">
+          <span>Powered by</span>
+          <a 
+            href="https://www.coingecko.com/en/api" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 hover:text-gray-300 transition-colors"
+          >
+            <img 
+              src="https://static.coingecko.com/s/coingecko-logo-8903d34ce19ca4be1c81f0db30e924154750d208683fad7ae6f2ce06c76d0a56.png" 
+              alt="CoinGecko Logo" 
+              className="h-6"
+            />
+          </a>
+        </div>
+
         <div className="table-controls">
           <div className="controls-section">
             <h2 className="presets-title">Quick Select</h2>
@@ -466,7 +555,7 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
                 <span className="preset-icon">🏆</span>
                 <span className="preset-text">
                   <span className="preset-name">Top 16</span>
-                  <span className="preset-description">Highest market cap</span>
+                  <span className="preset-description">Based on current sorting</span>
                 </span>
               </button>
               <button 
@@ -476,7 +565,7 @@ export default function CryptoTable({ data: initialData, onSelectionChange, tagg
                 <span className="preset-icon">💯</span>
                 <span className="preset-text">
                   <span className="preset-name">Top 100</span>
-                  <span className="preset-description">Most popular coins</span>
+                  <span className="preset-description">Based on current sorting</span>
                 </span>
               </button>
               <button 

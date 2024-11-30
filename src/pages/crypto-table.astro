@@ -15,7 +15,7 @@ const cryptoData: CryptoData[] = marketData.map((coin, index) => ({
   id: index,
   name: coin.name,
   ticker: coin.symbol.toUpperCase(),
-  logo_local: coin.image, // Using CoinGecko's image URLs directly
+  logo_local: coin.image, // Keep CoinGecko URL as fallback
   marketcap: coin.market_cap.toString(),
   market_stats: {
     market_cap: coin.market_cap.toString(),
@@ -25,7 +25,11 @@ const cryptoData: CryptoData[] = marketData.map((coin, index) => ({
     circulating_supply: coin.circulating_supply.toString(),
     total_supply: coin.total_supply?.toString() || '0',
     max_supply: coin.max_supply?.toString() || '0',
-    current_price: coin.current_price.toString()
+    current_price: coin.current_price.toString(),
+    market_cap_rank: coin.market_cap_rank,
+    price_change_24h: coin.price_change_percentage_24h,
+    price_change_percentage_30d_in_currency: coin.price_change_percentage_30d_in_currency,
+    price_change_percentage_1y_in_currency: coin.price_change_percentage_1y_in_currency
   }
 }));
 

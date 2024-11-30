@@ -344,7 +344,7 @@ const generateBattleImage = async (battle: BattleHistory, models: TextModels) =>
     for (let i = 0; i < topThree.length; i++) {
       const winner = topThree[i];
       try {
-        const logo = await loadImage(winner.coin.logo_local);
+        const logo = await loadImage(`/public/logos/${winner.coin.ticker.toLowerCase()}.png`);
         // Draw medal emoji
         ctx.font = '24px Arial';
         ctx.fillText(medals[i], 50, y);
@@ -1727,7 +1727,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                           <h3>{models[modelId]?.name} Winner:</h3>
                           <div className="winner-card">
                             <img 
-                              src={`/${winner.logo_local}`} 
+                              src={`/logos/${winner.ticker.toLowerCase()}.png`} 
                               alt={winner.name}
                               className="winner-logo"
                             />
@@ -1853,7 +1853,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                         <h3>{models[modelId]?.name}:</h3>
                         <div className="winner-card">
                           <img 
-                            src={`/${winner.logo_local}`} 
+                            src={`/logos/${winner.ticker.toLowerCase()}.png`} 
                             alt={winner.name}
                             className="winner-logo"
                           />
@@ -1883,7 +1883,7 @@ export default function CryptoBattle({ cryptos, ...props }: CryptoBattleProps & 
                               {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
                             </div>
                             <img 
-                              src={`/${winner.coin.logo_local}`}
+                              src={`/logos/${winner.coin.ticker.toLowerCase()}.png`}
                               alt={winner.coin.name}
                               className="winner-logo"
                             />
