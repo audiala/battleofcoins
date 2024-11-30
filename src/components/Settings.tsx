@@ -90,17 +90,30 @@ export function Settings() {
       <div className="settings-card">
         <div className="settings-section">
           <h2>NanoGPT API Key</h2>
-          <p className="settings-description">
-            Enter your API key from{' '}
-            <a 
-              href="https://nano-gpt.com/api" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="settings-link"
-            >
-              nano-gpt.com/api
-            </a>
-          </p>
+          <div className="api-key-info">
+  <p>
+    <a href="https://nano-gpt.com" className="external-link">NanoGPT</a> allows you to access cutting-edge AI models like GPT-4o, Claude, and Gemini using the <a href="https://nano.org" target="_blank" rel="noopener noreferrer" className="external-link">Nano cryptocurrency</a>. By connecting your NanoGPT account, you authorize BattleOfCoins to use your account for accessing these AI models.
+  </p>
+  <div className="security-notice">
+    <h3>🔒 Security Highlights</h3>
+    <ul>
+      <li>API key is stored exclusively on your local device</li>
+      <li>No third-party key sharing</li>
+      <li>Instant access revocation by clearing your key</li>
+      <li>Usage subject to <a href="https://nano-gpt.com/terms" target="_blank" rel="noopener noreferrer" className="external-link">NanoGPT terms of service</a></li>
+    </ul>
+  </div>
+  <p>
+    New to NanoGPT? Visit <a 
+      href="https://nano-gpt.com" 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="external-link"
+    >
+      nano-gpt.com
+    </a> to get started.
+  </p>
+</div>
           
           <div className="api-key-form">
             <input
